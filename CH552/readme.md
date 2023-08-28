@@ -5,7 +5,7 @@ Furthermore, inside the 'libraries' directory, there are optional libraries avai
 
 To make use of the template, it's necessary to install some extra software components to fully set up the toolchain:
 
-## Install GCC toolchain for compiling
+## Install SDCC toolchain for compiling
 ```
 sudo apt install build-essential sdcc
 ```
