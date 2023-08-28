@@ -22,7 +22,7 @@ echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="6
 sudo udevadm control --reload-rules
 ```
 
-# Using the template
+# Using the Template
 Use one of the following commands inside the 'template' folder to compile/upload:
 
 ```
