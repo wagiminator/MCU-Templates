@@ -119,31 +119,31 @@ uint8_t CDC_control(void) {
 // Endpoint 0 OUT handler
 void CDC_EP0_OUT(void) {
   uint8_t i;
-  if(USB_SetupReq == SET_LINE_CODING) {                     // set line coding
+  if(USB_SetupReq == SET_LINE_CODING) {                       // set line coding
     if(U_TOG_OK) {
       for(i=0; i<((sizeof(CDC_lineCodingB)<=USB_RX_LEN)?sizeof(CDC_lineCodingB):USB_RX_LEN); i++)
-        ((uint8_t*)&CDC_lineCodingB)[i] = EP0_buffer[i];    // receive line coding from host
+        ((uint8_t*)&CDC_lineCodingB)[i] = EP0_buffer[i];      // receive line coding from host
       UEP0_T_LEN = 0;
-      UEP0_CTRL |= UEP_R_RES_ACK | UEP_T_RES_ACK;           // send 0-length packet
+      UEP0_CTRL |= UEP_R_RES_ACK | UEP_T_RES_ACK;             // send 0-length packet
     }
   }
   else {
     UEP0_T_LEN = 0;
-    UEP0_CTRL |= UEP_R_RES_ACK | UEP_T_RES_NAK;             // respond Nak
+    UEP0_CTRL |= UEP_R_RES_ACK | UEP_T_RES_NAK;               // respond Nak
   }
 }
 
 // Endpoint 1 IN handler
 void CDC_EP1_IN(void) {
   UEP1_T_LEN = 0;
-  UEP1_CTRL = UEP1_CTRL & ~ MASK_UEP_T_RES | UEP_T_RES_NAK; // default NAK
+  UEP1_CTRL = (UEP1_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK;  // default NAK
 }
 
 // Endpoint 2 IN handler (bulk data transfer to host)
 void CDC_EP2_IN(void) {
-  UEP2_T_LEN = 0;                                           // no data to send anymore
-  UEP2_CTRL = UEP2_CTRL & ~MASK_UEP_T_RES | UEP_T_RES_NAK;  // respond NAK by default
-  CDC_writeBusyFlag = 0;                                    // clear busy flag
+  UEP2_T_LEN = 0;                                             // no data to send anymore
+  UEP2_CTRL = (UEP2_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK;  // respond NAK by default
+  CDC_writeBusyFlag = 0;                                      // clear busy flag
 }
 
 // Endpoint 2 OUT handler (bulk data transfer from host)
@@ -152,6 +152,6 @@ void CDC_EP2_OUT(void) {
     CDC_readByteCount = USB_RX_LEN;                     // set number of received data bytes
     CDC_readPointer = 0;                                // reset read pointer for fetching
     if(CDC_readByteCount) 
-      UEP2_CTRL = UEP2_CTRL & ~MASK_UEP_R_RES | UEP_R_RES_NAK; // respond NAK after a packet. Let main code change response after handling.
+      UEP2_CTRL = (UEP2_CTRL & ~MASK_UEP_R_RES) | UEP_R_RES_NAK; // respond NAK after a packet. Let main code change response after handling.
   }
 }
