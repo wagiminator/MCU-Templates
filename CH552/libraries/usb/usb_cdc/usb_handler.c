@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB Handler for CH551, CH552 and CH554                                     * v1.2 *
+// USB Handler for CH551, CH552 and CH554                                     * v1.3 *
 // ===================================================================================
 
 #include "ch554.h"
@@ -83,7 +83,7 @@ void USB_EP0_SETUP(void) {
     USB_SetupReq = USB_SetupBuf->bRequest;
     USB_SetupTyp = USB_SetupBuf->bRequestType;
 
-    if( (USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD ) {
+    if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
       #ifdef USB_CTRL_NS_handler
       len = USB_CTRL_NS_handler();                // non-standard request
       #else
@@ -168,7 +168,7 @@ void USB_EP0_SETUP(void) {
 
         case USB_GET_CONFIGURATION:
           EP0_buffer[0] = USB_Config;
-          if (USB_SetupLen >= 1) len = 1;
+          if(USB_SetupLen >= 1) len = 1;
           break;
 
         case USB_SET_CONFIGURATION:
@@ -182,8 +182,8 @@ void USB_EP0_SETUP(void) {
           break;
 
         case USB_CLEAR_FEATURE:
-          if( (USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE ) {
-            if( ( ( (uint16_t)USB_SetupBuf->wValueH << 8 ) | USB_SetupBuf->wValueL ) == 0x01 ) {
+          if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE) {
+            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x01 ) {
               if( ((uint8_t*)&CfgDescr)[7] & 0x20) {
                 // wake up
               }
@@ -191,7 +191,7 @@ void USB_EP0_SETUP(void) {
             }
             else len = 0xff;                 // failed
           }
-          else if( (USB_SetupTyp & USB_REQ_RECIP_MASK) == USB_REQ_RECIP_ENDP ) {
+          else if((USB_SetupTyp & USB_REQ_RECIP_MASK) == USB_REQ_RECIP_ENDP) {
             switch(USB_SetupBuf->wIndexL) {
               #ifdef EP1_OUT_callback
               case 0x01:
@@ -242,53 +242,53 @@ void USB_EP0_SETUP(void) {
           break;
 
         case USB_SET_FEATURE:
-          if( (USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE ) {
-            if( ( ( (uint16_t)USB_SetupBuf->wValueH << 8 ) | USB_SetupBuf->wValueL ) == 0x01 ) {
+          if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE) {
+            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x01 ) {
               if( !(((uint8_t*)&CfgDescr)[7] & 0x20) ) len = 0xff;  // failed
             }
             else len = 0xff;                                        // failed
           }
-          else if( (USB_SetupTyp & 0x1f) == USB_REQ_RECIP_ENDP ) {
-            if( ( ( (uint16_t)USB_SetupBuf->wValueH << 8 ) | USB_SetupBuf->wValueL ) == 0x00 ) {
+          else if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_ENDP) {
+            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x00 ) {
               switch( ( (uint16_t)USB_SetupBuf->wIndexH << 8 ) | USB_SetupBuf->wIndexL ) {
                 #ifdef EP1_OUT_callback
                 case 0x01:
-                  UEP1_CTRL = (UEP1_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;// Set EP1 OUT Stall
+                  UEP1_CTRL = (UEP1_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;
                   break;
                 #endif
                 #ifdef EP1_IN_callback
                 case 0x81:
-                  UEP1_CTRL = (UEP1_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;// Set EP1 IN STALL 
+                  UEP1_CTRL = (UEP1_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;
                   break;
                 #endif
                 #ifdef EP2_OUT_callback
                 case 0x02:
-                  UEP2_CTRL = (UEP2_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;// Set EP2 OUT Stall 
+                  UEP2_CTRL = (UEP2_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;
                   break;
                 #endif
                 #ifdef EP2_IN_callback
                 case 0x82:
-                  UEP2_CTRL = (UEP2_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;// Set EP2 IN STALL 
+                  UEP2_CTRL = (UEP2_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;
                   break;
                 #endif
                 #ifdef EP3_OUT_callback
                 case 0x03:
-                  UEP3_CTRL = (UEP3_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;// Set EP3 OUT Stall 
+                  UEP3_CTRL = (UEP3_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;
                   break;
                 #endif
                 #ifdef EP3_IN_callback
                 case 0x83:
-                  UEP3_CTRL = (UEP3_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;// Set EP3 IN STALL 
+                  UEP3_CTRL = (UEP3_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;
                   break;
                 #endif
                 #ifdef EP4_OUT_callback
                 case 0x04:
-                  UEP4_CTRL = (UEP4_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;// Set EP4 OUT Stall 
+                  UEP4_CTRL = (UEP4_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;
                   break;
                 #endif
                 #ifdef EP4_IN_callback
                 case 0x84:
-                  UEP4_CTRL = (UEP4_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;// Set EP4 IN STALL 
+                  UEP4_CTRL = (UEP4_CTRL & ~bUEP_T_TOG) | UEP_T_RES_STALL;
                   break;
                 #endif
                 default:
@@ -318,15 +318,15 @@ void USB_EP0_SETUP(void) {
 
   if(len == 0xff) {
     USB_SetupReq = 0xff;
-    UEP0_CTRL = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL;// STALL
+    UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL; // STALL
   }
   else if(len <= EP0_SIZE) {      // Tx data to host or send 0-length packet
     UEP0_T_LEN = len;
-    UEP0_CTRL = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK;// Expect DATA1, Answer ACK
+    UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK; // Expect DATA1, Answer ACK
   }
   else {
     UEP0_T_LEN = 0;  // Tx data to host or send 0-length packet
-    UEP0_CTRL = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK;// Expect DATA1, Answer ACK
+    UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK; // Expect DATA1, Answer ACK
   }
 }
 
@@ -334,7 +334,7 @@ void USB_EP0_IN(void) {
   uint8_t len;
 
   #ifdef USB_IN_NS_handler
-  if( (USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD ) {
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
     USB_IN_NS_handler();
     return;
   }
@@ -364,14 +364,14 @@ void USB_EP0_IN(void) {
 
 void USB_EP0_OUT(void) {
   #ifdef USB_OUT_NS_handler
-  if( (USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD ) {
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
     USB_OUT_NS_handler();
     return;
   }
   #endif
 
   UEP0_T_LEN = 0;
-  UEP0_CTRL |= UEP_R_RES_ACK | UEP_T_RES_NAK;     // respond Nak
+  UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK; // respond NAK
 }
 
 // ===================================================================================
@@ -472,7 +472,7 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
   // USB bus suspend / wake up
   if (UIF_SUSPEND) {
     UIF_SUSPEND = 0;
-    if ( !(USB_MIS_ST & bUMS_SUSPEND) ) USB_INT_FG = 0x1f;  // clear interrupt flag
+    if(!(USB_MIS_ST & bUMS_SUSPEND)) USB_INT_FG = 0x1f; // clear interrupt flag
   }
 }
 #pragma restore

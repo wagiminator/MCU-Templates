@@ -38,6 +38,10 @@ void HID_EP_init(void) {
               | UEP_T_RES_NAK;                    // EP1 IN transaction returns NAK
   UEP4_1_MOD  = bUEP1_TX_EN;                      // EP1 TX enable
   UEP1_T_LEN  = 0;                                // EP1 nothing to send
+  UEP2_DMA    = (uint16_t)EP2_buffer;             // EP2 data transfer address
+  UEP2_CTRL   = bUEP_AUTO_TOG                     // EP2 Auto flip sync flag
+              | UEP_R_RES_ACK;                    // EP2 OUT transaction returns ACK
+  UEP2_3_MOD  = bUEP2_RX_EN;                      // EP2 RX_enable
   HID_writeBusyFlag = 0;                          // reset write busy flag
 }
 
