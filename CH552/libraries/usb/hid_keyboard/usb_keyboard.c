@@ -115,10 +115,3 @@ void KBD_releaseAll(void) {
 void KBD_print(char* str) {
   while(*str) KBD_type(*str++);
 }
-
-// ===================================================================================
-// Get keyboard status LEDs
-// ===================================================================================
-uint8_t KBD_getState(void) {
-  return EP2_buffer[0];
-}

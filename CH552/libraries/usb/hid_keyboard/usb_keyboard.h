@@ -5,7 +5,7 @@
 // Functions available:
 // --------------------
 // KBD_init()               init USB HID Keyboard
-// KBD_press(k)             press a key on keyboard (see below for special keys)
+// KBD_press(k)             press a key on keyboard (see below for control keys)
 // KBD_release(k)           release a key on keyboard
 // KBD_type(k)              press and release a key on keyboard
 // KBD_releaseAll()         release all keys on keyboard
@@ -25,14 +25,14 @@ void KBD_release(uint8_t key);        // release a key on keyboard
 void KBD_type(uint8_t key);           // press and release a key on keyboard
 void KBD_releaseAll(void);            // release all keys on keyboard
 void KBD_print(char* str);            // type some text on the keyboard
-uint8_t KBD_getState(void);           // get keyboard status LEDs
 
 // Keyboard LED states
-#define KBD_NUM_LOCK_state            (KBD_getState() & 1)
-#define KBD_CAPS_LOCK_state           ((KBD_getState() >> 1) & 1)
-#define KBD_SCROLL_LOCK_state         ((KBD_getState() >> 2) & 1)
-#define KBD_COMPOSE_state             ((KBD_getState() >> 3) & 1)
-#define KBD_KANA_state                ((KBD_getState() >> 4) & 1)
+#define KBD_getState()          (EP2_buffer[0]) 
+#define KBD_NUM_LOCK_state      (KBD_getState() & 1)
+#define KBD_CAPS_LOCK_state     ((KBD_getState() >> 1) & 1)
+#define KBD_SCROLL_LOCK_state   ((KBD_getState() >> 2) & 1)
+#define KBD_COMPOSE_state       ((KBD_getState() >> 3) & 1)
+#define KBD_KANA_state          ((KBD_getState() >> 4) & 1)
 
 // Modifier keys
 #define KBD_KEY_LEFT_CTRL   0x80
