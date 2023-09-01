@@ -52,3 +52,7 @@ void HID_EP1_IN(void) {
              | UEP_T_RES_NAK;                     // -> respond NAK
   HID_writeBusyFlag = 0;                          // clear busy flag
 }
+
+// Endpoint 2 OUT handler (HID report transfer from host completed)
+// No handling is actually necessary here, the auto-ACK is sufficient.
+// The current report can be read from the EP2 buffer.

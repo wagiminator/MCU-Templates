@@ -136,10 +136,7 @@ void CDC_EP0_OUT(void) {
 }
 
 // Endpoint 1 IN handler
-void CDC_EP1_IN(void) {
-  UEP1_T_LEN = 0;
-  UEP1_CTRL  = (UEP1_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK; // default NAK
-}
+// No handling is actually necessary here, the auto-NAK is sufficient.
 
 // Endpoint 2 IN handler (bulk data transfer to host completed)
 void CDC_EP2_IN(void) {
@@ -149,7 +146,7 @@ void CDC_EP2_IN(void) {
   CDC_writeBusyFlag = 0;                          // clear busy flag
 }
 
-// Endpoint 2 OUT handler (bulk data transfer from host received)
+// Endpoint 2 OUT handler (bulk data transfer from host completed)
 void CDC_EP2_OUT(void) {
   if(U_TOG_OK && USB_RX_LEN) {                    // received synchronized packet?
     UEP2_CTRL = (UEP2_CTRL & ~MASK_UEP_R_RES)

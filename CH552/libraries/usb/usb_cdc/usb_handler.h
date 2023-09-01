@@ -19,7 +19,6 @@ extern volatile uint16_t USB_SetupLen;
 uint8_t CDC_control(void);
 void CDC_EP_init(void);
 void CDC_EP0_OUT(void);
-void CDC_EP1_IN(void);
 void CDC_EP2_IN(void);
 void CDC_EP2_OUT(void);
 
@@ -34,7 +33,6 @@ void CDC_EP2_OUT(void);
 #define EP0_SETUP_callback  USB_EP0_SETUP
 #define EP0_IN_callback     USB_EP0_IN
 #define EP0_OUT_callback    CDC_EP0_OUT
-#define EP1_IN_callback     CDC_EP1_IN
 #define EP2_IN_callback     CDC_EP2_IN
 #define EP2_OUT_callback    CDC_EP2_OUT
 
