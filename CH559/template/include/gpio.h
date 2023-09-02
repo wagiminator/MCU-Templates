@@ -16,6 +16,9 @@
 // PIN_output_PU_OD(PIN)    set PIN as OUTPUT (open-drain, pullup, also INPUT, P0-P3)
 // PIN_output_BI(PIN)       set PIN as 8051 bi-directional (open-drain, pullup, P0-P3)
 //
+// PIN_current_low(PIN)     set PIN output current drive capabilty to 5mA (default)
+// PIN_current_high(PIN)    set PIN output current to 20mA for P0, P2, P3 / 10mA for P1
+//
 // PIN_low(PIN)             set PIN output value to LOW
 // PIN_high(PIN)            set PIN output value to HIGH
 // PIN_toggle(PIN)          TOGGLE PIN output value
@@ -47,7 +50,7 @@
 // P1 means port 1, P13 means pin3 of port 1.
 // If one pin of a port ist set with an open-drain or bidirectional mode, then all other
 // pins of the same port must be set with one of these modes as well.
-// Setting the drive capability of one pin affects the whole port.
+// Setting the current drive capability of one pin affects the whole port.
 // Reset defaults P0-P3: PIN_output_PU_OD, HIGH, 5mA drive capability
 // Reset defaults P4:    PIN_input_PU
 // Reset defaults P5:    PIN_input (not changable, but PULL-DOWN available)
@@ -275,6 +278,27 @@ SFR(P4, 0xC0);
 #define PIN_bidir     PIN_output_BI
 
 // ===================================================================================
+// Set PIN output current drive capabilty to 5mA (P0-P3 only, affects whole port)
+// ===================================================================================
+#define PIN_current_low(PIN) \
+  ((PIN>=P00)&&(PIN<=P07) ? (PORT_CFG &= ~bP0_DRV) : \
+  ((PIN>=P10)&&(PIN<=P17) ? (PORT_CFG &= ~bP1_DRV) : \
+  ((PIN>=P20)&&(PIN<=P27) ? (PORT_CFG &= ~bP2_DRV) : \
+  ((PIN>=P30)&&(PIN<=P37) ? (PORT_CFG &= ~bP3_DRV) : \
+(0)))))
+
+// ===================================================================================
+// Set PIN output current drive capabilty to 20mA (P0, P2, P3 only) or 10mA (P1 only)
+// Setting affects the whole port.
+// ===================================================================================
+#define PIN_current_high(PIN) \
+  ((PIN>=P00)&&(PIN<=P07) ? (PORT_CFG |= bP0_DRV) : \
+  ((PIN>=P10)&&(PIN<=P17) ? (PORT_CFG |= bP1_DRV) : \
+  ((PIN>=P20)&&(PIN<=P27) ? (PORT_CFG |= bP2_DRV) : \
+  ((PIN>=P30)&&(PIN<=P37) ? (PORT_CFG |= bP3_DRV) : \
+(0)))))
+
+// ===================================================================================
 // PIN OUTPUT manipulation macros (P0-P4 only)
 // ===================================================================================
 #define PIN_low(PIN)          PIN_h_s(PIN) = 0              // set pin to LOW
@@ -285,8 +309,6 @@ SFR(P4, 0xC0);
 // ===================================================================================
 // PIN INPUT read macros (P0-P5)
 // ===================================================================================
-//#define PIN_read(PIN)         (PIN_h_s(PIN))                // READ pin
-
 #define PIN_read(PIN) \
   ((PIN>=P00)&&(PIN<=P37) ? (PIN_h_s(PIN))         : \
   ((PIN>=P40)&&(PIN<=P47) ? ((P4_IN>>((PIN)&7))&1) : \
