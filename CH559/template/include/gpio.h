@@ -47,8 +47,8 @@
 //
 // Notes:
 // ------
-// P1 means port 1, P13 means pin3 of port 1.
-// If one pin of a port ist set with an open-drain or bidirectional mode, then all other
+// P1 means port 1, P13 means pin 3 of port 1.
+// If one pin of a port is set with an open-drain or bidirectional mode, then all other
 // pins of the same port must be set with one of these modes as well.
 // Setting the current drive capability of one pin affects the whole port.
 // Reset defaults P0-P3: PIN_output_PU_OD, HIGH, 5mA drive capability
