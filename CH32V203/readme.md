@@ -33,12 +33,12 @@ sudo udevadm control --reload-rules
 Use one of the following commands inside the 'template' folder to compile/upload:
 
 ```
-make all       compile and build <firmware>.elf/.bin/.hex/.asm"
-make hex       compile and build <firmware>.hex"
-make asm       compile and disassemble to <firmware>.asm"
-make bin       compile and build <firmware>.bin"
-make flash     compile and upload to MCU"
-make clean     remove all build files"
+make all       compile and build <firmware>.elf/.bin/.hex/.asm
+make hex       compile and build <firmware>.hex
+make asm       compile and disassemble to <firmware>.asm
+make bin       compile and build <firmware>.bin
+make flash     compile and upload to MCU
+make clean     remove all build files
 ```
 
 # License
