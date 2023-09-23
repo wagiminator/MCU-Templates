@@ -156,7 +156,7 @@ void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock
 #define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
 #define DLY_us(n)         DLY_ticks((n)*DLY_US_TIME-1)  // delay n microseconds
 void DLY_ticks(uint32_t n);                             // delay n+1 clock cycles
-inline void DLY_ms(uint32_t ms) {                       // delay n milliseconds
+static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
   while(ms--) DLY_us(1000);
 }
 

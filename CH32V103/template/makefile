@@ -7,14 +7,16 @@
 # Type "make help" in the command line.
 # ===================================================================================
 
-# Input and Output File Names
-SKETCH   = example.c
+# Files and Folders
+MAINFILE = example.c
 TARGET   = example
 INCLUDE  = include
-LINKER   = linker/ch32v103x6.ld
+TOOLS    = tools
 
 # Microcontroller Settings
 F_CPU    = 72000000
+LDSCRIPT = linker/ch32v103x6.ld
+CPUARCH  = -march=rv32imac -mabi=ilp32
 
 # Toolchain
 PREFIX   = riscv64-unknown-elf
@@ -22,15 +24,15 @@ CC       = $(PREFIX)-gcc
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
-FLASHER  = python3 ./tools/chprog.py $(TARGET).bin
+NEWLIB   = /usr/include/newlib
+FLASHER  = python3 $(TOOLS)/chprog.py $(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = -g -Os -flto -ffunction-sections -fno-builtin -static-libgcc -nostdlib
-CFLAGS  += -march=rv32imac -mabi=ilp32 -DF_CPU=$(F_CPU)
-CFLAGS  += -I/usr/include/newlib -I$(INCLUDE) -I. -Wall
-LDFLAGS  = -T$(LINKER) -Wl,--gc-sections -lgcc
-CFILES   = $(SKETCH) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
+CFLAGS   = $(CPUARCH) -DF_CPU=$(F_CPU) -I$(NEWLIB) -I$(INCLUDE) -I. -L$(TOOLS)
+CFLAGS  += -g -Os -flto -ffunction-sections -fno-builtin -Wall
+LDFLAGS  = -T$(LDSCRIPT) -nostdlib -lgcc -static-libgcc -Wl,--gc-sections
+CFILES   = $(MAINFILE) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
 
 # Symbolic Targets
 help:

@@ -7,14 +7,16 @@
 # Type "make help" in the command line.
 # ===================================================================================
 
-# Input and Output File Names
-SKETCH   = example.c
+# Files and Folders
+MAINFILE = example.c
 TARGET   = example
 INCLUDE  = include
-LDSCRIPT = linker/py32f002xx5.ld
+TOOLS    = tools
 
 # Microcontroller Settings
-F_CPU    = 8000000
+F_CPU    = 24000000
+LDSCRIPT = linker/py32f002xx5.ld
+CPUARCH  = -mcpu=cortex-m0plus -mthumb
 
 # Toolchain
 PREFIX   = arm-none-eabi
@@ -22,15 +24,15 @@ CC       = $(PREFIX)-gcc
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
-FLASHER  = python3 ./tools/puyaisp.py -f $(TARGET).bin
+FLASHER  = python3 $(TOOLS)/puyaisp.py -f $(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = -mcpu=cortex-m0plus -mthumb -DF_CPU=$(F_CPU) -I$(INCLUDE) -I.
+CFLAGS   = $(CPUARCH) -DF_CPU=$(F_CPU) -I$(INCLUDE) -I.
 CFLAGS  += -g -Os -flto -fdata-sections -ffunction-sections -Wall
 LDFLAGS  = -T$(LDSCRIPT) -lc -lm -lnosys -specs=nano.specs -Wl,--gc-sections
 LDFLAGS += -nostdlib -lgcc -static-libgcc
-CFILES   = $(SKETCH) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
+CFILES   = $(MAINFILE) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
 
 # Symbolic Targets
 help:
