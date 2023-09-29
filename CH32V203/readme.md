@@ -1,4 +1,6 @@
 # MCU Template for CH32V203 Microcontrollers
+The CH32V203 is an industrial-grade microcontroller (MCU) designed for general-purpose use, with low power consumption and enhanced performance. It is based on a 32-bit RISC-V core, supports the RV32IMAC instruction set, and can operate at clock frequencies of up to 144MHz. The MCU's power consumption is highly efficient, reaching as low as 45uA per MHz. Additionally, the CH32V203 integrates a USB interface with two channels, enabling both USB Host and USB Device functionalities. It also provides a CAN interface (2.0B active) with one channel, up to two OPA channels, four UARTs, two I²Cs, a 12-bit ADC, a 10-channel TouchKey, and various other peripheral resources.
+
 The 'template' directory includes a makefile, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
@@ -40,6 +42,10 @@ make bin       compile and build <firmware>.bin
 make flash     compile and upload to MCU
 make clean     remove all build files
 ```
+
+# Links
+- [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
+- [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
 
 # License
 

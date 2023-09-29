@@ -1,4 +1,6 @@
-# MCU Template for CH559 Microcontrollers
+# MCU Template for CH558 and CH559 Microcontrollers
+The CH55x is an 8-bit enhanced E8051 core MCU compatible with the MCS51 instruction set. 79% of its instructions are single-byte single-cycle instructions, and the average instruction speed is 8 - 15 times faster than that of the standard MCS51. The special xRAM supports direct memory access (DMA), data fast copy command, and double DPTR pointers. The CH55x has a built-in USB controller and USB transceiver, it supports USB-Host mode (except CH558) and USB-Device mode, USB 2.0 full-speed (12Mbps) and low-speed (1.5Mbps) traffic, data packets of up to 64 bytes, and DMA. It has a factory built-in bootloader so firmware can be uploaded directly via USB without the need for an additional programming device.
+
 The 'template' directory includes a makefile, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
@@ -32,6 +34,10 @@ make bin       compile and build <firmware>.bin
 make flash     compile, build and upload to MCU
 make clean     remove all build files
 ```
+
+# Links
+- [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
+- [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
 
 # License
 

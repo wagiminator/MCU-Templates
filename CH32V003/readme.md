@@ -1,4 +1,6 @@
 # MCU Template for CH32V003 Microcontrollers
+The CH32V003 series is a collection of industrial-grade general-purpose microcontrollers that utilize the QingKe RISC-V2A core design supporting the RV32EC instruction set. These microcontrollers are equipped with various features such as a 48MHz system main frequency, 16KB flash, 2KB SRAM, wide voltage support, a single-wire serial debug interface, low power consumption, and an ultra-small package. Additionally, the CH32V003 series includes a built-in set of components including a DMA controller, a 10-bit ADC, op-amp comparators, multiple timers, and standard communication interfaces such as USART, I2C, and SPI.
+
 The 'template' directory includes a makefile, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
@@ -34,6 +36,10 @@ make bin       compile and build <firmware>.bin
 make flash     compile and upload to MCU
 make clean     remove all build files
 ```
+
+# Links
+- [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
+- [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
 
 # License
 
