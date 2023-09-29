@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v0.1 *
+// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v0.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -13,6 +13,9 @@
 void SYS_init(void) {
   // Init system clock
   #if SYS_CLK_INIT > 0
+  #if F_CPU > 24000000
+  FLASH->ACR = FLASH_ACR_LATENCY;                         // increase FLASH latency
+  #endif
   CLK_init();
   #endif
 
@@ -76,9 +79,68 @@ void DLY_ticks(uint32_t n) {
 // Independent Watchdog Timer (IWDG) Functions
 // ===================================================================================
 
+// Start independent watchdog timer (IWDG) with given time in milliseconds (max 8191).
+// Once the IWDG has been started, it cannot be disabled, only reloaded (feed).
+// It can be stopped by disabling the internal low-speed clock (LSI).
+void IWDG_start(uint16_t ms) {
+  LSI_enable();                         // enable internal low-speed clock (LSI)
+  IWDG->KR   = 0x5555;                  // allow register modification
+  while(IWDG->SR & IWDG_SR_PVU);        // wait for clock register to be ready
+  IWDG->PR   = 0b100;                   // set LSI clock prescaler 64 (~0.5kHz)
+  while(IWDG->SR & IWDG_SR_RVU);        // wait for reload register to be ready
+  IWDG->RLR  = ms >> 1;                 // set watchdog counter reload value
+  IWDG->KR   = 0xAAAA;                  // load reload value into watchdog counter
+  IWDG->KR   = 0xCCCC;                  // enable IWDG
+}
+
+// Reload watchdog counter with n milliseconds, n<=8191
+void IWDG_reload(uint16_t ms) {
+  IWDG->KR   = 0x5555;                  // allow register modification
+  while(IWDG->SR & IWDG_SR_RVU);        // wait for reload register to be ready
+  IWDG->RLR = ms >> 1;                  // set watchdog counter reload value
+  IWDG->KR   = 0xAAAA;                  // load reload value into watchdog counter
+}
+
 // ===================================================================================
 // Sleep Functions
 // ===================================================================================
+
+// Put device into sleep, wake up by interrupt
+void SLEEP_WFI_now(void) {
+  __WFI();                              // wait for interrupt
+}
+
+// Put device into sleep, wake up by event
+void SLEEP_WFE_now(void) {
+  __WFE();                              // wait for event
+}
+
+// Put device into stop (deep sleep), wake up interrupt
+void STOP_WFI_now(void) {
+  NVIC->ICPR[0U] = 0xffffffff;          // clear pending interrupts
+  EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
+  RTC->CRL = 0;                         // clear RTC interrupt flags
+  SCB->SCR |=  SCB_SCR_SLEEPDEEP_Msk;   // set deep sleep mode
+  __WFI();                              // wait for interrupt
+  SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
+}
+
+// Put device into stop (deep sleep), wake up event
+void STOP_WFE_now(void) {
+  NVIC->ICPR[0U] = 0xffffffff;          // clear pending interrupts
+  EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
+  RTC->CRL = 0;                         // clear RTC interrupt flags
+  SCB->SCR |=  SCB_SCR_SLEEPDEEP_Msk;   // set deep sleep mode
+  __WFE();                              // wait for event
+  SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
+}
+
+// Reduce power in stop mode
+void STOP_lowPower(void) {
+  PWR->CR1 = PWR_CR1_LPR                // use low power regulator in stop mode
+           | PWR_CR1_VOS                // use VDD = 1.0V in stop mode
+           | (0b011 << 16);             // supply 0.9V to SRAM in stop mode
+}
 
 // ===================================================================================
 // C++ Support

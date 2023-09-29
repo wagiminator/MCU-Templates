@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v0.1 *
+// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v0.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -28,12 +28,48 @@
 // LSI_disable()          // disable LSI
 // LSI_ready()            // check if LSI is stable
 //
+// LSE_enable()           // enable external 32.768kHz low-speed clock (LSE)
+// LSE_disable()          // disable LSE
+// LSE_ready()            // check if LSE is stable
+// LSE_bypass_on()        // enable LSE clock bypass
+// LSE_bypass_off()       // disable LSE clock bypass
+// LSE_CSS_on()           // enable LSE clock security system
+// LSE_CSS_off()          // disable LSE clock security system
+//
+// MCO_setSYS()           // enable output system clock (SYS_CLK) on MCO
+// MCO_setHSI()           // enable output internal high-speed clock (HSI) on MCO
+// MCO_setHSE()           // enable output external high-speed clock (HSE) on MCO
+// MCO_setPLL()           // enable output PLL on MCO
+// MCO_setLSI()           // enable output internal low-speed clock (LSI) on MCO
+// MCO_setLSE()           // enable output external low-speed clock (LSE) on MCO
+// MCO_setPRE(n)          // set MCO prescaler to 2^n (set before enabling MCO)
+// MCO_stop()             // disable clock output (MCO)
+//
 // STK_enable()           // enable SYSTICK at system frequency
 // STK_disable()          // disable SYSTICK
 //
 // DLY_ticks(n)           // delay n clock cycles
 // DLY_us(n)              // delay n microseconds
 // DLY_ms(n)              // delay n milliseconds
+//
+// RST_now()              // conduct software reset
+// RST_clearFlags()       // clear all reset flags
+// RST_wasWWDG()          // check if last reset was caused by window watchdog
+// RST_wasIWDG()          // check if last reset was caused by independent watchdog
+// RST_wasSoftware()      // check if last reset was caused by software
+// RST_wasPower()         // check if last reset was caused by BOR/POR/PDR
+// RST_wasPin()           // check if last reset was caused by RST pin low
+// RST_wasOption()        // check if last reset was caused by OPTION byte loader
+//
+// IWDG_start(n)          // start independent watchdog timer, n milliseconds, n<=8191
+// IWDG_reload(n)         // reload watchdog counter with n milliseconds, n<=8191
+// IWDG_feed()            // feed the dog (reload last time)
+//
+// SLEEP_WFI_now()        // put device into sleep, wake up by interrupt
+// SLEEP_WFE_now()        // put device into sleep, wake up by event
+// STOP_WFI_now()         // put device into stop (deep sleep), wake by interrupt
+// STOP_WFE_now()         // put device into stop (deep sleep), wake by event
+// STOP_lowPower()        // set reduced power in stop mode
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -117,27 +153,42 @@ void CLK_init_HSI_PLL(void);  // init internal oscillator with PLL as system clo
 void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock source
 
 // Internal high-speed clock (HSI) functions
-#define HSI_enable()      RCC->CR |=  RCC_CR_HSION      // enable HSI
-#define HSI_disable()     RCC->CR &= ~RCC_CR_HSION      // disable HSI
-#define HSI_ready()       (RCC->CR & RCC_CR_HSERDY)     // check if HSI is stable
+#define HSI_enable()      RCC->CR |=  RCC_CR_HSION        // enable HSI
+#define HSI_disable()     RCC->CR &= ~RCC_CR_HSION        // disable HSI
+#define HSI_ready()       (RCC->CR & RCC_CR_HSIRDY)       // check if HSI is stable
 
 // External high-speed clock (HSE) functions
-#define HSE_enable()      RCC->CR |=  RCC_CR_HSEON      // enable HSE
-#define HSE_disable()     RCC->CR &= ~RCC_CR_HSEON      // disable HSE
-#define HSE_ready()       (RCC->CR & RCC_HSERDY)        // check if HSE is stable
-#define HSE_bypass_on()   RCC->CR |=  RCC_CR_HSEBYP     // enable HSE clock bypass
-#define HSE_bypass_off()  RCC->CR &= ~RCC_CR_HSEBYP     // disable HSE clock bypass
-#define HSE_CSS_on()      RCC->CR |=  RCC_CR_CSSON      // enable HSE clock security
-#define HSE_CSS_off()     RCC->CR &= ~RCC_CR_CSSON      // enable HSE clock security
+#define HSE_enable()      RCC->CR |=  RCC_CR_HSEON        // enable HSE
+#define HSE_disable()     RCC->CR &= ~RCC_CR_HSEON        // disable HSE
+#define HSE_ready()       (RCC->CR & RCC_HSERDY)          // check if HSE is stable
+#define HSE_bypass_on()   RCC->CR |=  RCC_CR_HSEBYP       // enable HSE clock bypass
+#define HSE_bypass_off()  RCC->CR &= ~RCC_CR_HSEBYP       // disable HSE clock bypass
+#define HSE_CSS_on()      RCC->CR |=  RCC_CR_CSSON        // enable HSE clock security
+#define HSE_CSS_off()     RCC->CR &= ~RCC_CR_CSSON        // enable HSE clock security
 
 // Internal 32.768kHz low-speed clock (LSI) functions
-#define LSI_enable()      RCC->CSR |=  RCC_CSR_LSION    // enable LSI
-#define LSI_disable()     RCC->CSR &= ~RCC_CSR_LSION    // disable LSI
-#define LSI_ready()       (RCC->CSR & RCC_CSR_LSIRDY)   // check if LSI is stable
+#define LSI_enable()      RCC->CSR |=  RCC_CSR_LSION      // enable LSI
+#define LSI_disable()     RCC->CSR &= ~RCC_CSR_LSION      // disable LSI
+#define LSI_ready()       (RCC->CSR & RCC_CSR_LSIRDY)     // check if LSI is stable
 
-// External 32.768kHz low-speed clock (LSI) functions
+// External 32.768kHz low-speed clock (LSE) functions
+#define LSE_enable()      RCC->BDCR |=  RCC_BDCR_LSEON    // enable LSE
+#define LSE_disable()     RCC->BDCR &= ~RCC_BDCR_LSEON    // disable LSE
+#define LSE_ready()       (RCC->BDCR & RCC_BDCR_LSERDY)   // check if LSE is stable
+#define LSE_bypass_on()   RCC->BDCR |=  RCC_BDCR_LSEBYP   // enable LSE clock bypass
+#define LSE_bypass_off()  RCC->BDCR &= ~RCC_BDCR_LSEBYP   // disable LSE clock bypass
+#define LSE_CSS_on()      RCC->BDCR |=  RCC_BDCR_LSECSSON // enable LSE clock security
+#define LSE_CSS_off()     RCC->BDCR &= ~RCC_BDCR_LSECSSON // enable LSE clock security
 
 // Clock output functions
+#define MCO_setSYS()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b001 << 24)
+#define MCO_setHSI()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b011 << 24)
+#define MCO_setHSE()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b100 << 24)
+#define MCO_setPLL()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b101 << 24)
+#define MCO_setLSI()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b110 << 24)
+#define MCO_setLSE()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b111 << 24)
+#define MCO_setPRE(n)     RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOPRE) | (((n)&7) << 28)
+#define MCO_stop()        RCC->CFGR &= ~RCC_CFGR_MCOSEL
 
 // ===================================================================================
 // Real-Time Clock (RTC) Functions
@@ -163,15 +214,30 @@ static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
 // ===================================================================================
 // Reset Functions
 // ===================================================================================
+#define RST_now()         NVIC_SystemReset()
+#define RST_clearFlags()  RCC->CSR |= RCC_CSR_RMVF
+#define RST_wasWWDG()     (RCC->CSR & RCC_CSR_WWDGRSTF)
+#define RST_wasIWDG()     (RCC->CSR & RCC_CSR_IWDGRSTF)
+#define RST_wasSoftware() (RCC->CSR & RCC_CSR_SFTRSTF)
+#define RST_wasPower()    (RCC->CSR & RCC_CSR_PWRRSTF)
+#define RST_wasPin()      (RCC->CSR & RCC_CSR_PINRSTF)
+#define RST_wasOption()   (RCC->CSR & RCC_CSR_OBLRSTF)
 
 // ===================================================================================
 // Independent Watchdog Timer (IWDG) Functions
 // ===================================================================================
+void IWDG_start(uint16_t ms);                           // start IWDG with time in ms
+void IWDG_reload(uint16_t ms);                          // reload IWDG with time in ms
+#define IWDG_feed()       IWDG->KR = 0xAAAA             // feed the dog (reload time)
 
 // ===================================================================================
 // Sleep Functions
 // ===================================================================================
-
+void SLEEP_WFI_now(void);   // put device into sleep, wake up by interrupt
+void SLEEP_WFE_now(void);   // put device into sleep, wake up by event
+void STOP_WFI_now(void);    // put device into stop (deep sleep), wake up interrupt
+void STOP_WFE_now(void);    // put device into stop (deep sleep), wake up event
+void STOP_lowPower(void);   // set reduced power in stop mode
 
 // ===================================================================================
 // Imported System Functions from cmsis_gcc.h and core_cm0plus.h
@@ -419,23 +485,15 @@ __STATIC_INLINE uint32_t NVIC_GetPriority(IRQn_Type IRQn) {
 
 // System Reset
 __STATIC_INLINE void NVIC_SystemReset(void) {
-  __DSB();                                                          // Ensure all outstanding memory accesses included
-                                                                    // buffered write are completed before reset
-  SCB->AIRCR  = ((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) |
-                 SCB_AIRCR_SYSRESETREQ_Msk);
+  __DSB();  // Ensure all outstanding memory accesses included buffered write are completed before reset
+  SCB->AIRCR  = ((0x5FAUL << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk);
   __DSB();                                                          // Ensure completion of memory access
-
-  for(;;)                                                           // wait until reset
-  {
-    __NOP();
-  }
+  for(;;) __NOP();                                                  // wait until reset
 }
 
 // System Tick Configuration
 __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks) {
-  if ((ticks - 1UL) > SysTick_LOAD_RELOAD_Msk) {
-    return (1UL);                                                   // Reload value impossible
-  }
+  if ((ticks - 1UL) > SysTick_LOAD_RELOAD_Msk) return (1UL);        // Reload value impossible
   SysTick->LOAD  = (uint32_t)(ticks - 1UL);                         // set reload register
   NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL); // set Priority for Systick Interrupt
   SysTick->VAL   = 0UL;                                             // Load the SysTick Counter Value
