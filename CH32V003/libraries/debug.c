@@ -21,7 +21,7 @@ __attribute__((used))
 int _write(int fd, char *buf, int size) {
   int count = size;
   while(count--) {
-    while(!(USART1->STATR & USART_STATR_TC));
+    while(!(USART1->STATR & USART_STATR_TXE));
     USART1->DATAR = (const char)*buf++;
   }
   return size;
