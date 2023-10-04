@@ -1,4 +1,4 @@
-# Programming the MCU using the factory built-in Serial Bootloader
+# Programming the MCU using the factory built-in serial bootloader
 ## Description
 With this tool, PUYA microcontrollers of the series PY32F0xx can be flashed via a simple USB-to-serial converter by utilizing the factory built-in embedded bootloader.
 
@@ -27,23 +27,23 @@ USB2SERIAL            PY32F0xx
 
 ## Entering Bootloader Mode
 Set your MCU to boot mode by using ONE of the following methods:
-1. Disconnect your USB-to-serial converter, pull BOOT0 pin (PF4) to VCC (or press and hold the BOOT button, if your board has one), then connect the converter to your USB port. BOOT0 pin (or BOOT button) can be released now.
-2. Connect your USB-to-serial converter to your USB port. Pull BOOT0 pin (PF4) to VCC, then pull nRST (PF2) shortly to GND (or press and hold the BOOT button, then press and release the RESET button and then release the BOOT button, if your board has them).
+- Disconnect your USB-to-serial converter, pull BOOT0 pin (PF4) to VCC (or press and hold the BOOT button, if your board has one), then connect the converter to your USB port. BOOT0 pin (or BOOT button) can be released now.
+- Connect your USB-to-serial converter to your USB port. Pull BOOT0 pin (PF4) to VCC, then pull nRST (PF2) shortly to GND (or press and hold the BOOT button, then press and release the RESET button and then release the BOOT button, if your board has them).
 
 ## Usage
 ```
-Usage: puyaisp.py [-h] [-u] [-l] [-e] [-o] [-G] [-R] [-f FLASH]
+Usage: py32iap.py [-h] [-u] [-l] [-e] [-o] [-G] [-R] [-f FLASH]
 
 Optional arguments:
   -h, --help                show this help message and exit
   -u, --unlock              unlock chip (remove read protection)
   -l, --lock                lock chip (set read protection)
-  -e, --erase               perform a whole chip erase
+  -e, --erase               perform chip erase (implied with -f)
   -o, --rstoption           reset option bytes
   -G, --nrstgpio            make nRST pin a GPIO pin
   -R, --nrstreset           make nRST pin a RESET pin
   -f FLASH, --flash FLASH   write BIN file to flash and verify
 
 Example:
-python3 puyaisp.py -f firmware.bin
+python3 py32iap.py -f firmware.bin
 ```
