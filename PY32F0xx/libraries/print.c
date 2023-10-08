@@ -45,8 +45,8 @@ void printH(uint16_t value, void (*putchar) (char c)) {
 
 // Convert 32-bit word into hex characters and print it via putchar
 void printW(uint32_t value, void (*putchar) (char c)) {
-  printW(value >> 16, putchar);
-  printW(value, putchar);
+  printH(value >> 16, putchar);
+  printH(value, putchar);
 }
 
 // Print string via putchar

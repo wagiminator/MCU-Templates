@@ -159,8 +159,8 @@ void DEBUG_printH(uint16_t value) {
 
 // Convert 32-bit word into hex characters and print it via UART
 void DEBUG_printW(uint32_t value) {
-  DEBUG_printW(value >> 16);
-  DEBUG_printW(value);
+  DEBUG_printH(value >> 16);
+  DEBUG_printH(value);
 }
 
 #endif // DEBUG_ENABLE > 0

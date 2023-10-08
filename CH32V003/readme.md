@@ -37,6 +37,9 @@ make flash     compile and upload to MCU
 make clean     remove all build files
 ```
 
+# Development Board and Example Software
+Take a look [here](https://github.com/wagiminator/Development-Boards/tree/main/CH32V003F4P6_DevBoard).
+
 # Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
 - [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
