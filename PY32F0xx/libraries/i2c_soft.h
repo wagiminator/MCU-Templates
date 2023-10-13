@@ -3,7 +3,7 @@
 // ===================================================================================
 //
 // Simple I2C bitbanging for 400kHz slave devices. ACK bit of the slave is ignored. 
-// Clock stretching by the slave is not allowed. System clock must be minimum 12 MHz.
+// Clock stretching by the slave is not allowed. System clock must be minimum 8 MHz.
 // External pull-up resistors (4k7 - 10k) are mandatory!
 //
 // Functions available:
