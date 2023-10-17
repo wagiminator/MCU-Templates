@@ -37,16 +37,16 @@
 // LSE_CSS_on()             enable LSE clock security system
 // LSE_CSS_off()            disable LSE clock security system
 //
-// PLL_enable()             enable phae-locked loop (PLL)
+// PLL_enable()             enable phase-locked loop (PLL)
 // PLL_disable()            disable PLL
 // PLL_ready()              check if PLL is stable
 // PLL_factor(n)            set PLL multiplication factor (8 - 86)
 // PLL_divider(n)           set PLL input divider (1 - 8)
 // PLL_setHSI()             set HSI as input for PLL
 // PLL_setHSE()             set HSE as input for PLL
+// PLLR_divider(n)          set PLLR output divider (2 - 8)
 // PLLR_enable()            enable PLLR output for system clock
 // PLLR_disable()           disable PLLR output
-// PLLR_divider(n)          set PLLR output divider (2 - 8)
 //
 // MCO_setSYS()             enable output system clock (SYS_CLK) on MCO
 // MCO_setHSI()             enable output internal high-speed clock (HSI) on MCO
@@ -101,8 +101,8 @@
 // IWDG_feed()              feed the dog (reload last time)
 //
 // LPT_init()               init and enable low-power timer (LPT)
-// LPT_shot(n)              start LPT single shot with period in n milliseconds
-// LPT_start(n)             start LPT in continuous mode with period in milliseconds
+// LPT_shot(n)              start LPT single shot with period of n milliseconds
+// LPT_start(n)             start LPT in continuous mode with period of n milliseconds
 // LPT_enable()             enable LPT
 // LPT_disable()            disable LPT
 // LPT_readReloadFlag()     read auto reload flag (set by hardware at end of period)
@@ -118,12 +118,12 @@
 //
 // SLEEP_WFI_now()          put device into SLEEP,   wake up by interrupt
 // SLEEP_WFE_now()          put device into SLEEP,   wake up by event
-// STOP0_WFI_now()          put device into STOP 0,  wake up interrupt
-// STOP0_WFE_now()          put device into STOP 0,  wake up event
-// STOP1_WFI_now()          put device into STOP 1,  wake up interrupt
-// STOP1_WFE_now()          put device into STOP 1,  wake up event
-// STDBY_WFI_now()          put device into STANDBY, wake up interrupt
-// STDBY_WFE_now()          put device into STANDBY, wake up event
+// STOP0_WFI_now()          put device into STOP 0,  wake up by interrupt
+// STOP0_WFE_now()          put device into STOP 0,  wake up by event
+// STOP1_WFI_now()          put device into STOP 1,  wake up by interrupt
+// STOP1_WFE_now()          put device into STOP 1,  wake up by event
+// STDBY_WFI_now()          put device into STANDBY, wake up by interrupt
+// STDBY_WFE_now()          put device into STANDBY, wake up by event
 //
 // BOOT_now()               jump to bootloader
 // RST_now()                conduct software reset
@@ -171,8 +171,8 @@ extern "C" {
 #define SYS_CLK_INIT      1         // 1: init system clock on startup
 #define SYS_TICK_INIT     1         // 1: init and start SYSTICK on startup
 #define SYS_GPIO_EN       1         // 1: enable GPIO ports on startup
-#define SYS_CLEAR_BSS     0         // 1: clear uninitialized variables
-#define SYS_USE_VECTORS   0         // 1: create interrupt vector table
+#define SYS_CLEAR_BSS     1         // 1: clear uninitialized variables
+#define SYS_USE_VECTORS   1         // 1: create interrupt vector table
 #define SYS_USE_HSE       0         // 1: use external crystal
 
 // ===================================================================================
@@ -358,8 +358,8 @@ void LPT_sleep(uint16_t ms);    // put device in to SLEEP,  wake-up after period
 #define LPT_disableReloadInt()  LPTIM1->IER &= ~LPTIM_IER_ARRMIE
 #define LPT_enableWakeEvent()   EXTI->EMR1  |=  ((uint32_t)1 << 29)
 #define LPT_disableWakeEvent()  EXTI->EMR1  &= ~((uint32_t)1 << 29)
-#define LPT_EnableWakeInt()     EXTI->IMR1  |=  ((uint32_t)1 << 29)
-#define LPT_DisableWakeInt()    EXTI->IMR1  &= ~((uint32_t)1 << 29)
+#define LPT_enableWakeInt()     EXTI->IMR1  |=  ((uint32_t)1 << 29)
+#define LPT_disableWakeInt()    EXTI->IMR1  &= ~((uint32_t)1 << 29)
 
 // ===================================================================================
 // Sleep Functions
