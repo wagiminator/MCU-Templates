@@ -71,8 +71,8 @@ extern "C" {
 
 #define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2     // set BAUD rate
 #define UART2_setDataBits(n)  {USART2->CR1 &= ~(USART_CR1_M1 | USART_CR1_M0); \
-                              (n==9 ? (USART2->CR1 |= USART_CR1_M0) : \
-                              (n==7 ? (USART2->CR1 |= USART_CR1_M1) : (0)));}
+                              (n==9 ? (USART2->CR1 |= USART_CR1_M0) :         \
+                              (n==7 ? (USART2->CR1 |= USART_CR1_M1) : (0)));  }
 #define UART2_setStopBits(n)  (n==2 ? (USART2->CR2 |= ((uint32_t)1<<13) : (USART2->CR2 &= ~((uint32_t)1<<13)))
 #define UART2_setEvenParity() {USART2->CR1 |= USART_CR1_PCE; USART2->CR1 &= ~USART_CR1_PS;}
 #define UART2_setOddParity()  {USART2->CR1 |= USART_CR1_PCE; USART2->CR1 |=  USART_CR1_PS;}
