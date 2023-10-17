@@ -50,9 +50,9 @@
 // ADC_disable()            disable ADC (power-down)
 // ADC_calibrate()          calibrate ADC (ADC must be disabled)
 //
-// ADC_fast()               set fast mode   (  3.5 ADC clock cycles, least accurate) (*)
-// ADC_slow()               set slow mode   (239.5 ADC clock cycles, most accurate)
-// ADC_medium()             set medium mode ( 71.5 ADC clock cycles, medium accurate, default)
+// ADC_fast()               set fast mode   (  1.5 ADC clock cycles, least accurate) (*)
+// ADC_medium()             set medium mode ( 79.5 ADC clock cycles, medium accurate)
+// ADC_slow()               set slow mode   (160.5 ADC clock cycles, most accurate)
 //
 // ADC_input(PIN)           Set PIN as ADC input
 // ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
@@ -536,7 +536,7 @@ static inline void ADC_input_TEMP(void) {
 
 // Set VREF as ADC input
 static inline void ADC_input_VREF(void) {
-  ADC1->ISR = ADC_ISR_CCRDY;                     // clear config ready flag
+  ADC1->ISR = ADC_ISR_CCRDY;                    // clear config ready flag
   ADC1->CHSELR = (uint16_t)1<<13;               // set ADC channel 13
   while(!(ADC1->ISR & ADC_ISR_CCRDY));          // wait until configured
 }
