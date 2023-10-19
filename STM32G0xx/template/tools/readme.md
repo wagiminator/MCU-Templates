@@ -29,11 +29,11 @@ USB2SERIAL      STM32G03x/04x
 Set your MCU to boot mode by using the following method:
 - Connect your USB-to-serial converter to your USB port. Pull BOOT0 pin (PA14) to VCC, then pull nRST shortly to GND (or press and hold the BOOT button, then press and release the RESET button and then release the BOOT button, if your board has them).
 
-On STM32G03x/04x microcontrollers, the BOOT0 pin is initially disabled. When the chip is brand new or the main flash memory is erased, this isn't an issue as the embedded bootloader automatically kicks in. By using the stm32iap tool, the BOOT0 pin will be activated for subsequent use. However, if the chip has been previously programmed using a different software tool, the bootloader might not be accessible through the BOOT0 pin anymore. In such cases, the nBOOT_SEL bit in the User Option Bytes must be cleared (set to 0) using an SWD programmer like ST-Link and the appropriate software.
+On STM32G03x/04x microcontrollers, the BOOT0 pin is initially disabled. When the chip is brand new or the main flash memory is erased, this isn't an issue as the embedded bootloader automatically kicks in. By using the stm32isp tool, the BOOT0 pin will be activated for subsequent use. However, if the chip has been previously programmed using a different software tool, the bootloader might not be accessible through the BOOT0 pin anymore. In such cases, the nBOOT_SEL bit in the User Option Bytes must be cleared (set to 0) using an SWD programmer like ST-Link and the appropriate software.
 
 ## Usage
 ```
-Usage: stm32iap.py [-h] [-u] [-l] [-e] [-o] [-f FLASH]
+Usage: stm32isp.py [-h] [-u] [-l] [-e] [-o] [-f FLASH]
 
 Optional arguments:
   -h, --help                show this help message and exit
@@ -44,5 +44,5 @@ Optional arguments:
   -f FLASH, --flash FLASH   write BIN file to flash and verify
 
 Example:
-python3 stm32iap.py -f firmware.bin
+python3 stm32isp.py -f firmware.bin
 ```
