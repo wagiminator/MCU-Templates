@@ -505,9 +505,9 @@ enum{
 // ===================================================================================
 
 // ADC calibration registers
-#define ADC_TSCAL1          (*(uint16_t *)(0x1FFF75A8))
-#define ADC_TSCAL2          (*(uint16_t *)(0x1FFF75CA))
-#define ADC_VREFCAL         (*(uint16_t *)(0x1FFF75AA))
+#define ADC_TSCAL1          (*(uint32_t*)(0x1FFF75A8))
+#define ADC_TSCAL2          (*(uint32_t*)(0x1FFF75CA))
+#define ADC_VREFCAL         (*(uint32_t*)(0x1FFF75AA))
 
 // Set ADC sampling rate
 #define ADC_fast()          ADC1->SMPR &= ~ADC_SMPR_SMP2
