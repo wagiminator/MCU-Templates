@@ -435,7 +435,7 @@ extern uint32_t _ebss;
 extern uint32_t _data_lma;
 extern uint32_t _data_vma;
 extern uint32_t _edata;
-extern void _eusrstack(void);
+extern void _estack(void);
 
 // Prototypes
 int main(void)                __attribute__((section(".text.main"), used));
@@ -487,65 +487,72 @@ DUMMY_HANDLER void AES_RNG_IRQHandler(void);
 
 // Interrupt vector table
 void (*const vectors[])(void) = {
-  &_eusrstack,                   //  0 - Initial Stack Pointer Value
+  &_estack,                       //  0 - Initial Stack Pointer Value
 
   // Cortex-M0+ handlers
-  Reset_Handler,                 //  1 - Reset
+  Reset_Handler,                  //  1 - Reset
   #if SYS_USE_VECTORS > 0
-  NMI_Handler,                   //  2 - NMI
-  HardFault_Handler,             //  3 - Hard Fault
-  0,                             //  4 - Reserved
-  0,                             //  5 - Reserved
-  0,                             //  6 - Reserved
-  0,                             //  7 - Reserved
-  0,                             //  8 - Reserved
-  0,                             //  9 - Reserved
-  0,                             // 10 - Reserved
-  SVC_Handler,                   // 11 - SVCall
-  0,                             // 12 - Reserved
-  0,                             // 13 - Reserved
-  PendSV_Handler,                // 14 - PendSV
-  SysTick_Handler,               // 15 - SysTick
+  NMI_Handler,                    //  2 - NMI
+  HardFault_Handler,              //  3 - Hard Fault
+  0,                              //  4 - Reserved
+  0,                              //  5 - Reserved
+  0,                              //  6 - Reserved
+  0,                              //  7 - Reserved
+  0,                              //  8 - Reserved
+  0,                              //  9 - Reserved
+  0,                              // 10 - Reserved
+  SVC_Handler,                    // 11 - SVCall
+  0,                              // 12 - Reserved
+  0,                              // 13 - Reserved
+  PendSV_Handler,                 // 14 - PendSV
+  SysTick_Handler,                // 15 - SysTick
 
   // Peripheral handlers
-  WWDG_IRQHandler,               //  0 - Window Watchdog
-  PVD_IRQHandler,                //  1 - PVD through EXTI Line detect
-  RTC_TAMP_IRQHandler,           //  2 - RTC through EXTI Line
-  FLASH_IRQHandler,              //  3 - FLASH
-  RCC_IRQHandler,                //  4 - RCC
-  EXTI0_1_IRQHandler,            //  5 - EXTI Line 0 and 1
-  EXTI2_3_IRQHandler,            //  6 - EXTI Line 2 and 3
-  EXTI4_15_IRQHandler,           //  7 - EXTI Line 4 to 15
-  0,                             //  8 - Reserved
-  DMA1_Channel1_IRQHandler,      //  9 - DMA1 Channel 1
-  DMA1_Channel2_3_IRQHandler,    // 10 - DMA1 Channel 2 and 3
+  WWDG_IRQHandler,                //  0 - Window Watchdog
+  PVD_IRQHandler,                 //  1 - PVD through EXTI Line detect
+  RTC_TAMP_IRQHandler,            //  2 - RTC through EXTI Line
+  FLASH_IRQHandler,               //  3 - FLASH
+  RCC_IRQHandler,                 //  4 - RCC
+  EXTI0_1_IRQHandler,             //  5 - EXTI Line 0 and 1
+  EXTI2_3_IRQHandler,             //  6 - EXTI Line 2 and 3
+  EXTI4_15_IRQHandler,            //  7 - EXTI Line 4 to 15
+  0,                              //  8 - Reserved
+  DMA1_Channel1_IRQHandler,       //  9 - DMA1 Channel 1
+  DMA1_Channel2_3_IRQHandler,     // 10 - DMA1 Channel 2 and 3
   DMA1_Ch4_5_DMAMUX1_OVR_IRQHandler,  // 11 - DMA1 Channel 4 to Channel 5, DMAMUX1 overrun
-  ADC1_IRQHandler,               // 12 - ADC1
-  TIM1_BRK_UP_TRG_COM_IRQHandler,// 13 - TIM1 Break, Update, Trigger and Commutation
-  TIM1_CC_IRQHandler,            // 14 - TIM1 Capture Compare
-  TIM2_IRQHandler,               // 15 - TIM2
-  TIM3_IRQHandler,               // 16 - TIM3
-  LPTIM1_IRQHandler,             // 17 - LPTIM1
-  LPTIM2_IRQHandler,             // 18 - LPTIM2
-  TIM14_IRQHandler,              // 19 - TIM14
-  0,                             // 20 - Reserved
-  TIM16_IRQHandler,              // 21 - TIM16
-  TIM17_IRQHandler,              // 22 - TIM17
-  I2C1_IRQHandler,               // 23 - I2C1
-  I2C2_IRQHandler,               // 24 - I2C2
-  SPI1_IRQHandler,               // 25 - SPI1
-  SPI2_IRQHandler,               // 26 - SPI2
-  USART1_IRQHandler,             // 27 - USART1
-  USART2_IRQHandler,             // 28 - USART2
-  LPUART1_IRQHandler,            // 29 - LPUART1
-  0,                             // 30 - Reserved
-  AES_RNG_IRQHandler,            // 31 - AES and RNG
+  ADC1_IRQHandler,                // 12 - ADC1
+  TIM1_BRK_UP_TRG_COM_IRQHandler, // 13 - TIM1 Break, Update, Trigger and Commutation
+  TIM1_CC_IRQHandler,             // 14 - TIM1 Capture Compare
+  TIM2_IRQHandler,                // 15 - TIM2
+  TIM3_IRQHandler,                // 16 - TIM3
+  LPTIM1_IRQHandler,              // 17 - LPTIM1
+  LPTIM2_IRQHandler,              // 18 - LPTIM2
+  TIM14_IRQHandler,               // 19 - TIM14
+  0,                              // 20 - Reserved
+  TIM16_IRQHandler,               // 21 - TIM16
+  TIM17_IRQHandler,               // 22 - TIM17
+  I2C1_IRQHandler,                // 23 - I2C1
+  I2C2_IRQHandler,                // 24 - I2C2
+  SPI1_IRQHandler,                // 25 - SPI1
+  SPI2_IRQHandler,                // 26 - SPI2
+  USART1_IRQHandler,              // 27 - USART1
+  USART2_IRQHandler,              // 28 - USART2
+  LPUART1_IRQHandler,             // 29 - LPUART1
+  0,                              // 30 - Reserved
+  AES_RNG_IRQHandler,             // 31 - AES and RNG
   #endif  // SYS_USE_VECTORS > 0
 };
 
 // Reset handler
 void Reset_Handler(void) {
   uint32_t *src, *dst;
+
+  // Set stack pointer
+  asm volatile(
+  " ldr r0, =_estack  \n\
+    mov sp, r0        \n"
+    : : : "r0", "memory"
+  );
 
   // Configure vector table location
   SCB->VTOR = (uint32_t)vectors;
@@ -561,13 +568,13 @@ void Reset_Handler(void) {
   while(dst < &_ebss) *dst++ = 0;
   #endif
 
+  // Init system
+  SYS_init();
+
   // C++ Support
   #ifdef __cplusplus
   __libc_init_array();
   #endif
-
-  // Init system
-  SYS_init();
 
   // Start main function
   main();
