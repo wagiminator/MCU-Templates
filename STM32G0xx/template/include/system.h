@@ -266,13 +266,13 @@ void CLK_reset(void);         // reset system clock to default state
 #define PLL_enable()      RCC->CR |=  RCC_CR_PLLON        // enable PLL
 #define PLL_disable()     RCC->CR &= ~RCC_CR_PLLON        // disable PLL
 #define PLL_ready()       (RCC->CR & RCC_CR_PLLRDY)       // check if PLL is stable
-#define PLL_factor(n)     (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) | (((n)&127) << 8) // 8-86
-#define PLL_divider(n)    (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) | (((n-1)&7) << 4) // 1-8
-#define PLL_setHSI()      (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) | 0b10
-#define PLL_setHSE()      (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) | 0b11
+#define PLL_factor(n)     (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLN) | (((n)&127) << 8) // 8-86
+#define PLL_divider(n)    (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLM) | (((n-1)&7) << 4) // 1-8
+#define PLL_setHSI()      (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLSRC) | 0b10
+#define PLL_setHSE()      (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLSRC) | 0b11
 #define PLLR_enable()     RCC->PLLCFGR |=  RCC_PLLCFGR_PLLREN; // enable PLLR output
 #define PLLR_disable()    RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLREN; // disable PLLR output
-#define PLLR_divider(n)   (RCC->PLLCFGR & RCC_PLLCFGR_PLLR) | (((n-1)&7) << 29) // 2-8
+#define PLLR_divider(n)   (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLR) | (((n-1)&7) << 29) // 2-8
 
 // Clock output functions (MCO)
 #define MCO_setSYS()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0001 << 24)
