@@ -13,7 +13,7 @@
 // CLK_init_HSE_PLL()       init external crystal with PLL as system clock source
 // CLK_reset()              reset system clock to default state
 //
-// HSI_enable()             enable internal 8MHz high-speed clock (HSI)
+// HSI_enable()             enable internal 16MHz high-speed clock (HSI)
 // HSI_disable()            disable HSI
 // HSI_ready()              check if HSI is stable
 //
