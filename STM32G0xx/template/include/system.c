@@ -82,15 +82,16 @@ void CLK_init_HSE_PLL(void) {
 
 // Reset system clock to default state
 void CLK_reset(void) {
-  RCC->CR = RCC_CR_HSION;                                 // enable HSI, no divider
+  RCC->CR |= RCC_CR_HSION;                                // enable HSI, no divider
   while(!(RCC->CR & RCC_CR_HSIRDY));                      // wait for HSI ready
-  RCC->CFGR = 0;                                          // HSI as system clock source
-  while(RCC->CFGR & RCC_CFGR_SWS_Msk);                    // Wait for HSI
+  RCC->CFGR = 0x00000000;                                 // HSI as system clock source
+  while(RCC->CFGR & RCC_CFGR_SWS_Msk);                    // wait until switched to HSI
   RCC->ICSCR = (RCC->ICSCR & ~RCC_ICSCR_HSITRIM) | 0x4000;// reset ICSCR register
+  RCC->CR      = 0x00000500;                              // keep only HSI on
   RCC->PLLCFGR = 0x00001000;                              // reset PLLCFGR register
-  RCC->CIER = 0;                                          // reset CIER register
-  RCC->CICR = 0xffffffff;                                 // clear all interrupt flags
-  FLASH->ACR &= ~(uint32_t)0b111;                         // reset flash latency
+  RCC->CIER    = 0x00000000;                              // disable all interrupts
+  RCC->CICR    = 0xffffffff;                              // clear all interrupt flags
+  FLASH->ACR  &= ~(uint32_t)0b111;                        // reset flash latency
 }
 
 // ===================================================================================
