@@ -498,7 +498,7 @@ enum{
   ((PIN>=PC0)&&(PIN<=PC15) ? ( RCC->IOPENR &= ~RCC_IOPENR_GPIOCEN ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( RCC->IOPENR &= ~RCC_IOPENR_GPIODEN ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( RCC->IOPENR &= ~RCC_IOPENR_GPIOFEN ) : \
-(0))))
+(0))))))
 
 // ===================================================================================
 // ADC Functions
