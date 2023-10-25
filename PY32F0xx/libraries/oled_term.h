@@ -41,7 +41,7 @@ extern "C" {
 #include "i2c_tx.h"
 
 // OLED parameters
-#define OLED_PRINT        1       //  1 = include print functions (needs print.h)
+#define OLED_PRINT        1       // 1: include print functions (needs print.h)
 
 // OLED definitions
 #define OLED_ADDR         0x78    // OLED write address (0x3C << 1)

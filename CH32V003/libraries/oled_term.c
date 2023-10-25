@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306 128x64 Pixels OLED Terminal Functions                              * v1.0 *
+// SSD1306 128x64 Pixels OLED Terminal Functions                              * v1.1 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306 128x64 pixels
@@ -156,59 +156,4 @@ void OLED_write(char c) {
     column = 0;
     OLED_setline((line + scroll) & 0x07);
   }
-}
-
-// OLED print string
-void OLED_print(char* str) {
-  while(*str) OLED_write(*str++);
-}
-
-// OLED print string with newline
-void OLED_println(char* str) {
-  OLED_print(str);
-  OLED_write('\n');
-}
-
-// For BCD conversion
-const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
-                            10000000, 100000000, 1000000000};
-
-// Print decimal value (BCD conversion by substraction method)
-void OLED_printD(uint32_t value) {
-  uint8_t digits   = 10;                          // print 10 digits
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  while(digits--) {                               // for all digits
-    uint8_t digitval = 0;                         // start with digit value 0
-    uint32_t divider = DIVIDER[digits];           // read current divider
-    while(value >= divider) {                     // if current divider fits into the value
-      leadflag = 1;                               // end of leading spaces
-      digitval++;                                 // increase digit value
-      value -= divider;                           // decrease value by divider
-    }
-    if(!digits)  leadflag++;                      // least digit has to be printed
-    if(leadflag) OLED_write(digitval + '0');      // print the digit
-  }
-}
-
-// Convert byte nibble into hex character and print it
-void OLED_printN(uint8_t nibble) {
-  OLED_write((nibble <= 9) ? ('0' + nibble) : ('A' - 10 + nibble));
-}
-
-// Convert byte into hex characters and print it
-void OLED_printB(uint8_t value) {
-  OLED_printN(value >> 4);
-  OLED_printN(value & 0x0f);
-}
-
-// Convert word into hex characters and print it
-void OLED_printW(uint16_t value) {
-  OLED_printB(value >> 8);
-  OLED_printB(value);
-}
-
-// Convert long into hex characters and print it
-void OLED_printL(uint32_t value) {
-  OLED_printW(value >> 16);
-  OLED_printW(value);
 }
