@@ -55,7 +55,7 @@ extern "C" {
 // UART parameters
 #define UART2_BAUD             115200    // default UART baud rate
 #define UART2_MAP              1         // UART pin mapping (see above)
-#define UART2_PRINT            0         // 1 = include print functions (needs print.h)
+#define UART2_PRINT            0         // 1: include print functions (needs print.h)
 
 // UART macros
 #define UART2_ready()          (USART2->SR & USART_SR_TXE)   // ready to write

@@ -57,7 +57,7 @@ extern "C" {
 #define UART_RX_BUF_SIZE      64        // UART RX buffer size
 #define UART_MAP              0         // UART pin mapping (see above)
 #define UART_DMA_CHANNEL      1         // DMA channel (1 - 3)
-#define UART_PRINT            0         // 1 = include print functions (needs print.h)
+#define UART_PRINT            0         // 1: include print functions (needs print.h)
 
 // UART macros
 #define UART_ready()          (USART1->SR & USART_SR_TXE)     // ready to write

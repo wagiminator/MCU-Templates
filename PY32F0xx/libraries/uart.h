@@ -53,9 +53,9 @@ extern "C" {
 #include "py32f0xx.h"
 
 // UART parameters
-#define UART_BAUD             115200          // default UART baud rate
-#define UART_MAP              0               // UART pin mapping (see above)
-#define UART_PRINT            0               // 1 = include print functions (needs print.h)
+#define UART_BAUD             115200        // default UART baud rate
+#define UART_MAP              0             // UART pin mapping (see above)
+#define UART_PRINT            0             // 1: include print functions (needs print.h)
 
 // UART macros
 #define UART_ready()          (USART1->SR & USART_SR_TXE)     // ready to write
