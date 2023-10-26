@@ -29,8 +29,8 @@ extern "C" {
 #include "gpio.h"
 
 // I2C parameters
-#define PIN_SDA       PC1         // pin connected to serial data of the I2C bus
-#define PIN_SCL       PC2         // pin connected to serial clock of the I2C bus
+#define PIN_SDA       PA12        // pin connected to serial data of the I2C bus
+#define PIN_SCL       PA11        // pin connected to serial clock of the I2C bus
 #define I2C_CLKRATE   400000      // I2C bus clock rate in Hz
 
 // I2C Functions
