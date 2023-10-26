@@ -1,10 +1,9 @@
 // ===================================================================================
-// Software I2C Master Functions                                              * v1.0 *
+// Software I2C Master Functions                                              * v1.1 *
 // ===================================================================================
 //
-// Simple I2C bitbanging for 400kHz slave devices. ACK bit of the slave is ignored. 
-// Clock stretching by the slave is not allowed. System clock must be minimum 8 MHz.
-// External pull-up resistors (4k7 - 10k) are mandatory!
+// Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
+// slave is not allowed. External pull-up resistors (4k7 - 10k) are mandatory!
 //
 // Further information:     https://github.com/wagiminator/ATtiny13-TinyOLEDdemo
 // 2022 by Stefan Wagner:   https://github.com/wagiminator
@@ -14,9 +13,8 @@
 // ===================================================================================
 // I2C Delay
 // ===================================================================================
-// For 400kHz devices -> SCL low: min 1300us, SCL high: min 600us
-#define I2C_DELAY_H()   DLY_ticks(((F_CPU *  6) / 10000000) - 3)
-#define I2C_DELAY_L()   DLY_ticks(((F_CPU * 13) / 10000000) - 3)
+#define I2C_DELAY_H()   DLY_ticks((((F_CPU *  9) / 25) / I2C_CLKRATE) - 7)
+#define I2C_DELAY_L()   DLY_ticks((((F_CPU * 16) / 25) / I2C_CLKRATE) - 7)
 
 // ===================================================================================
 // I2C Pin Macros
