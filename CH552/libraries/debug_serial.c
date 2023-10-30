@@ -6,7 +6,7 @@
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
-#include "debug.h"
+#include "debug_serial.h"
 
 #if DEBUG_PORT == 0
 
