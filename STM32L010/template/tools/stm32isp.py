@@ -291,8 +291,8 @@ class Programmer(Serial):
     # Erase whole chip
     def erase(self):
         if self.pid == 0x457:
-            self.sendcommand(ST_CMD_ERASE_X)
-            self.write(b'\x00\x02\x00\x00\x00\x01\x00\x02\x01')
+            self.erasepages(128)
+            return
         elif ST_CMD_ERASE_X in self.cmds:
             self.sendcommand(ST_CMD_ERASE_X)
             self.write(b'\xff\xff\x00')
@@ -301,6 +301,19 @@ class Programmer(Serial):
             self.write(b'\xff\x00')
         if not self.checkreply():
             raise Exception('Failed to erase chip')
+
+    # Erase number of pages
+    def erasepages(self, pagecount):
+        pagecount -= 1
+        self.sendcommand(ST_CMD_ERASE_X)
+        self.write([pagecount >> 16, pagecount & 0xff])
+        parity = (pagecount >> 16) ^ (pagecount & 0xff)
+        for x in range(pagecount + 1):
+            self.write([x >> 16, x & 0xff])
+            parity ^= (x >> 16) ^ (x & 0xff)
+        self.write([parity])
+        if not self.checkreply():
+            raise Exception('Failed to erase pages')
 
     # Read flash
     def readflash(self, addr, size):

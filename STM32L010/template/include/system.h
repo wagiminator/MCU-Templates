@@ -170,8 +170,8 @@ extern "C" {
 #define SYS_CLK_INIT      1         // 1: init system clock on startup
 #define SYS_TICK_INIT     1         // 1: init and start SYSTICK on startup
 #define SYS_GPIO_EN       1         // 1: enable GPIO ports A-C on startup
-#define SYS_CLEAR_BSS     0         // 1: clear uninitialized variables
-#define SYS_USE_VECTORS   0         // 1: create interrupt vector table
+#define SYS_CLEAR_BSS     1         // 1: clear uninitialized variables
+#define SYS_USE_VECTORS   1         // 1: create interrupt vector table
 #define SYS_USE_HSE       0         // 1: use external crystal
 
 // ===================================================================================
