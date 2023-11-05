@@ -243,6 +243,14 @@ void AWU_init(void);        // init automatic wake-up timer
 #define AWU_stdby(ms)       {AWU_set(ms); STDBY_WFE_now();}
 
 // ===================================================================================
+// Device Electronic Signature (ESIG)
+// ===================================================================================
+#define ESIG_FLASHSIZE      (*(__I uint16_t*)(0x1FFFF7E0))
+#define ESIG_UID1           (*(__I uint32_t*)(0x1FFFF7E8))
+#define ESIG_UID2           (*(__I uint32_t*)(0x1FFFF7EC))
+#define ESIG_UID3           (*(__I uint32_t*)(0x1FFFF7F0))
+
+// ===================================================================================
 // Imported System Functions
 // ===================================================================================
 // Enable Global Interrupt

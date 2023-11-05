@@ -58,9 +58,11 @@
 //
 // ADC_input(PIN)           Set PIN as ADC input
 // ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
+// ADC_input_TEMP()         Set internal temperature sensor as ADC input
 //
 // ADC_read()               Sample and read 12-bit ADC value (0..4095)
-// ADC_read_VDD()           Sample and read supply voltage (VDD) in millivolts (mV)
+// ADC_read_VDD()           Sample and calculate supply voltage (VDD) in millivolts (mV)
+// ADC_read_TEMP()          Sample and calculate internal temperature in °C
 //
 // Notes:
 // ------
@@ -565,23 +567,27 @@ enum{
 #define ADC_TSCAL1          (*(__I uint16_t*)(0x1FF8007A))    // at 30°C
 #define ADC_TSCAL2          (*(__I uint16_t*)(0x1FF8007E))    // at 130°C
 
+// ADC calibration values
+#define ADC_CVOLT           3000  // calibration voltage of VREF and TEMP sensor
+#define ADC_CTEMP1          30    // calibration temperature of TSCAL1
+#define ADC_CTEMP2          130   // calibration temperature of TSCAL2
+
 // Set ADC sampling rate
 #define ADC_fast()          ADC1->SMPR &= ~ADC_SMPR_SMP
-#define ADC_medium()        ADC1->SMPR  = (ADC->SMPR & ~ADC_SMPR_SMP) | 0b110
+#define ADC_medium()        ADC1->SMPR  = (ADC1->SMPR & ~ADC_SMPR_SMP) | 0b110
 #define ADC_slow()          ADC1->SMPR |=  ADC_SMPR_SMP
 
-// Set GPIO pin as ADC input
+// Set ADC input
 #define ADC_input(PIN)                \
   ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( ADC1->CHSELR = (uint32_t)1<<( (PIN)&7)     ) : \
   ((PIN>=PB0 )&&(PIN<=PB1 ) ? ( ADC1->CHSELR = (uint32_t)1<<(((PIN)&7)+8)  ) : \
   (0)))
-
-// Set VREF as ADC input
-#define ADC_input_VREF()    ADC1->CHSELR = (uint16_t)1<<17  // set ADC channel 17
+#define ADC_input_VREF()    ADC1->CHSELR = (uint16_t)1<<17  // VREF: channel 17
+#define ADC_input_TEMP()    ADC1->CHSELR = (uint16_t)1<<18  // TEMP: channel 18
 
 // Enable ADC
 static inline void ADC_enable(void) {
-  ADC->CCR  = ADC_CCR_VREFEN;                   // enable VREF
+  ADC->CCR  = ADC_CCR_VREFEN | (1<<23);         // enable VREF and TEMP sensor
   ADC1->ISR = 0xffff;                           // clear all ADC flags
   ADC1->CR |= ADC_CR_ADEN;                      // enable ADC
   while(!(ADC1->ISR & ADC_ISR_ADRDY));          // wait until ready
@@ -620,9 +626,18 @@ static inline uint16_t ADC_read(void) {
   return ADC1->DR;                              // return result
 }
 
+// Sample and read supply voltage (VDD) in millivolts (mV)
 static inline uint16_t ADC_read_VDD(void) {
   ADC_input_VREF();                             // set VREF as ADC input
-  return((uint32_t)3000*ADC_VREFCAL/ADC_read());// return VDD in mV
+  return((uint32_t)ADC_CVOLT*ADC_VREFCAL/ADC_read()); // return VDD in mV
+}
+
+// Sample and read temperature sensor in °C
+static inline int8_t ADC_read_TEMP(void) {
+  int32_t vdd = ADC_read_VDD();                 // read current supply voltage
+  ADC_input_TEMP();                             // set temp sensor as ADC input
+  int32_t tdata = vdd*ADC_read()/ADC_CVOLT;     // get vdd-compensated temp sensor val
+  return((tdata-ADC_TSCAL1)*(ADC_CTEMP2-ADC_CTEMP1)/(ADC_TSCAL2-ADC_TSCAL1)+ADC_CTEMP1);
 }
 
 #ifdef __cplusplus
