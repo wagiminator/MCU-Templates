@@ -115,7 +115,7 @@ void RTC_init(void) {
   RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
   RTC->WPR = 0xCA;                      // remove RTC register write protection
   RTC->WPR = 0x53;
-  RTC_setPrescaler(63, 624);            // set prescaler (40kHz -> 1Hz)
+  RTC_setPrescaler(73, 499);            // set prescaler (37kHz -> 1Hz)
 }
 
 // Init RTC with LSE as clock source and 1s clock period
