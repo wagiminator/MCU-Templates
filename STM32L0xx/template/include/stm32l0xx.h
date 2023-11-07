@@ -221,6 +221,8 @@ typedef enum {
   #define __RESTRICT                             __restrict
 #endif
 
+#pragma GCC diagnostic pop
+
 /* IO definitions (access restrictions to peripheral registers) */
 /**
     \defgroup CMSIS_glob_defs CMSIS Global Defines

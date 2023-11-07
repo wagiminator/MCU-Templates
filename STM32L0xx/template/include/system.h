@@ -293,13 +293,13 @@ void CLK_reset(void);         // reset system clock to default state
 #define LSI_ready()       (RCC->CSR & RCC_CSR_LSIRDY)     // check if LSI is stable
 
 // External 32.768kHz low-speed clock (LSE) functions
-#define LSE_enable()      RCC->CSR |=  RCC_CSR_LSEON    // enable LSE
-#define LSE_disable()     RCC->CSR &= ~RCC_CSR_LSEON    // disable LSE
-#define LSE_ready()       (RCC->CSR & RCC_CSR_LSERDY)   // check if LSE is stable
-#define LSE_bypass_on()   RCC->CSR |=  RCC_CSR_LSEBYP   // enable LSE clock bypass
-#define LSE_bypass_off()  RCC->CSR &= ~RCC_CSR_LSEBYP   // disable LSE clock bypass
-#define LSE_CSS_on()      RCC->CSR |=  RCC_CSR_CSSLSEON // enable LSE clock security
-#define LSE_CSS_off()     RCC->CSR &= ~RCC_CSR_CSSLSEON // enable LSE clock security
+#define LSE_enable()      RCC->CSR |=  RCC_CSR_LSEON      // enable LSE
+#define LSE_disable()     RCC->CSR &= ~RCC_CSR_LSEON      // disable LSE
+#define LSE_ready()       (RCC->CSR & RCC_CSR_LSERDY)     // check if LSE is stable
+#define LSE_bypass_on()   RCC->CSR |=  RCC_CSR_LSEBYP     // enable LSE clock bypass
+#define LSE_bypass_off()  RCC->CSR &= ~RCC_CSR_LSEBYP     // disable LSE clock bypass
+#define LSE_CSS_on()      RCC->CSR |=  RCC_CSR_CSSLSEON   // enable LSE clock security
+#define LSE_CSS_off()     RCC->CSR &= ~RCC_CSR_CSSLSEON   // enable LSE clock security
 
 // PLL functions
 #define PLL_enable()      RCC->CR |=  RCC_CR_PLLON        // enable PLL
@@ -424,7 +424,7 @@ void STDBY_WFE_now(void);       // put device into STANDBY, wake up event
 // ===================================================================================
 // Bootloader Functions
 // ===================================================================================
-#define BOOT_ADDR           0x1fff0000
+#define BOOT_ADDR           0x1ff00000
 void BOOT_now(void);        // jump to bootloader
 
 // ===================================================================================

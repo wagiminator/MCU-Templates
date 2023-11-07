@@ -133,6 +133,9 @@ SECTIONS
     PROVIDE(_ebss = .);
   } > RAM
 
+  PROVIDE(__bss_start__ = _sbss);
+  PROVIDE(__bss_end__ = _ebss);
+  PROVIDE(_exit = _ebss);
   PROVIDE(_end = _ebss);
   PROVIDE(end = . );
   PROVIDE(_estack = ORIGIN(RAM) + LENGTH(RAM));	

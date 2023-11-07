@@ -137,7 +137,7 @@ enum{
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
   ((PIN>=PH0)&&(PIN<=PH15) ? ( GPIOH->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
-                               GPIOG->PUPDR  =  (GPIOH->PUPDR                        \
+                               GPIOH->PUPDR  =  (GPIOH->PUPDR                        \
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
 (0)))))))
@@ -332,7 +332,7 @@ enum{
   ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->PUPDR =  (GPIOE->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
-  ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->PUPDR =  (GPIOF->PUPDR                        \
+  ((PIN>=PH0)&&(PIN<=PH15) ? ( GPIOH->PUPDR =  (GPIOH->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
 (0)))))))
@@ -578,7 +578,7 @@ enum{
 #define ADC_slow()          ADC1->SMPR |=  ADC_SMPR_SMP
 
 // Set ADC input
-#define ADC_input(PIN)                \
+#define ADC_input(PIN) \
   ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( ADC1->CHSELR = (uint32_t)1<<( (PIN)&7)     ) : \
   ((PIN>=PB0 )&&(PIN<=PB1 ) ? ( ADC1->CHSELR = (uint32_t)1<<(((PIN)&7)+8)  ) : \
   (0)))

@@ -401,7 +401,7 @@ ST_SYNCH        = 0x7f
 DEVICES = [
     {'name': 'STM32G03x/04x', 'id': 0x466, 'opt_addr': 0x1fff7800, 'opt_default': 0xfffffeaa},
     {'name': 'STM32L01x/02x', 'id': 0x457, 'opt_addr': 0x1ff80000, 'opt_default': 0x807000aa},
-    {'name': 'STM32F03xx4/6', 'id': 0x444, 'opt_addr': 0x1ff80000, 'opt_default': 0x00ff55aa}
+    {'name': 'STM32F03xx4/6', 'id': 0x444, 'opt_addr': 0x1ffff800, 'opt_default': 0x00ff55aa}
 ]
 
 # ===================================================================================
