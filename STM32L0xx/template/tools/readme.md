@@ -53,7 +53,7 @@ On STM32G03x/04x microcontrollers, the BOOT0 pin is initially disabled. When the
 
 ## Usage
 ```
-Usage: stm32isp.py [-h] [-u] [-l] [-e] [-o] [-f FLASH]
+Usage: stm32isp.py [-h] [-u] [-l] [-e] [-f FLASH]
 
 Optional arguments:
   -h, --help                show this help message and exit

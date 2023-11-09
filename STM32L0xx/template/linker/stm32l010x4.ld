@@ -10,17 +10,9 @@ SECTIONS
 {
   .vectors :
   {
-    *(.vectors);
     . = ALIGN(4);
-  } > FLASH
-
-  .init :
-  { 
+    KEEP(*(.isr_vector))
     . = ALIGN(4);
-    _sinit = .;
-    KEEP(*(SORT_NONE(.init)))
-    . = ALIGN(4);
-    _einit = .;
   } > FLASH
 
   .text :
@@ -30,56 +22,66 @@ SECTIONS
     *(.text*)
     *(.glue_7)
     *(.glue_7t)
+    *(.eh_frame)
+    KEEP (*(.init))
+    KEEP (*(.fini))
+    . = ALIGN(4);
+    _etext = .;
+  } > FLASH
+
+  .rodata :
+  {
+    . = ALIGN(4);
     *(.rodata)
     *(.rodata*)
-    *(.eh_frame)
-    *(.eh_frame*)
     . = ALIGN(4);
   } > FLASH
-
-  .fini :
-  {
-    KEEP(*(SORT_NONE(.fini)))
-    . = ALIGN(4);
-  } > FLASH
-
-  PROVIDE(_etext = .);
 
   .ARM.extab :
   {
+    . = ALIGN(4);
     *(.ARM.extab* .gnu.linkonce.armextab.*)
+    . = ALIGN(4);
   } > FLASH
 
-  _sexidx = .;
-  .ARM.exidx :
+  .ARM :
   {
-    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    . = ALIGN(4);
+    __exidx_start = .;
+    *(.ARM.exidx*)
+    __exidx_end = .;
+    . = ALIGN(4);
   } > FLASH
-  _eexidx = .;
 
   .preinit_array :
   {
-    PROVIDE_HIDDEN(__preinit_array_start = .);
-    KEEP(*(.preinit_array))
-    PROVIDE_HIDDEN(__preinit_array_end = .);
+    . = ALIGN(4);
+    PROVIDE_HIDDEN (__preinit_array_start = .);
+    KEEP (*(.preinit_array*))
+    PROVIDE_HIDDEN (__preinit_array_end = .);
+    . = ALIGN(4);
   } > FLASH
-  
+
   .init_array :
   {
-    PROVIDE_HIDDEN(__init_array_start = .);
-    KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)SORT_BY_INIT_PRIORITY(.ctors.*)))
-    KEEP(*(.init_array EXCLUDE_FILE(*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o) .ctors))
-    PROVIDE_HIDDEN(__init_array_end = .);
+    . = ALIGN(4);
+    PROVIDE_HIDDEN (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array*))
+    PROVIDE_HIDDEN (__init_array_end = .);
+    . = ALIGN(4);
   } > FLASH
-  
+
   .fini_array :
   {
-    PROVIDE_HIDDEN(__fini_array_start = .);
-    KEEP(*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
-    KEEP(*(.fini_array EXCLUDE_FILE(*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o) .dtors))
-    PROVIDE_HIDDEN(__fini_array_end = .);
+    . = ALIGN(4);
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array*))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+    . = ALIGN(4);
   } > FLASH
-  
+
   .ctors :
   {
     KEEP(*crtbegin.o(.ctors))
@@ -98,45 +100,45 @@ SECTIONS
     KEEP(*(.dtors))
   } > FLASH
 
-  .dalign :
-  {
-    . = ALIGN(4);
-    PROVIDE(_data_vma = .);
-  } > RAM
-
-  .dlalign :
-  {
-    . = ALIGN(4); 
-    PROVIDE(_data_lma = .);
-  } > FLASH
+  _sidata = LOADADDR(.data);
 
   .data :
   {
     . = ALIGN(4);
-    PROVIDE(_sdata = .);
+    _sdata = .;
     *(.data)
     *(.data*)
+    *(.RamFunc)
+    *(.RamFunc*)
     . = ALIGN(4);
-    PROVIDE(_edata = .);
+    _edata = .;
+
   } > RAM AT> FLASH
 
   .bss :
   {
     . = ALIGN(4);
-    PROVIDE(_sbss = .);
-    *(.sbss)
-    *(.sbss*)
+    _sbss = .;
+    __bss_start__ = _sbss;
     *(.bss)
-    *(.bss*) 
-    *(COMMON*)
+    *(.bss*)
+    *(COMMON)
     . = ALIGN(4);
-    PROVIDE(_ebss = .);
+    _ebss = .;
+    __bss_end__ = _ebss;
   } > RAM
 
-  PROVIDE(__bss_start__ = _sbss);
-  PROVIDE(__bss_end__ = _ebss);
   PROVIDE(_exit = _ebss);
   PROVIDE(_end = _ebss);
   PROVIDE(end = . );
-  PROVIDE(_estack = ORIGIN(RAM) + LENGTH(RAM));		
+  PROVIDE(_estack = ORIGIN(RAM) + LENGTH(RAM));	
+
+  /DISCARD/ :
+  {
+    libc.a ( * )
+    libm.a ( * )
+    libgcc.a ( * )
+  }
+
+  .ARM.attributes 0 : { *(.ARM.attributes) }
 }

@@ -38,7 +38,7 @@ int main (void) {
 
   // Loop
   while(1) {
-    DLY_ms(100);
+    DLY_ms(500);
     PIN_toggle(PIN_LED);
   }
 }
