@@ -22,76 +22,76 @@ void DLY_us(uint16_t n) {           // delay in us
   #endif
 
   while(n) {                        // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
-    SAFE_MOD++;                     // 2 Fsys cycles, for higher Fsys, add operation here
+    __asm__("inc _SAFE_MOD");       // 2 Fsys cycles, for higher Fsys, add operation here
     #ifdef F_CPU
       #if F_CPU >= 14000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 16000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 18000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 20000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 22000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 24000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 26000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 28000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 30000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 32000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 34000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 36000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 38000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 40000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 42000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 44000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 46000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 48000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 50000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 52000000
-        SAFE_MOD++;
+        S__asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 54000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 56000000
-        SAFE_MOD++;
+        __asm__("inc _SAFE_MOD");
       #endif
     #endif
-    n--;
+    --n;
   }
 }
 
@@ -101,6 +101,6 @@ void DLY_us(uint16_t n) {           // delay in us
 void DLY_ms(uint16_t n) {           // delay in ms
   while(n) {
     DLY_us(1000);
-    n--;
+    --n;
   }
 }                                         
