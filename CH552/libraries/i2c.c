@@ -26,8 +26,8 @@
 // be precisely predicted. However, this can be accepted for this type of 
 // application (synchronous data transmission).
 #if F_CPU >= 24000000                                       // ~500kHz I2C clock
-  #define I2C_DELAY_H() __asm__("sjmp .+2");SAFE_MOD++      // delay 6-7 clock cycles
-  #define I2C_DELAY_L() __asm__("sjmp .+2");SAFE_MOD++      // delay 6-7 clock cycles
+  #define I2C_DELAY_H() __asm__("sjmp .+2");++SAFE_MOD      // delay 6-7 clock cycles
+  #define I2C_DELAY_L() __asm__("sjmp .+2");++SAFE_MOD      // delay 6-7 clock cycles
 #elif F_CPU >= 16000000                                     // ~500kHz I2C clock
   #define I2C_DELAY_H() __asm__("sjmp .+2")                 // delay 4-5 clock cycles
   #define I2C_DELAY_L()                                     // no delay

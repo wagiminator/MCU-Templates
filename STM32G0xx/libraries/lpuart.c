@@ -14,7 +14,6 @@ void LPUART_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) ))
                                      |  ( ((uint32_t)0b10<<(2<<1)) | ((uint32_t)0b10<<(3<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(2<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(2<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(3<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(3<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(2<<2)) | ((uint32_t)0xf <<(3<<2)) ))
@@ -25,7 +24,6 @@ void LPUART_init(void) {
     GPIOB->MODER    = (GPIOB->MODER  & ~( ((uint32_t)0b11<<(11<<1)) | ((uint32_t)0b11<<(10<<1)) ))
                                      |  ( ((uint32_t)0b10<<(11<<1)) | ((uint32_t)0b10<<(10<<1)) );
     GPIOB->OTYPER  &=                  ~  ((uint32_t)0b1 <<(11<<0));
-    GPIOB->OSPEEDR |=                     ((uint32_t)0b11<<(11<<1));
     GPIOB->PUPDR    = (GPIOB->PUPDR  & ~(                             ((uint32_t)0b11<<(10<<1)) ))
                                      |  (                             ((uint32_t)0b01<<(10<<1)) );
     GPIOB->AFR[1]   = (GPIOB->AFR[1] & ~( ((uint32_t)0xf <<( 3<<2)) | ((uint32_t)0xf <<( 2<<2)) ))

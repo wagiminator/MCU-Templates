@@ -14,7 +14,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(0<<1)) | ((uint32_t)0b11<<(1<<1)) ))
                                      |  ( ((uint32_t)0b10<<(0<<1)) | ((uint32_t)0b10<<(1<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(0<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(0<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(1<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(1<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(0<<2)) | ((uint32_t)0xf <<(1<<2)) ))
@@ -25,7 +24,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) ))
                                      |  ( ((uint32_t)0b10<<(2<<1)) | ((uint32_t)0b10<<(3<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(2<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(2<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(3<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(3<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(2<<2)) | ((uint32_t)0xf <<(3<<2)) ))
@@ -36,7 +34,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(4<<1)) | ((uint32_t)0b11<<(5<<1)) ))
                                      |  ( ((uint32_t)0b10<<(4<<1)) | ((uint32_t)0b10<<(5<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(4<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(4<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(5<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(5<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(4<<2)) | ((uint32_t)0xf <<(5<<2)) ))
@@ -47,7 +44,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) ))
                                      |  ( ((uint32_t)0b10<<(7<<1)) | ((uint32_t)0b10<<(8<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(7<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(7<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(8<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(8<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(7<<2))                            ))
@@ -60,7 +56,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(9<<1)) | ((uint32_t)0b11<<(10<<1)) ))
                                      |  ( ((uint32_t)0b10<<(9<<1)) | ((uint32_t)0b10<<(10<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(9<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(9<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(10<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(10<<1)) );
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~( ((uint32_t)0xf <<(1<<2)) | ((uint32_t)0xf <<( 2<<2)) ))
@@ -71,7 +66,6 @@ void UART2_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(14<<1)) | ((uint32_t)0b11<<(15<<1)) ))
                                      |  ( ((uint32_t)0b10<<(14<<1)) | ((uint32_t)0b10<<(15<<1)) );
     GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(14<<0));
-    GPIOA->OSPEEDR |=                     ((uint32_t)0b11<<(14<<1));
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                             ((uint32_t)0b11<<(15<<1)) ))
                                      |  (                             ((uint32_t)0b01<<(15<<1)) );
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~( ((uint32_t)0xf <<( 6<<2)) | ((uint32_t)0xf <<( 7<<2)) ))
@@ -82,7 +76,6 @@ void UART2_init(void) {
     GPIOB->MODER    = (GPIOB->MODER  & ~( ((uint32_t)0b11<<(6<<1)) | ((uint32_t)0b11<<(7<<1)) ))
                                      |  ( ((uint32_t)0b10<<(6<<1)) | ((uint32_t)0b10<<(7<<1)) );
     GPIOB->OTYPER  &=                  ~  ((uint32_t)0b1 <<(6<<0));
-    GPIOB->OSPEEDR |=                     ((uint32_t)0b11<<(6<<1));
     GPIOB->PUPDR    = (GPIOB->PUPDR  & ~(                            ((uint32_t)0b11<<(7<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(7<<1)) );
     GPIOB->AFR[0]   = (GPIOB->AFR[0] & ~( ((uint32_t)0xf <<(6<<2)) | ((uint32_t)0xf <<(7<<2)) ))
@@ -93,7 +86,6 @@ void UART2_init(void) {
     GPIOF->MODER    = (GPIOF->MODER  & ~( ((uint32_t)0b11<<(1<<1)) | ((uint32_t)0b11<<(0<<1)) ))
                                      |  ( ((uint32_t)0b10<<(1<<1)) | ((uint32_t)0b10<<(0<<1)) );
     GPIOF->OTYPER  &=                  ~  ((uint32_t)0b1 <<(1<<0));
-    GPIOF->OSPEEDR |=                     ((uint32_t)0b11<<(1<<1));
     GPIOF->PUPDR    = (GPIOF->PUPDR  & ~(                            ((uint32_t)0b11<<(0<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(0<<1)) );
     GPIOF->AFR[0]   = (GPIOF->AFR[0] & ~( ((uint32_t)0xf <<(1<<2)) | ((uint32_t)0xf <<(0<<2)) ))
@@ -104,7 +96,6 @@ void UART2_init(void) {
     GPIOF->MODER    = (GPIOF->MODER  & ~( ((uint32_t)0b11<<(3<<1)) | ((uint32_t)0b11<<(2<<1)) ))
                                      |  ( ((uint32_t)0b10<<(3<<1)) | ((uint32_t)0b10<<(2<<1)) );
     GPIOF->OTYPER  &=                  ~  ((uint32_t)0b1 <<(3<<0));
-    GPIOF->OSPEEDR |=                     ((uint32_t)0b11<<(3<<1));
     GPIOF->PUPDR    = (GPIOF->PUPDR  & ~(                            ((uint32_t)0b11<<(2<<1)) ))
                                      |  (                            ((uint32_t)0b01<<(2<<1)) );
     GPIOF->AFR[0]   = (GPIOF->AFR[0] & ~( ((uint32_t)0xf <<(3<<2)) | ((uint32_t)0xf <<(2<<2)) ))

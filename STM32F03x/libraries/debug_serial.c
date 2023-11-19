@@ -17,7 +17,6 @@ void DEBUG_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(2<<1)))
                                      |  ((uint32_t)0b10<<(2<<1));
     GPIOA->OTYPER  &=                  ~((uint32_t)0b1 <<(2<<0));
-    GPIOA->OSPEEDR |=                   ((uint32_t)0b11<<(2<<1));
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~((uint32_t)0xf <<(2<<2)))
                                      |  ((uint32_t)0x1 <<(2<<2));
   #elif DEBUG_TX == 1
@@ -26,7 +25,6 @@ void DEBUG_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(9<<1)))
                                      |  ((uint32_t)0b10<<(9<<1));
     GPIOA->OTYPER  &=                  ~((uint32_t)0b1 <<(9<<0));
-    GPIOA->OSPEEDR |=                   ((uint32_t)0b11<<(9<<1));
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~((uint32_t)0xf <<(1<<2)))
                                      |  ((uint32_t)0x1 <<(1<<2));
   #elif DEBUG_TX == 2
@@ -35,7 +33,6 @@ void DEBUG_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(14<<1)))
                                      |  ((uint32_t)0b10<<(14<<1));
     GPIOA->OTYPER  &=                  ~((uint32_t)0b1 <<(14<<0));
-    GPIOA->OSPEEDR |=                   ((uint32_t)0b11<<(14<<1));
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~((uint32_t)0xf <<( 6<<2)))
                                      |  ((uint32_t)0x1 <<( 6<<2));
   #elif DEBUG_TX == 3
@@ -44,7 +41,6 @@ void DEBUG_init(void) {
     GPIOB->MODER    = (GPIOB->MODER  & ~((uint32_t)0b11<<(6<<1)))
                                      |  ((uint32_t)0b10<<(6<<1));
     GPIOB->OTYPER  &=                  ~((uint32_t)0b1 <<(6<<0));
-    GPIOB->OSPEEDR |=                   ((uint32_t)0b11<<(6<<1));
     GPIOB->AFR[0]  &=                  ~((uint32_t)0xf <<(6<<2));
   #else
     #warning No automatic pin mapping for USART1

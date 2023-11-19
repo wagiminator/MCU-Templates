@@ -20,7 +20,6 @@ void I2C_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) ))
                                      |  ( ((uint32_t)0b10<<(2<<1)) | ((uint32_t)0b10<<(3<<1)) );
     GPIOA->OTYPER  |=                   ( ((uint32_t)0b1 <<(2<<0)) | ((uint32_t)0b1 <<(3<<0)) );
-    GPIOA->OSPEEDR |=                   ( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) );
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) ))
                                      |  ( ((uint32_t)0b01<<(2<<1)) | ((uint32_t)0b01<<(3<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)15  <<(2<<2)) | ((uint32_t)15  <<(3<<2)) ))
@@ -31,7 +30,6 @@ void I2C_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) ))
                                      |  ( ((uint32_t)0b10<<(7<<1)) | ((uint32_t)0b10<<(8<<1)) );
     GPIOA->OTYPER  |=                   ( ((uint32_t)0b1 <<(7<<0)) | ((uint32_t)0b1 <<(8<<0)) );
-    GPIOA->OSPEEDR |=                   ( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) );
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) ))
                                      |  ( ((uint32_t)0b01<<(7<<1)) | ((uint32_t)0b01<<(8<<1)) );
     GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)15  <<(7<<2))                            ))
@@ -44,7 +42,6 @@ void I2C_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(9<<1)) | ((uint32_t)0b11<<(10<<1)) ))
                                      |  ( ((uint32_t)0b10<<(9<<1)) | ((uint32_t)0b10<<(10<<1)) );
     GPIOA->OTYPER  |=                   ( ((uint32_t)0b1 <<(9<<0)) | ((uint32_t)0b1 <<(10<<0)) );
-    GPIOA->OSPEEDR |=                   ( ((uint32_t)0b11<<(9<<1)) | ((uint32_t)0b11<<(10<<1)) );
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~( ((uint32_t)0b11<<(9<<1)) | ((uint32_t)0b11<<(10<<1)) ))
                                      |  ( ((uint32_t)0b01<<(9<<1)) | ((uint32_t)0b01<<(10<<1)) );
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~( ((uint32_t)15  <<(1<<2)) | ((uint32_t)15  <<( 2<<2)) ))
@@ -55,7 +52,6 @@ void I2C_init(void) {
     GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(12<<1)) | ((uint32_t)0b11<<(11<<1)) ))
                                      |  ( ((uint32_t)0b10<<(12<<1)) | ((uint32_t)0b10<<(11<<1)) );
     GPIOA->OTYPER  |=                   ( ((uint32_t)0b1 <<(12<<0)) | ((uint32_t)0b1 <<(11<<0)) );
-    GPIOA->OSPEEDR |=                   ( ((uint32_t)0b11<<(12<<1)) | ((uint32_t)0b11<<(11<<1)) );
     GPIOA->PUPDR    = (GPIOA->PUPDR  & ~( ((uint32_t)0b11<<(12<<1)) | ((uint32_t)0b11<<(11<<1)) ))
                                      |  ( ((uint32_t)0b01<<(12<<1)) | ((uint32_t)0b01<<(11<<1)) );
     GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~( ((uint32_t)15  <<( 4<<2)) | ((uint32_t)15  <<( 3<<2)) ))
@@ -66,7 +62,6 @@ void I2C_init(void) {
     GPIOB->MODER    = (GPIOB->MODER  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(6<<1)) ))
                                      |  ( ((uint32_t)0b10<<(7<<1)) | ((uint32_t)0b10<<(6<<1)) );
     GPIOB->OTYPER  |=                   ( ((uint32_t)0b1 <<(7<<0)) | ((uint32_t)0b1 <<(6<<0)) );
-    GPIOB->OSPEEDR |=                   ( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(6<<1)) );
     GPIOB->PUPDR    = (GPIOB->PUPDR  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(6<<1)) ))
                                      |  ( ((uint32_t)0b01<<(7<<1)) | ((uint32_t)0b01<<(6<<1)) );
     GPIOB->AFR[0]   = (GPIOB->AFR[0] & ~( ((uint32_t)15  <<(7<<2)) | ((uint32_t)15  <<(6<<2)) ))
@@ -77,7 +72,6 @@ void I2C_init(void) {
     GPIOB->MODER    = (GPIOB->MODER  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) ))
                                      |  ( ((uint32_t)0b10<<(7<<1)) | ((uint32_t)0b10<<(8<<1)) );
     GPIOB->OTYPER  |=                   ( ((uint32_t)0b1 <<(7<<0)) | ((uint32_t)0b1 <<(8<<0)) );
-    GPIOB->OSPEEDR |=                   ( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) );
     GPIOB->PUPDR    = (GPIOB->PUPDR  & ~( ((uint32_t)0b11<<(7<<1)) | ((uint32_t)0b11<<(8<<1)) ))
                                      |  ( ((uint32_t)0b01<<(7<<1)) | ((uint32_t)0b01<<(8<<1)) );
     GPIOB->AFR[0]   = (GPIOB->AFR[0] & ~( ((uint32_t)15  <<(7<<2))                            ))
@@ -90,7 +84,6 @@ void I2C_init(void) {
     GPIOF->MODER    = (GPIOF->MODER  & ~( ((uint32_t)0b11<<(0<<1)) | ((uint32_t)0b11<<(1<<1)) ))
                                      |  ( ((uint32_t)0b10<<(0<<1)) | ((uint32_t)0b10<<(1<<1)) );
     GPIOF->OTYPER  |=                   ( ((uint32_t)0b1 <<(0<<0)) | ((uint32_t)0b1 <<(1<<0)) );
-    GPIOF->OSPEEDR |=                   ( ((uint32_t)0b11<<(0<<1)) | ((uint32_t)0b11<<(1<<1)) );
     GPIOF->PUPDR    = (GPIOF->PUPDR  & ~( ((uint32_t)0b11<<(0<<1)) | ((uint32_t)0b11<<(1<<1)) ))
                                      |  ( ((uint32_t)0b01<<(0<<1)) | ((uint32_t)0b01<<(1<<1)) );
     GPIOF->AFR[0]   = (GPIOF->AFR[0] & ~( ((uint32_t)15  <<(0<<2)) | ((uint32_t)15  <<(1<<2)) ))
