@@ -50,13 +50,13 @@ void DLY_us(uint16_t n) {
       #endif
 
     #else
-      mov	r6,dpl
-	    mov	r7,dph
-	    mov a,r6
+      mov r6,dpl
+      mov r7,dph
+      mov a,r6
     #endif
 
-	  jz 01$
-	  inc r7
+    jz 01$
+    inc r7
 
     01$:
     #if F_CPU % 3000000 >= 1000000
