@@ -35,7 +35,7 @@
 // PIN_set(PIN)             convert PIN for direct manipulation: PIN_set(PIN_LED) = 1;
 //
 // PWM_init()               init PWMA timer
-// PWM_start(PIN)           start PWM output on PIN (P10 - P27, P33, P34)
+// PWM_start(PIN)           start PWM output on PIN (P10 - P27, P33, P34 only)
 // PWM_stop(PIN)            stop PWM output on PIN
 // PWM_write(PIN, val)      set PWM output active level duty cycle on PIN (0 - 255)
 //
@@ -44,8 +44,8 @@
 // ADC_disable()            disable ADC
 // ADC_fast()               set ADC fast mode (less accurate) (*)
 // ADC_slow()               set ADC slow mode (more accurate)
-// ADC_input(PIN)           set ADC input pin (see below)
-// ADC_read()               sample and read ADC value (0..1023)
+// ADC_input(PIN)           set ADC input pin (P10 - P17, P30 - P36 only)
+// ADC_read()               sample and read ADC value (0 - 1023 or 0 - 4095)
 // ADC_read_VDD()           sample and read VREF, calculate and return VDD in mV
 //
 // CMP_enable()             enable comparator
@@ -66,7 +66,6 @@
 // Pins used for PWM should be set as OUTPUT beforehand.
 // Not all PWM pins work independently of each other. Refer to the datasheet for more info.
 // Pins used for ADC or CMP input must have been set as INPUT (high impedance) beforehand.
-// ADC input pins: P10, P11, P30, P31, P32, P33, P34, P35, P36 (STC8H1K08 family).
 // If ADC input pins are used for the CMP, ADC and CMP must be enabled.
 // Some functions may only work with the STC8H1K08 family.
 // Access to extended registers must be granted (P_SW2 |= 0x80;).
@@ -461,7 +460,7 @@ inline void PWM_init() {
 (0)))))))))))))))))))
 
 // ===================================================================================
-// ADC functions (P10, P11, P30, P31, P32, P33, P34, P35, P36, VREF only)
+// ADC functions (P10 - P17, P30 - P36, VREF only)
 // ===================================================================================
 #define ADC_enable()        ADC_CONTR |=  0x80
 #define ADC_disable()       ADC_CONTR &= ~0x80
@@ -472,6 +471,12 @@ inline void PWM_init() {
 #define ADC_input(PIN) \
   ((PIN == P10) ? (ADC_CONTR &= 0xf0) : \
   ((PIN == P11) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x01) : \
+  ((PIN == P12) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x02) : \
+  ((PIN == P13) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x03) : \
+  ((PIN == P14) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x04) : \
+  ((PIN == P15) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x05) : \
+  ((PIN == P16) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x06) : \
+  ((PIN == P17) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x07) : \
   ((PIN == P30) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x08) : \
   ((PIN == P31) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x09) : \
   ((PIN == P32) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0a) : \
@@ -501,7 +506,7 @@ inline uint16_t ADC_read_VDD(void) {
 }
 
 // ===================================================================================
-// Comparator functions (positive: P37, ADC, negative: P36, VREF only)
+// Comparator Functions (POS: P37, ADC-pins / NEG: P36, VREF / OUT: P34, P41)
 // ===================================================================================
 #define CMP_enable()        CMPCR1 |=  0x80
 #define CMP_disable()       CMPCR1 &= ~0x80
@@ -511,6 +516,12 @@ inline uint16_t ADC_read_VDD(void) {
   ((PIN == P37) ? (CMPCR1 &= ~0x08) : \
   ((PIN == P10) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0) : \
   ((PIN == P11) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x01) : \
+  ((PIN == P12) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x02) : \
+  ((PIN == P13) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x03) : \
+  ((PIN == P14) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x04) : \
+  ((PIN == P15) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x05) : \
+  ((PIN == P16) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x06) : \
+  ((PIN == P17) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x07) : \
   ((PIN == P30) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x08) : \
   ((PIN == P31) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x09) : \
   ((PIN == P32) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0a) : \

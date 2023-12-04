@@ -14,7 +14,7 @@ INCLUDE    = include
 TOOLS      = tools
 
 # Microcontroller Settings
-F_CPU      = 24000000
+F_CPU      = 36000000
 IRAM_SIZE  = 0x0100
 XRAM_SIZE  = 0x0400
 CODE_SIZE  = 0x2000
