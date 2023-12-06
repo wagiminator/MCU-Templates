@@ -42,7 +42,7 @@ void DLY_ms_h(uint16_t n) {
   n;
 
   __asm
-  
+
     mov r3,dpl
     mov r4,dph
     mov a,r3
@@ -52,19 +52,19 @@ void DLY_ms_h(uint16_t n) {
 
     03$:
     #if   F_CPU <=  187000
-      mov	dptr,#0x0039
+      mov dptr,#0x0039
     #elif F_CPU <=  375000
-      mov	dptr,#0x0078
+      mov dptr,#0x0078
     #elif F_CPU <= 1000000
-      mov	dptr,#0x00f6
+      mov dptr,#0x00f6
     #elif F_CPU <  3000000
-      mov	dptr,#0x01f0
+      mov dptr,#0x01f0
     #else
-      mov	dptr,#0x03e8
+      mov dptr,#0x03e8
     #endif
 
-    lcall	_DLY_us_h
-    
+    lcall _DLY_us_h
+
     djnz r3, 03$
     djnz r4, 03$
 
