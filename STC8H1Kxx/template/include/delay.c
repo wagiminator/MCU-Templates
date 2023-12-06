@@ -5,55 +5,14 @@
 
 #include "delay.h"
 
-void DLY_us(uint16_t n) {
+void DLY_us_h(uint16_t n) {
   n;
 
   __asm
-
-    #if F_CPU < 3000000
-      mov a,dph
-      clr c
-      rrc a
-      mov r7,a
-      mov a,dpl
-      rrc a
-      mov r6,a
-
-      #if F_CPU <= 1000000
-        mov a,r7
-        clr c
-        rrc a
-        mov r7,a
-        mov a,r6
-        rrc a
-        mov r6,a
-      #endif
-
-      #if F_CPU <= 375000
-        mov a,r7
-        clr c
-        rrc a
-        mov r7,a
-        mov a,r6
-        rrc a
-        mov r6,a
-      #endif
-
-      #if F_CPU <= 187000
-        mov a,r7
-        clr c
-        rrc a
-        mov r7,a
-        mov a,r6
-        rrc a
-        mov r6,a
-      #endif
-
-    #else
-      mov r6,dpl
-      mov r7,dph
-      mov a,r6
-    #endif
+  
+    mov r6,dpl
+    mov r7,dph
+    mov a,r6
 
     jz 01$
     inc r7
@@ -79,9 +38,35 @@ void DLY_us(uint16_t n) {
   __endasm;
 }
 
-void DLY_ms(uint16_t n) {
-  while(n) {
-    DLY_us(1000);
-    --n;
-  }
+void DLY_ms_h(uint16_t n) {
+  n;
+
+  __asm
+  
+    mov r3,dpl
+    mov r4,dph
+    mov a,r3
+
+    jz 03$
+    inc r4
+
+    03$:
+    #if   F_CPU <=  187000
+      mov	dptr,#0x0039
+    #elif F_CPU <=  375000
+      mov	dptr,#0x0078
+    #elif F_CPU <= 1000000
+      mov	dptr,#0x00f6
+    #elif F_CPU <  3000000
+      mov	dptr,#0x01f0
+    #else
+      mov	dptr,#0x03e8
+    #endif
+
+    lcall	_DLY_us_h
+    
+    djnz r3, 03$
+    djnz r4, 03$
+
+  __endasm;
 }
