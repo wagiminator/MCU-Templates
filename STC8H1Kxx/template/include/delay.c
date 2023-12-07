@@ -10,30 +10,28 @@ void DLY_us_h(uint16_t n) {
 
   __asm
   
-    mov r6,dpl
-    mov r7,dph
-    mov a,r6
-
+    mov a, dpl
     jz 01$
-    inc r7
+    inc dph
 
     01$:
-    #if F_CPU % 3000000 >= 1000000
-      nop
-    #endif
-
-    #if F_CPU % 3000000 >= 2000000
-      nop
+    #if F_CPU >= 3000000
+      #if F_CPU % 3000000 >= 1000000
+        nop
+      #endif
+      #if F_CPU % 3000000 >= 2000000
+        nop
+      #endif
     #endif
 
     #if F_CPU >= 6000000
-      mov r5,#((F_CPU / 3000000) - 1)
+      mov r7, #((F_CPU / 3000000) - 1)
       02$:
-      djnz r5, 02$
+      djnz r7, 02$
     #endif
     
-    djnz r6, 01$
-    djnz r7, 01$
+    djnz dpl, 01$
+    djnz dph, 01$
 
   __endasm;
 }
@@ -43,30 +41,24 @@ void DLY_ms_h(uint16_t n) {
 
   __asm
 
-    mov r3,dpl
-    mov r4,dph
-    mov a,r3
+    mov r5, dpl
+    mov r6, dph
+    mov a, r5
 
     jz 03$
-    inc r4
+    inc r6
 
     03$:
-    #if   F_CPU <=  187000
-      mov dptr,#0x0039
-    #elif F_CPU <=  375000
-      mov dptr,#0x0078
-    #elif F_CPU <= 1000000
-      mov dptr,#0x00f6
-    #elif F_CPU <  3000000
-      mov dptr,#0x01f0
+    #if F_CPU < 3000000
+      mov dptr, #(F_CPU / 3000)
     #else
-      mov dptr,#0x03e8
+      mov dptr, #1000
     #endif
 
     lcall _DLY_us_h
 
-    djnz r3, 03$
-    djnz r4, 03$
+    djnz r5, 03$
+    djnz r6, 03$
 
   __endasm;
 }
