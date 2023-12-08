@@ -22,10 +22,10 @@
 // SYS_MCO_DIV(d)           Set sytem clock output (MCO) divider (0: MCO off)
 // SYS_MCO_PIN(p)           Define MCO pin (0: P5.4, 1: P1.6)
 //
-// WDT_start()              Start watchdog timer with full period, disabled in IDLE
-// WDT_start_idle()         Start watchdog timer with full period, enabled in IDLE
+// WDT_start(d)             Start watchdog timer with clock divider d (0-7), disabled in IDLE
+// WDT_start_idle(d)        Start watchdog timer with clock divider d (0-7), enabled in IDLE
 // WDT_reset()              Reset watchdog timer
-// WDT_feed(d)              Reset watchdog timer with new divider (d)
+// WDT_feed()               Reset watchdog timer (alias)
 //
 // RST_now()                Perform software reset
 // RST_pin_enable()         Enable reset pin
@@ -47,6 +47,7 @@
 // Notes:
 // ------
 // Access to extended registers must be granted (P_SW2 |= 0x80;).
+// Watchdog timer period = 12 * 32768 * (2 << divider) / F_CPU [s]
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -128,10 +129,10 @@ inline void SYS_CLK_HSE(__bit xitype) {
 // ===================================================================================
 // Watchdog Timer
 // ===================================================================================
-#define WDT_start()         WDT_CONTR  = 0x27
-#define WDT_start_idle()    WDT_CONTR  = 0x2f
+#define WDT_start(d)        WDT_CONTR  = 0x20 | ((d) & 0x07)
+#define WDT_start_idle(d)   WDT_CONTR  = 0x28 | ((d) & 0x07)
 #define WDT_reset()         WDT_CONTR |= 0x10
-#define WDT_feed(div)       WDT_CONTR  = (WDT_CONTR & 0x07) | 0x10 | (div)
+#define WDT_feed()          WDT_CONTR |= 0x10
 
 // ===================================================================================
 // Reset and Bootloader
