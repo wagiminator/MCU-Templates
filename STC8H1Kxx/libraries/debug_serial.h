@@ -39,6 +39,16 @@
     #if DEBUG_MAP > 0
     P_SW1 |= DEBUG_MAP << 6;            // UART1 set alternate pins
     #endif
+    #if DEBUG_MAP == 1
+    P3M0  &= ~(1<<7);
+    P3M1  &= ~(1<<7);
+    #elif DEBUG_MAP == 2
+    P1M0  &= ~(1<<7);
+    P1M1  &= ~(1<<7);
+    #elif DEBUG_MAP == 3
+    P4M0  &= ~(1<<4);
+    P4M1  &= ~(1<<4);
+    #endif
     SCON = 0x42;                        // TX only, 8 bits, variable baudrate, TI flag
     #if DEBUG_TIMER == 1
     AUXR = 0x40;                        // timer1 in 1T mode as baudrate generator
@@ -51,8 +61,13 @@
     T2H  = DEBUG_BAUD_SET >> 8;         // initial timer value according to BAUD
     #endif
   #elif DEBUG_PORT == 2
-    #if DEBUG_MAP > 0
-    P_SW2 |= 0x01;                      // UART2 set alternate pins
+    #if   DEBUG_MAP == 0                // UART2 set alternate pins
+    P1M0  &= ~(1<<1);
+    P1M1  &= ~(1<<1);
+    #elif DEBUG_MAP == 1
+    P_SW2 |= 0x01;
+    P4M0  &= ~(1<<7);
+    P4M1  &= ~(1<<7);
     #endif
     S2CON = 0x02;                       // TX only, 8 bits, set transmit complete flag
     AUXR |= 0x14;                       // timer2 in 1T mode as baudrate generator

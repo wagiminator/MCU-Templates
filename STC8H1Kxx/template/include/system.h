@@ -54,12 +54,6 @@
 #include <stdint.h>
 #include "stc8h.h"
 
-// XDATA SFR address switch
-#define SFRX_ON()                     P_SW2 |= 0x80
-#define SFRX_OFF()                    P_SW2 &= 0x7f
-#define SFRX_SET(__SFR__, __POS__)    {SFRX_ON();(__SFR__)|= (0x01<<(__POS__));SFRX_OFF();}
-#define SFRX_RESET(__SFR__, __POS__)  {SFRX_ON();(__SFR__)&=~(0x01<<(__POS__));SFRX_OFF();}
-
 // ===================================================================================
 // System Clock
 // ===================================================================================
