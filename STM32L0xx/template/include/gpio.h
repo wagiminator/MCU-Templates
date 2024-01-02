@@ -5,8 +5,8 @@
 // Pins must be defined as PA0, PA1, .., PH14, PH15 - e.g.:
 // #define PIN_LED PC0      // LED on pin PC0
 //
-// Functions available:
-// --------------------
+// PIN functions available:
+// ------------------------
 // PIN_input(PIN)           Set PIN as INPUT (floating, no pullup/pulldown)
 // PIN_input_PU(PIN)        Set PIN as INPUT with internal PULLUP resistor
 // PIN_input_PD(PIN)        Set PIN as INPUT with internal PULLDOWN resistor
@@ -29,6 +29,8 @@
 // PIN_read(PIN)            Read PIN input value
 // PIN_write(PIN, val)      Write PIN output value (0 = LOW / 1 = HIGH)
 //
+// PORT functions available:
+// -------------------------
 // PORT_enable(PIN)         Enable GPIO PORT of PIN
 // PORTA_enable()           Enable GPIO PORT A
 // PORTB_enable()           Enable GPIO PORT B
@@ -47,6 +49,8 @@
 // PORTH_disable()          Disable GPIO PORT H
 // PORTS_disable()          Disable all GPIO PORTS
 //
+// Analog-to-Digital Converter (ADC) functions available:
+// ------------------------------------------------------
 // ADC_init()               Init, enable and calibrate ADC (must be called first)
 // ADC_enable()             Enable ADC (power-up)
 // ADC_disable()            Disable ADC (power-down)

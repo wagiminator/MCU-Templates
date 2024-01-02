@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.1 *
+// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 

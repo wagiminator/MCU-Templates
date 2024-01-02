@@ -1,12 +1,12 @@
 // ===================================================================================
-// Basic System Functions for STM32F030 and STM32F031                         * v0.1 *
+// Basic System Functions for STM32F030 and STM32F031                         * v0.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
 // set up automatically on system start.
 //
-// Functions available:
-// --------------------
+// System clock functions available:
+// ---------------------------------
 // CLK_init_HSI()           init internal oscillator (non PLL) as system clock source
 // CLK_init_HSI_PLL()       init internal oscillator with PLL as system clock source
 // CLK_init_HSE()           init external crystal (non PLL) as system clock source
@@ -51,6 +51,8 @@
 // MCO_setPRE(n)            set MCO prescaler to 2^n (set before enabling MCO)
 // MCO_stop()               disable clock output (MCO)
 //
+// Real-Time Clock (RTC) functions available:
+// ------------------------------------------
 // RTC_init()               init RTC with LSI as clock source and 1s clock period
 // RTC_init_LSE()           init RTC with LSE as clock source and 1s clock period
 // RTC_setPrescaler(a,s)    set RTC prescaler (async, sync)
@@ -78,17 +80,23 @@
 // RTC_enableWakeInt()      enable CPU wakeup with RTC interrupt
 // RTC_disableWakeInt()     disable CPU wakeup with RTC interrupt
 //
-// STK_enable()             enable SYSTICK at system frequency
-// STK_disable()            disable SYSTICK
-//
+// Delay (DLY) and SysTick (STK) functions available:
+// --------------------------------------------------
 // DLY_ticks(n)             delay n+1 clock cycles
 // DLY_us(n)                delay n microseconds
 // DLY_ms(n)                delay n milliseconds
 //
+// STK_enable()             enable SYSTICK at system frequency
+// STK_disable()            disable SYSTICK
+//
+// Independent Watchdog Timer (IWDG) functions available:
+// ------------------------------------------------------
 // IWDG_start(n)            start independent watchdog timer, n milliseconds, n<=8191
 // IWDG_reload(n)           reload watchdog counter with n milliseconds, n<=8191
 // IWDG_feed()              feed the dog (reload last time)
 //
+// Sleep functions available:
+// --------------------------
 // SLEEP_WFI_now()          put device into SLEEP,   wake up by interrupt
 // SLEEP_WFE_now()          put device into SLEEP,   wake up by event
 // STOP_WFI_now()           put device into STOP,    wake up by interrupt
@@ -96,6 +104,8 @@
 // STDBY_WFI_now()          put device into STANDBY, wake up by interrupt
 // STDBY_WFE_now()          put device into STANDBY, wake up by event
 //
+// Reset (RST) and Bootloader (BOOT) functions available:
+// ------------------------------------------------------
 // BOOT_now()               jump to bootloader
 // RST_now()                conduct software reset
 // RST_clearFlags()         clear all reset flags
@@ -106,6 +116,8 @@
 // RST_wasPin()             check if last reset was caused by RST pin low
 // RST_wasOption()          check if last reset was caused by OPTION byte loader
 //
+// Cyclic Redundancy Check (CRC) functions available:
+// --------------------------------------------------
 // CRC_enable()             enable cyclic redundancy check (CRC) module
 // CRC_disable()            disable CRC module
 // CRC_write(w)             add new 32-bit word for CRC calculation
@@ -119,6 +131,12 @@
 // CRC_reset()              reset CRC calculation
 // CRC_setInit(n)           set initial CRC value (default: 0xffffffff)
 // CRC_setPoly(n)           set polynomial (default: 0x04c11db7)
+//
+// Interrupt (INT) functions available:
+// ------------------------------------
+// INT_enable()             global interrupt enable
+// INT_disable()            global interrupt disable
+// INT_ATOMIC_BLOCK { }     execute block without being interrupted
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -295,7 +313,7 @@ void RTC_startWakeupTimer(uint16_t ms);
 #define STK_disable()     SysTick->CTRL = 0
 
 // ===================================================================================
-// Delay Functions (using SYSTICK)
+// Delay (DLY) Functions (using SYSTICK)
 // ===================================================================================
 #define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
@@ -323,7 +341,7 @@ void STDBY_WFI_now(void);       // put device into STANDBY, wake up interrupt
 void STDBY_WFE_now(void);       // put device into STANDBY, wake up event
 
 // ===================================================================================
-// Reset Functions
+// Reset (RST) Functions
 // ===================================================================================
 #define RST_now()           NVIC_SystemReset()
 #define RST_clearFlags()    RCC->CSR |= RCC_CSR_RMVF
@@ -337,7 +355,7 @@ void STDBY_WFE_now(void);       // put device into STANDBY, wake up event
 #define RST_wasFirewall()   (RCC->CSR & RCC_CSR_FWRSTF)
 
 // ===================================================================================
-// Bootloader Functions
+// Bootloader (BOOT) Functions
 // ===================================================================================
 #define BOOT_ADDR           0x1FFFEC00
 void BOOT_now(void);        // jump to bootloader
@@ -369,6 +387,27 @@ void BOOT_now(void);        // jump to bootloader
 #define ESIG_UID1           (*(__I uint32_t*)(0x1FFFF7AC))
 #define ESIG_UID2           (*(__I uint32_t*)(0x1FFFF7B0))
 #define ESIG_UID3           (*(__I uint32_t*)(0x1FFFF7B4))
+
+// ===================================================================================
+// Interrupt (INT) Functions
+// ===================================================================================
+#define INT_enable()          __enable_irq()
+#define INT_disable()         __disable_irq()
+#define INT_ATOMIC_BLOCK      for(INT_ATOMIC_RESTORE, __ToDo = 1; __ToDo; __ToDo = 0)
+#define INT_ATOMIC_RESTORE    uint32_t __reg_save __attribute__((__cleanup__(__iRestore))) = __iSave()
+
+// Save interrupt status and disable interrupts
+static inline uint32_t __iSave(void) {
+  uint32_t result;
+  __ASM volatile("MRS %0, primask" : "=r" (result));
+  __ASM volatile("cpsid i" ::: "memory");
+  return result;
+}
+
+// Restore interrupt status
+static inline void __iRestore(const uint32_t *__s) {
+  __ASM volatile("MSR primask, %0" :: "r" (*__s) : "memory");
+}
 
 // ===================================================================================
 // Imported System Functions from cmsis_gcc.h and core_cm0.h
