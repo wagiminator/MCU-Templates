@@ -1,5 +1,5 @@
 # Programming Tools
-There are two ways to program the microcontroller: via USB using the built-in bootloader and via the serial 2-wire debug interface using a WCH-Link programming device.
+There are two ways to program the microcontroller: via USB using the built-in bootloader and via the serial 2-wire debug interface using a WCH-LinkE programming device.
 
 # Built-in USB Bootloader
 ## Installing Drivers for the Bootloader
@@ -85,12 +85,12 @@ Optional arguments:
   -h, --help                show help message and exit
   -a, --armmode             switch WCH-Link to ARM mode
   -v, --rvmode              switch WCH-Link to RISC-V mode
-  -b, --unbrick             unbrick chip
+  -b, --unbrick             unbrick chip (CH32V003 only)
   -u, --unlock              unlock chip (remove read protection)
   -l, --lock                lock chip (set read protection)
   -e, --erase               perform a whole chip erase
-  -G, --pingpio             make nRST pin a GPIO pin
-  -R, --pinreset            make nRST pin a reset pin
+  -G, --pingpio             make nRST pin a GPIO pin (CH32V003 only)
+  -R, --pinreset            make nRST pin a reset pin (CH32V003 only)
   -f FLASH, --flash FLASH   write BIN file to flash
 
 Example:

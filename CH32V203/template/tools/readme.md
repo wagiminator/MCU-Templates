@@ -1,5 +1,5 @@
 # Programming Tools
-There are two ways to program the microcontroller: via USB using the built-in bootloader and via the serial 2-wire debug interface using a WCH-Link programming device.
+There are two ways to program the microcontroller: via USB using the built-in bootloader and via the serial 2-wire debug interface using a WCH-LinkE programming device.
 
 # Built-in USB Bootloader
 ## Installing Drivers for the Bootloader
@@ -10,7 +10,7 @@ echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="6
 sudo udevadm control --reload-rules
 ```
 
-For Windows, you need the [CH372 driver](http://www.wch-ic.com/downloads/CH372DRV_EXE.html). Alternatively, you can also use the [Zadig Tool](https://zadig.akeo.ie/) to install the correct driver. Here, click "Options" -> "List All Devices" and select the USB module. Then install the libusb-win32 driver. To do this, the board must be connected and the microcontroller must be in bootloader mode.
+For Windows, you need the [CH372 driver](http://www.wch-ic.com/downloads/CH372DRV_EXE.html). Alternatively, you can also use the [Zadig Tool](https://zadig.akeo.ie/) to install the correct driver. Here, click "Options" -> "List All Devices" and select the USB module. Then install the libusb-win32 driver. To do this, the board must be connected and the CH55x must be in bootloader mode.
 
 ## Entering Bootloader Mode
 The bootloader must be started manually for new uploads. To do this, the board must first be disconnected from the USB port and all voltage sources. Now press the BOOT0 button and keep it pressed while reconnecting the board to the USB port of your PC. The chip now starts in bootloader mode, the BOOT0 button can be released and new firmware can be uploaded via USB. Alternatively, you can leave the board connected to the USB port, press and hold the BOOT0 button, press and release the RESET button and then release the BOOT0 button to enter the bootloader mode.
@@ -35,9 +35,9 @@ python3 chprog.py firmware.bin
 - [isp55e0](https://github.com/frank-zago/isp55e0)
 - [wchisp](https://github.com/ch32-rs/wchisp)
 
-# 2-Wire Serial Debug Interface
+# Serial 2-Wire Debug Interface
 ## WCH-LinkE
-To program the microcontroller via the serial debug interface, you will need a special programming device. The [WCH-LinkE](http://www.wch-ic.com/products/WCH-Link.html) (pay attention to the "E" in the name) is a suitable option for this purpose and can be purchased commercially. This debugging tool is compatible with most WCH RISC-V and ARM-based microcontrollers.
+To program the microcontroller via the serial debug interface, you will need a special programming device. The [WCH-LinkE](http://www.wch-ic.com/products/WCH-Link.html) (pay attention to the "E" in the name) is a suitable option for this purpose and can be purchased commercially for around $3. This debugging tool is compatible with most WCH RISC-V and ARM-based microcontrollers.
 
 To use the WCH-Link on Linux, you need to grant access permissions beforehand by executing the following commands:
 ```
@@ -85,12 +85,12 @@ Optional arguments:
   -h, --help                show help message and exit
   -a, --armmode             switch WCH-Link to ARM mode
   -v, --rvmode              switch WCH-Link to RISC-V mode
-  -b, --unbrick             unbrick chip
+  -b, --unbrick             unbrick chip (CH32V003 only)
   -u, --unlock              unlock chip (remove read protection)
   -l, --lock                lock chip (set read protection)
   -e, --erase               perform a whole chip erase
-  -G, --pingpio             make nRST pin a GPIO pin
-  -R, --pinreset            make nRST pin a reset pin
+  -G, --pingpio             make nRST pin a GPIO pin (CH32V003 only)
+  -R, --pinreset            make nRST pin a reset pin (CH32V003 only)
   -f FLASH, --flash FLASH   write BIN file to flash
 
 Example:
