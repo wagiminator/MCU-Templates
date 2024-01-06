@@ -25,7 +25,7 @@ OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
 NEWLIB   = /usr/include/newlib
-ISPTOOL  = python3 $(TOOLS)/rvprog.py -f $(TARGET).bin
+ISPTOOL  = python3 $(TOOLS)/chprog.py $(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
