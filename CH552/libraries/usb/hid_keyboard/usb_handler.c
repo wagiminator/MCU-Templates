@@ -1,8 +1,7 @@
 // ===================================================================================
-// USB Handler for CH551, CH552 and CH554                                     * v1.3 *
+// USB Handler for CH551, CH552 and CH554                                     * v1.4 *
 // ===================================================================================
 
-#include "ch554.h"
 #include "usb_handler.h"
 
 // ===================================================================================
@@ -10,7 +9,7 @@
 // ===================================================================================
 volatile uint8_t  USB_SetupReq, USB_SetupTyp, USB_Config;
 volatile uint16_t USB_SetupLen;
-__code uint8_t *pDescr;
+__code uint8_t*   USB_pDescr;
 
 // ===================================================================================
 // Setup/Reset Endpoints
@@ -50,7 +49,7 @@ void USB_init(void) {
 // ===================================================================================
 // Fast Copy Function
 // ===================================================================================
-// Copy descriptor *pDescr to Ep0 using double pointer
+// Copy descriptor *USB_pDescr to EP0_buffer using double pointer
 // (Thanks to Ralph Doncaster)
 #pragma callee_saves USB_EP0_copyDescr
 void USB_EP0_copyDescr(uint8_t len) {
@@ -61,11 +60,11 @@ void USB_EP0_copyDescr(uint8_t len) {
     inc  _XBUS_AUX              ; select dptr1
     mov  dptr, #_EP0_buffer     ; dptr1 <- EP0_buffer
     dec  _XBUS_AUX              ; select dptr0
-    mov  dpl, _pDescr           ; dptr0 <- *pDescr
-    mov  dph, (_pDescr + 1)
+    mov  dpl, _USB_pDescr       ; dptr0 <- *USB_pDescr
+    mov  dph, (_USB_pDescr + 1)
     01$:
     clr  a                      ; acc <- #0
-    movc a, @a+dptr             ; acc <- *pDescr[dptr0]
+    movc a, @a+dptr             ; acc <- *USB_pDescr[dptr0]
     inc  dptr                   ; inc dptr0
     .DB  0xA5                   ; acc -> EP0_buffer[dptr1] & inc dptr1
     djnz r7, 01$                ; repeat len times
@@ -83,65 +82,57 @@ void USB_EP0_SETUP(void) {
     USB_SetupReq = USB_SetupBuf->bRequest;
     USB_SetupTyp = USB_SetupBuf->bRequestType;
 
-    if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
-      #ifdef USB_CTRL_NS_handler
-      len = USB_CTRL_NS_handler();                // non-standard request
-      #else
-      len = 0xff;                                 // command not supported
-      #endif
-    }
-
-    else {                                        // standard request
+    if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_STANDARD) {
       switch(USB_SetupReq) {                      // request ccfType
         case USB_GET_DESCRIPTOR:
           switch(USB_SetupBuf->wValueH) {
 
             case USB_DESCR_TYP_DEVICE:            // Device Descriptor
-              pDescr = (uint8_t*)&DevDescr;       // put descriptor into out buffer
+              USB_pDescr = (uint8_t*)&DevDescr;   // put descriptor into out buffer
               len = sizeof(DevDescr);             // descriptor length
               break;
 
             case USB_DESCR_TYP_CONFIG:            // Configuration Descriptor
-              pDescr = (uint8_t*)&CfgDescr;       // put descriptor into out buffer
+              USB_pDescr = (uint8_t*)&CfgDescr;   // put descriptor into out buffer
               len = sizeof(CfgDescr);             // descriptor length
               break;
 
             case USB_DESCR_TYP_STRING:
-              switch(USB_SetupBuf->wValueL) {      // String Descriptor Index
-                case 0:   pDescr = USB_STR_DESCR_i0; break;
-                case 1:   pDescr = USB_STR_DESCR_i1; break;
-                case 2:   pDescr = USB_STR_DESCR_i2; break;
-                case 3:   pDescr = USB_STR_DESCR_i3; break;
+              switch(USB_SetupBuf->wValueL) {     // String Descriptor Index
+                case 0:   USB_pDescr = USB_STR_DESCR_i0; break;
+                case 1:   USB_pDescr = USB_STR_DESCR_i1; break;
+                case 2:   USB_pDescr = USB_STR_DESCR_i2; break;
+                case 3:   USB_pDescr = USB_STR_DESCR_i3; break;
                 #ifdef USB_STR_DESCR_i4
-                case 4:   pDescr = USB_STR_DESCR_i4; break;
+                case 4:   USB_pDescr = USB_STR_DESCR_i4; break;
                 #endif
                 #ifdef USB_STR_DESCR_i5
-                case 5:   pDescr = USB_STR_DESCR_i5; break;
+                case 5:   USB_pDescr = USB_STR_DESCR_i5; break;
                 #endif
                 #ifdef USB_STR_DESCR_i6
-                case 6:   pDescr = USB_STR_DESCR_i6; break;
+                case 6:   USB_pDescr = USB_STR_DESCR_i6; break;
                 #endif
                 #ifdef USB_STR_DESCR_i7
-                case 7:   pDescr = USB_STR_DESCR_i7; break;
+                case 7:   USB_pDescr = USB_STR_DESCR_i7; break;
                 #endif
                 #ifdef USB_STR_DESCR_i8
-                case 8:   pDescr = USB_STR_DESCR_i8; break;
+                case 8:   USB_pDescr = USB_STR_DESCR_i8; break;
                 #endif
                 #ifdef USB_STR_DESCR_i9
-                case 9:   pDescr = USB_STR_DESCR_i9; break;
+                case 9:   USB_pDescr = USB_STR_DESCR_i9; break;
                 #endif
                 #ifdef USB_STR_DESCR_ixee
-                case 0xee:  pDescr = USB_STR_DESCR_ixee; break;
+                case 0xee:  USB_pDescr = USB_STR_DESCR_ixee; break;
                 #endif
-                default:  pDescr = USB_STR_DESCR_ix; break;
+                default:  USB_pDescr = USB_STR_DESCR_ix; break;
               }
-              len = pDescr[0];                    // descriptor length
+              len = USB_pDescr[0];                // descriptor length
               break;
 
             #ifdef USB_REPORT_DESCR
             case USB_DESCR_TYP_REPORT:
               if(USB_SetupBuf->wValueL == 0) {
-                pDescr = USB_REPORT_DESCR;
+                USB_pDescr = USB_REPORT_DESCR;
                 len = USB_REPORT_DESCR_LEN;
               }
               else len = 0xff;
@@ -158,7 +149,7 @@ void USB_EP0_SETUP(void) {
             len = USB_SetupLen >= EP0_SIZE ? EP0_SIZE : USB_SetupLen;
             USB_EP0_copyDescr(len);               // copy descriptor to Ep0
             USB_SetupLen -= len;
-            pDescr += len;
+            USB_pDescr   += len;
           }
           break;
 
@@ -182,9 +173,9 @@ void USB_EP0_SETUP(void) {
           break;
 
         case USB_CLEAR_FEATURE:
-          if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE) {
-            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x01 ) {
-              if( ((uint8_t*)&CfgDescr)[7] & 0x20) {
+          if((USB_SetupTyp & USB_REQ_RECIP_MASK) == USB_REQ_RECIP_DEVICE) {
+            if(USB_SetupBuf->wValueL == 0x01) {
+              if(((uint8_t*)&CfgDescr)[7] & 0x20) {
                 // wake up
               }
               else len = 0xff;               // failed
@@ -242,15 +233,15 @@ void USB_EP0_SETUP(void) {
           break;
 
         case USB_SET_FEATURE:
-          if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_DEVICE) {
-            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x01 ) {
+          if((USB_SetupTyp & USB_REQ_RECIP_MASK) == USB_REQ_RECIP_DEVICE) {
+            if(USB_SetupBuf->wValueL == 0x01) {
               if( !(((uint8_t*)&CfgDescr)[7] & 0x20) ) len = 0xff;  // failed
             }
             else len = 0xff;                                        // failed
           }
-          else if((USB_SetupTyp & 0x1f) == USB_REQ_RECIP_ENDP) {
-            if( (((uint16_t)USB_SetupBuf->wValueH << 8) | USB_SetupBuf->wValueL) == 0x00 ) {
-              switch( ( (uint16_t)USB_SetupBuf->wIndexH << 8 ) | USB_SetupBuf->wIndexL ) {
+          else if((USB_SetupTyp & USB_REQ_RECIP_MASK) == USB_REQ_RECIP_ENDP) {
+            if(USB_SetupBuf->wValueL == 0x00) {
+              switch(USB_SetupBuf->wIndexL) {
                 #ifdef EP1_OUT_callback
                 case 0x01:
                   UEP1_CTRL = (UEP1_CTRL & ~bUEP_R_TOG) | UEP_R_RES_STALL;
@@ -313,6 +304,20 @@ void USB_EP0_SETUP(void) {
           break;
       }
     }
+
+    #ifdef USB_CLASS_SETUP_handler
+    else if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_CLASS) {
+      len = USB_CLASS_SETUP_handler();
+    }
+    #endif
+
+    #ifdef USB_VENDOR_SETUP_handler
+    else if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_VENDOR) {
+      len = USB_VENDOR_SETUP_handler();
+    }
+    #endif
+
+    else len = 0xff;
   }
   else len = 0xff;                          // wrong packet length
 
@@ -333,9 +338,16 @@ void USB_EP0_SETUP(void) {
 void USB_EP0_IN(void) {
   uint8_t len;
 
-  #ifdef USB_IN_NS_handler
-  if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
-    USB_IN_NS_handler();
+  #ifdef USB_CLASS_IN_handler
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_CLASS) {
+    USB_CLASS_IN_handler();
+    return;
+  }
+  #endif
+
+  #ifdef USB_VENDOR_IN_handler
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_VENDOR) {
+    USB_VENDOR_IN_handler();
     return;
   }
   #endif
@@ -344,10 +356,10 @@ void USB_EP0_IN(void) {
     case USB_GET_DESCRIPTOR:
       len = USB_SetupLen >= EP0_SIZE ? EP0_SIZE : USB_SetupLen;
       USB_EP0_copyDescr(len);                     // copy descriptor to Ep0                                
-      USB_SetupLen  -= len;
-      pDescr    += len;
-      UEP0_T_LEN = len;
-      UEP0_CTRL ^= bUEP_T_TOG;                    // switch between DATA0 and DATA1
+      USB_SetupLen -= len;
+      USB_pDescr   += len;
+      UEP0_T_LEN    = len;
+      UEP0_CTRL    ^= bUEP_T_TOG;                 // switch between DATA0 and DATA1
       break;
 
     case USB_SET_ADDRESS:
@@ -356,21 +368,26 @@ void USB_EP0_IN(void) {
       break;
 
     default:
-      UEP0_T_LEN = 0;                             // end of transaction
       UEP0_CTRL  = UEP_R_RES_ACK | UEP_T_RES_NAK;
       break;
   }
 }
 
 void USB_EP0_OUT(void) {
-  #ifdef USB_OUT_NS_handler
-  if((USB_SetupTyp & USB_REQ_TYP_MASK) != USB_REQ_TYP_STANDARD) {
-    USB_OUT_NS_handler();
+  #ifdef USB_CLASS_OUT_handler
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_CLASS) {
+    USB_CLASS_OUT_handler();
     return;
   }
   #endif
 
-  UEP0_T_LEN = 0;
+  #ifdef USB_VENDOR_OUT_handler
+  if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_VENDOR) {
+    USB_VENDOR_OUT_handler();
+    return;
+  }
+  #endif
+
   UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK; // respond NAK
 }
 

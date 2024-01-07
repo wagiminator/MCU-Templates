@@ -11,7 +11,11 @@
 
 #pragma once
 #include <stdint.h>
+#include "ch554.h"
+#include "usb.h"
+#include "usb_descr.h"
 #include "usb_handler.h"
 
-#define HID_init USB_init                                 // setup USB-HID
+#define HID_IN_buffer   EP2_buffer                        // buffer for incoming HID reports
+#define HID_init        USB_init                          // setup USB-HID
 void HID_sendReport(__xdata uint8_t* buf, uint8_t len);   // send HID report

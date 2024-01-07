@@ -1,10 +1,8 @@
 // ===================================================================================
-// USB HID Composite Device Functions for CH551, CH552 and CH554              * v1.0 *
+// USB HID Composite Device Functions for CH551, CH552 and CH554              * v1.1 *
 // ===================================================================================
 
 #include "usb_composite.h"
-#include "usb_hid.h"
-#include "usb_handler.h"
 
 #define KBD_sendReport()    HID_sendReport(KBD_report, sizeof(KBD_report))
 #define CON_sendReport()    HID_sendReport(CON_report, sizeof(CON_report))

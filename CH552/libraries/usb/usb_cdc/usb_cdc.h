@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USB CDC Functions for CH551, CH552 and CH554                         * v1.3 *
+// Basic USB CDC Functions for CH551, CH552 and CH554                         * v1.4 *
 // ===================================================================================
 //
 // Functions available:
@@ -21,6 +21,8 @@
 
 #pragma once
 #include <stdint.h>
+#include "ch554.h"
+#include "usb_descr.h"
 #include "usb_handler.h"
 
 // ===================================================================================

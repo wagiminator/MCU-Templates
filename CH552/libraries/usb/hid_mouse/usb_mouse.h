@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Standard Mouse Functions for CH551, CH552 and CH554                * v1.0 *
+// USB HID Standard Mouse Functions for CH551, CH552 and CH554                * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -17,6 +17,7 @@
 #pragma once
 #include <stdint.h>
 #include "usb_hid.h"
+#include "usb_handler.h"
 
 // Functions
 #define MOUSE_init HID_init                 // init mouse

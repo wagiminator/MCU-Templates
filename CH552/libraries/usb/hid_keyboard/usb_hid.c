@@ -2,10 +2,7 @@
 // USB HID Functions for CH551, CH552 and CH554                               * v1.1 *
 // ===================================================================================
 
-#include "ch554.h"
-#include "usb.h"
 #include "usb_hid.h"
-#include "usb_descr.h"
 
 // ===================================================================================
 // Variables and Defines
@@ -38,16 +35,17 @@ void HID_EP_init(void) {
               | UEP_T_RES_NAK;                    // EP1 IN transaction returns NAK
   UEP4_1_MOD  = bUEP1_TX_EN;                      // EP1 TX enable
   UEP1_T_LEN  = 0;                                // EP1 nothing to send
+  #ifdef EP2_SIZE
   UEP2_DMA    = (uint16_t)EP2_buffer;             // EP2 data transfer address
   UEP2_CTRL   = bUEP_AUTO_TOG                     // EP2 Auto flip sync flag
               | UEP_R_RES_ACK;                    // EP2 OUT transaction returns ACK
   UEP2_3_MOD  = bUEP2_RX_EN;                      // EP2 RX_enable
   HID_writeBusyFlag = 0;                          // reset write busy flag
+  #endif
 }
 
 // Endpoint 1 IN handler (HID report transfer to host completed)
 void HID_EP1_IN(void) {
-  UEP1_T_LEN = 0;                                 // no data to send anymore
   UEP1_CTRL  = (UEP1_CTRL & ~MASK_UEP_T_RES)
              | UEP_T_RES_NAK;                     // -> respond NAK
   HID_writeBusyFlag = 0;                          // clear busy flag

@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Standard Keyboard Functions for CH551, CH552 and CH554             * v1.0 *
+// USB HID Standard Keyboard Functions for CH551, CH552 and CH554             * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -17,6 +17,7 @@
 #pragma once
 #include <stdint.h>
 #include "usb_hid.h"
+#include "usb_handler.h"
 
 // Functions
 #define KBD_init   HID_init           // init keyboard
@@ -27,7 +28,7 @@ void KBD_releaseAll(void);            // release all keys on keyboard
 void KBD_print(char* str);            // type some text on the keyboard
 
 // Keyboard LED states
-#define KBD_getState()          (EP2_buffer[0]) 
+#define KBD_getState()          (HID_IN_buffer[0]) 
 #define KBD_NUM_LOCK_state      (KBD_getState() & 1)
 #define KBD_CAPS_LOCK_state     ((KBD_getState() >> 1) & 1)
 #define KBD_SCROLL_LOCK_state   ((KBD_getState() >> 2) & 1)

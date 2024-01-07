@@ -18,6 +18,7 @@
 #pragma once
 #include <stdint.h>
 #include "usb.h"
+#include "config.h"
 
 // ===================================================================================
 // USB Endpoint Definitions
