@@ -30,20 +30,20 @@ void USB_EP_init(void) {
 // ===================================================================================
 void USB_init(void) {
   USB_CTRL    = bUC_DEV_PU_EN               // USB internal pull-up enable
-              | bUC_INT_BUSY                // Return NAK if USB INT flag not clear
+              | bUC_INT_BUSY                // return NAK if USB INT flag not clear
               | bUC_DMA_EN;                 // DMA enable
-  UDEV_CTRL   = bUD_PD_DIS                  // Disable UDP/UDM pulldown resistor
-              | bUD_PORT_EN;                // Enable port, full-speed
+  UDEV_CTRL   = bUD_PD_DIS                  // disable UDP/UDM pulldown resistor
+              | bUD_PORT_EN;                // enable port, full-speed
 
   USB_EP_init();                            // setup endpoints
 
-  USB_INT_EN |= bUIE_SUSPEND                // Enable device hang interrupt
-              | bUIE_TRANSFER               // Enable USB transfer completion interrupt
-              | bUIE_BUS_RST;               // Enable device mode USB bus reset interrupt
+  USB_INT_EN |= bUIE_SUSPEND                // enable device hang interrupt
+              | bUIE_TRANSFER               // enable USB transfer completion interrupt
+              | bUIE_BUS_RST;               // enable device mode USB bus reset interrupt
 
-  USB_INT_FG |= 0x1f;                       // Clear interrupt flag
-  IE_USB      = 1;                          // Enable USB interrupt
-  EA          = 1;                          // Enable global interrupts
+  USB_INT_FG  = 0x1f;                       // clear interrupt flag
+  IE_USB      = 1;                          // enable USB interrupt
+  EA          = 1;                          // enable global interrupts
 }
 
 // ===================================================================================
@@ -55,8 +55,9 @@ void USB_init(void) {
 void USB_EP0_copyDescr(uint8_t len) {
   len;                          // stop unreferenced argument warning
   __asm
-    push ar7                    ; r7 -> stack
-    mov  r7, dpl                ; r7 <- len
+    push acc                    ; acc -> stack
+    push ar7                    ; r7  -> stack
+    mov  r7, dpl                ; r7  <- len
     inc  _XBUS_AUX              ; select dptr1
     mov  dptr, #_EP0_buffer     ; dptr1 <- EP0_buffer
     dec  _XBUS_AUX              ; select dptr0
@@ -68,7 +69,8 @@ void USB_EP0_copyDescr(uint8_t len) {
     inc  dptr                   ; inc dptr0
     .DB  0xA5                   ; acc -> EP0_buffer[dptr1] & inc dptr1
     djnz r7, 01$                ; repeat len times
-    pop  ar7                    ; r7 <- stack
+    pop  ar7                    ; r7  <- stack
+    pop  acc                    ; acc <- stack
   __endasm;
 }
 
@@ -325,12 +327,8 @@ void USB_EP0_SETUP(void) {
     USB_SetupReq = 0xff;
     UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL; // STALL
   }
-  else if(len <= EP0_SIZE) {      // Tx data to host or send 0-length packet
+  else {                                    // Tx data to host or send 0-length packet
     UEP0_T_LEN = len;
-    UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK; // Expect DATA1, Answer ACK
-  }
-  else {
-    UEP0_T_LEN = 0;  // Tx data to host or send 0-length packet
     UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK; // Expect DATA1, Answer ACK
   }
 }
@@ -388,7 +386,7 @@ void USB_EP0_OUT(void) {
   }
   #endif
 
-  UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK; // respond NAK
+  UEP0_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
 }
 
 // ===================================================================================
@@ -401,6 +399,7 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
     // Dispatch to service functions
     uint8_t callIndex = USB_INT_ST & MASK_UIS_ENDP;
     switch (USB_INT_ST & MASK_UIS_TOKEN) {
+
       case UIS_TOKEN_OUT:
         switch (callIndex) {
           case 0: EP0_OUT_callback(); break;
@@ -419,6 +418,7 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
           default: break;
         }
         break;
+
       case UIS_TOKEN_SOF:
         switch (callIndex) {
           #ifdef EP0_SOF_callback
@@ -439,6 +439,7 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
           default: break;
         }
         break;
+
       case UIS_TOKEN_IN:
         switch (callIndex) {
           case 0: EP0_IN_callback(); break;
@@ -457,21 +458,10 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
           default: break;
         }
         break;
+
       case UIS_TOKEN_SETUP:
         switch (callIndex) {
-          case 0: EP0_SETUP_callback(); break;
-          #ifdef EP1_SETUP_callback
-          case 1: EP1_SETUP_callback(); break;
-          #endif
-          #ifdef EP2_SETUP_callback
-          case 2: EP2_SETUP_callback(); break;
-          #endif
-          #ifdef EP3_SETUP_callback
-          case 3: EP3_SETUP_callback(); break;
-          #endif
-          #ifdef EP4_SETUP_callback
-          case 4: EP4_SETUP_callback(); break;
-          #endif
+          case 0:  EP0_SETUP_callback(); break;
           default: break;
         }
         break;
@@ -481,6 +471,9 @@ void USB_interrupt(void) {   // inline not really working in multiple files in S
     
   // Device mode USB bus reset
   if(UIF_BUS_RST) {
+    #ifdef USB_RESET_handler
+    USB_RESET_handler();                    // custom reset handler
+    #endif
     USB_EP_init();                          // reset endpoints
     USB_DEV_AD = 0x00;                      // reset device address
     USB_INT_FG = 0x1f;                      // clear all interrupt flags

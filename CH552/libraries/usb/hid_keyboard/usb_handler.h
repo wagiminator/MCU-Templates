@@ -35,5 +35,6 @@ void HID_EP1_IN(void);
 // ===================================================================================
 // Functions
 // ===================================================================================
-void USB_interrupt(void);
 void USB_init(void);
+void USB_interrupt(void);
+void USB_EP0_copyDescr(uint8_t len);

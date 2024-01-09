@@ -125,7 +125,7 @@ void CDC_EP0_OUT(void) {
     }
   }
   else {
-    UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK;   // default NAK
+    UEP0_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
   }
 }
 
