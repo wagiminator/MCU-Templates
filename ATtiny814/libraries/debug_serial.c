@@ -43,7 +43,7 @@ void DEBUG_println(const char* str) {
 }
 
 // For BCD conversion
-const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000};
+const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000};
 
 // Print decimal value (BCD conversion by substraction method)
 void DEBUG_printD(uint16_t value) {

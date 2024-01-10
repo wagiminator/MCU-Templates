@@ -7,7 +7,7 @@
 #include "print.h"
 
 // For BCD conversion
-const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000};
+const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000};
 
 // Print decimal value (BCD conversion by substraction method)
 void printD(void (*putchar) (char c), uint16_t value) {
