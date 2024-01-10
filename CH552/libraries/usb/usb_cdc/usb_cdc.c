@@ -125,7 +125,8 @@ void CDC_EP0_OUT(void) {
     }
   }
   else {
-    UEP0_CTRL = UEP_R_RES_ACK | UEP_T_RES_NAK;
+    UEP0_T_LEN = 0;
+    UEP0_CTRL  = UEP_R_RES_ACK | UEP_T_RES_ACK;
   }
 }
 

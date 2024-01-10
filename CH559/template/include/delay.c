@@ -82,7 +82,7 @@ void DLY_us(uint16_t n) {           // delay in us
         __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 52000000
-        S__asm__("inc _SAFE_MOD");
+        __asm__("inc _SAFE_MOD");
       #endif
       #if F_CPU >= 54000000
         __asm__("inc _SAFE_MOD");

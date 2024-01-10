@@ -13,6 +13,8 @@
 #define USB_SetupBuf     ((PUSB_SETUP_REQ)EP0_buffer)
 extern volatile uint8_t  USB_SetupReq, USB_SetupTyp;
 extern volatile uint16_t USB_SetupLen;
+extern volatile __bit    USB_ENUM_OK;
+extern __code uint8_t*   USB_pDescr;
 
 // ===================================================================================
 // Custom External USB Handler Functions
