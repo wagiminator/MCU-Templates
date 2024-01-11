@@ -64,18 +64,6 @@ void CDC_write(char c) {
   if(CDC_writePointer == EP2_SIZE) CDC_flush();         // flush if buffer full
 }
 
-// Write string to OUT buffer
-void CDC_print(char* str) {
-  while(*str) CDC_write(*str++);                        // write each char of string
-}
-
-// Write string with newline to OUT buffer and flush
-void CDC_println(char* str) {
-  CDC_print(str);                                       // write string
-  CDC_write('\n');                                      // write new line
-  CDC_flush();                                          // flush OUT buffer
-}
-
 // Read single character from IN buffer
 char CDC_read(void) {
   char data;
@@ -131,11 +119,13 @@ uint8_t CDC_control(void) {
 void CDC_EP0_OUT(void) {
   uint8_t i, len;
   if(USB_SetupReq == SET_LINE_CODING) {                 // set line coding
-    len = USBFSD->RX_LEN;
-    for(i=0; i<((sizeof(CDC_lineCoding)<=len)?sizeof(CDC_lineCoding):len); i++)
-      ((uint8_t*)&CDC_lineCoding)[i] = EP0_buffer[i];   // receive line coding from host
-    USBFSD->UEP0_TX_LEN = 0;                            // send 0-length packet
-    USBFSD->UEP0_CTRL_H = (USBFSD->UEP0_CTRL_H & ~USBFS_UEP_T_RES_MASK) | USBFS_UEP_T_RES_ACK;
+    if(USBFSD->INT_FG & USBFS_U_TOG_OK) {
+      len = USBFSD->RX_LEN;
+      for(i=0; i<((sizeof(CDC_lineCoding)<=len)?sizeof(CDC_lineCoding):len); i++)
+        ((uint8_t*)&CDC_lineCoding)[i] = EP0_buffer[i]; // receive line coding from host
+      USBFSD->UEP0_TX_LEN = 0;                          // send 0-length packet
+      USBFSD->UEP0_CTRL_H = (USBFSD->UEP0_CTRL_H & ~USBFS_UEP_T_RES_MASK) | USBFS_UEP_T_RES_ACK;
+    }
   }
   else {
     USBFSD->UEP0_TX_LEN = 0;
@@ -154,10 +144,10 @@ void CDC_EP2_IN(void) {
 
 // Endpoint 2 OUT handler (bulk data transfer from host)
 void CDC_EP2_OUT(void) {
-  CDC_readByteCount = USBFSD->RX_LEN;                 // set number of received data bytes
-  CDC_readPointer = 0;                                // reset read pointer for fetching
-  if(CDC_readByteCount) {
+  if((USBFSD->INT_FG & USBFS_U_TOG_OK) && USBFSD->RX_LEN) {
     // respond NAK after a packet. Let main code change response after handling.
     USBFSD->UEP2_CTRL_H = (USBFSD->UEP2_CTRL_H & ~USBFS_UEP_R_RES_MASK) | USBFS_UEP_R_RES_NAK;
+    CDC_readByteCount   = USBFSD->RX_LEN;             // set number of received data bytes
+    CDC_readPointer     = 0;                          // reset read pointer for fetching
   }
 }

@@ -2,7 +2,7 @@
 // USB Descriptors and Definitions
 // ===================================================================================
 //
-// Definition of USB descriptors and endpoints.
+// Definition of USB descriptors and endpoint sizes and addresses.
 //
 // The following must be defined in config.h:
 // USB_VENDOR_ID            - Vendor ID (16-bit word)
@@ -30,35 +30,36 @@ extern "C" {
 // Endpoint sizes
 #define EP0_SIZE        8
 #define EP1_SIZE        8
-#define EP2_SIZE        64
 
 #define EP0_BUF_SIZE    EP_BUF_SIZE(EP0_SIZE)
 #define EP1_BUF_SIZE    EP_BUF_SIZE(EP1_SIZE)
-#define EP2_BUF_SIZE    EP_BUF_SIZE(EP2_SIZE) + 64
-
 #define EP_BUF_SIZE(x)  (x+2<64 ? x+2 : 64)
 
 // Endpoint buffers
 extern uint8_t __attribute__((aligned(4))) EP0_buffer[];
 extern uint8_t __attribute__((aligned(4))) EP1_buffer[];
-extern uint8_t __attribute__((aligned(4))) EP2_buffer[];
 
 // ===================================================================================
 // Device and Configuration Descriptors
 // ===================================================================================
 typedef struct __attribute__((packed)) {
   USB_CFG_DESCR config;
-  USB_IAD_DESCR association;
   USB_ITF_DESCR interface0;
-  uint8_t functional[19];
+  USB_HID_DESCR hid0;
   USB_ENDP_DESCR ep1IN;
-  USB_ITF_DESCR interface1;
-  USB_ENDP_DESCR ep2OUT;
-  USB_ENDP_DESCR ep2IN;
-} USB_CFG_DESCR_CDC, *PUSB_CFG_DESCR_CDC;
+} USB_CFG_DESCR_HID, *PUSB_CFG_DESCR_HID;
 
 extern const USB_DEV_DESCR DevDescr;
-extern const USB_CFG_DESCR_CDC CfgDescr;
+extern const USB_CFG_DESCR_HID CfgDescr;
+
+// ===================================================================================
+// HID Report Descriptors
+// ===================================================================================
+extern const uint8_t ReportDescr[];
+extern const uint8_t ReportDescrLen;
+
+#define USB_REPORT_DESCR      ReportDescr
+#define USB_REPORT_DESCR_LEN  ReportDescrLen
 
 // ===================================================================================
 // String Descriptors
