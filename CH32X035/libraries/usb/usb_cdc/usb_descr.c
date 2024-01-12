@@ -5,7 +5,7 @@
 
 #include "usb_descr.h"
 
-#define __code const __attribute__((section(".text")))
+#define __code const __attribute__((section(".rodata")))
 
 // ===================================================================================
 // Endpoint Buffers
