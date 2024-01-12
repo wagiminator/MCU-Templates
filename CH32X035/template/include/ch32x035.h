@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32X035/X034/X033                                         * v0.1 *
+// Header file for CH32X035/X034/X033                                         * v0.2 *
 // ===================================================================================
 // This contains a copy of ch32x035.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -461,11 +461,12 @@ typedef struct
     __IO uint8_t  MIS_ST;
     __IO uint8_t  INT_FG;
     __IO uint8_t  INT_ST;
-    __IO uint32_t RX_LEN;
+    __IO uint16_t RX_LEN;
+    uint16_t      RESERVED1;
     __IO uint8_t  UEP4_1_MOD;
     __IO uint8_t  UEP2_3_MOD;
     __IO uint8_t  UEP567_MOD;
-    uint8_t       RESERVED1;
+    uint8_t       RESERVED2;
     __IO uint32_t UEP0_DMA;
     __IO uint32_t UEP1_DMA;
     __IO uint32_t UEP2_DMA;
@@ -505,7 +506,6 @@ typedef struct
             __IO uint16_t  UEP4_CTRL_H;
         };
     };
-    uint32_t      RESERVED2;
     uint32_t      RESERVED3;
     uint32_t      RESERVED4;
     uint32_t      RESERVED5;
@@ -513,10 +513,11 @@ typedef struct
     uint32_t      RESERVED7;
     uint32_t      RESERVED8;
     uint32_t      RESERVED9;
+    uint32_t      RESERVED10;
     __IO uint32_t UEP5_DMA;
     __IO uint32_t UEP6_DMA;
     __IO uint32_t UEP7_DMA;
-    uint32_t      RESERVED10;
+    uint32_t      RESERVED11;
     union{
         __IO uint32_t  UEP5_CTRL;
         struct{
@@ -2169,7 +2170,7 @@ typedef struct
 #define GPIO_CFGXR_MODE23_0                      ((uint32_t)0x10000000) /* Bit 0 */
 #define GPIO_CFGXR_MODE23_1                      ((uint32_t)0x20000000) /* Bit 1 */
 
-#define GPIO_CFGXR_CNF                          ((uint32_t)0xCCCCCCCC) /* Port x configuration bits */
+#define GPIO_CFGXR_CNF                           ((uint32_t)0xCCCCCCCC) /* Port x configuration bits */
 
 #define GPIO_CFGXR_CNF16                         ((uint32_t)0x0000000C) /* CNF16[1:0] bits (Port x configuration bits, pin 0) */
 #define GPIO_CFGXR_CNF16_0                       ((uint32_t)0x00000004) /* Bit 0 */
@@ -2399,12 +2400,14 @@ typedef struct
 #define AFIO_CTLR_UDM_PUE                        ((uint32_t)0x00000003) /* PC16/UDM Pin pull-up Mode*/
 #define AFIO_CTLR_UDM_PUE_0                      ((uint32_t)0x00000001) /* bit[0] */
 #define AFIO_CTLR_UDM_PUE_1                      ((uint32_t)0x00000002) /* bit[1] */
+#define AFIO_CTLR_UDM_PUE_1K5                    ((uint32_t)0x00000003) /* pull-up 1.5KΩ */
+#define AFIO_CTLR_UDM_PUE_10K                    ((uint32_t)0x00000002) /* pull-up 10KΩ */
 
 #define AFIO_CTLR_UDP_PUE                        ((uint32_t)0x0000000c) /* PC17/UDP Pin pull-up Mode*/
 #define AFIO_CTLR_UDP_PUE_0                      ((uint32_t)0x00000004) /* bit[2] */
 #define AFIO_CTLR_UDP_PUE_1                      ((uint32_t)0x00000008) /* bit[3] */
-#define AFIO_CTLR_UDP_PUE_1K5                    ((uint32_t)0x0000000c)
-#define AFIO_CTLR_UDP_PUE_10K                    ((uint32_t)0x00000008)
+#define AFIO_CTLR_UDP_PUE_1K5                    ((uint32_t)0x0000000c) /* pull-up 1.5KΩ */
+#define AFIO_CTLR_UDP_PUE_10K                    ((uint32_t)0x00000008) /* pull-up 10KΩ */
 
 #define AFIO_CTLR_USB_PHY_V33                    ((uint32_t)0x00000040) /* USB transceiver PHY output and pull-up limiter configuration */
 #define AFIO_CTLR_USB_IOEN                       ((uint32_t)0x00000080) /* USB Remap pin enable */
@@ -2523,6 +2526,130 @@ typedef struct
 #define I2C_CKCFGR_CCR                          ((uint16_t)0x0FFF) /* Clock Control Register in Fast/Standard mode (Master mode) */
 #define I2C_CKCFGR_DUTY                         ((uint16_t)0x4000) /* Fast Mode Duty Cycle */
 #define I2C_CKCFGR_FS                           ((uint16_t)0x8000) /* I2C Master Mode Selection */
+
+/******************************************************************************/
+/*                 Operational Amplifiers and Comparators                     */
+/******************************************************************************/
+
+/******************  Bit definition for OPA_CFGR1 register  *******************/
+#define OPA_CFGR1_POLL_EN1                      ((uint16_t)0x0001) /* OPA1 positive polling enable */
+#define OPA_CFGR1_POLL_EN2                      ((uint16_t)0x0002) /* OPA2 positive polling enable */
+#define OPA_CFGR1_BKIN_EN1                      ((uint16_t)0x0004) /* Timer's brake input source OPA1 enable */
+#define OPA_CFGR1_BKIN_EN2                      ((uint16_t)0x0008) /* Timer's brake input source OPA2 enable */
+#define OPA_CFGR1_RST_EN1                       ((uint16_t)0x0010) /* OPA1 reset system enable */
+#define OPA_CFGR1_RST_EN2                       ((uint16_t)0x0020) /* OPA2 reset system enable */
+#define OPA_CFGR1_BKIN_SEL                      ((uint16_t)0x0040) /* Timer selection for brake input connection */
+#define OPA_CFGR1_POLL_LOCK                     ((uint16_t)0x0080) /* POLL lock */
+#define OPA_CFGR1_IE_OUT1                       ((uint16_t)0x0100) /* OPA1 interrupt enable */
+#define OPA_CFGR1_IE_OUT2                       ((uint16_t)0x0200) /* OPA2 interrupt enable */
+#define OPA_CFGR1_IE_CNT                        ((uint16_t)0x0400) /* OPA end-of-polling-interval interrupt enable */
+#define OPA_CFGR1_NMI_EN                        ((uint16_t)0x0800) /* OPA connection NMI interrupt enable */
+#define OPA_CFGR1_IF_OUT1                       ((uint16_t)0x1000) /* Interrupt flag for polling to an OPA1 output high */
+#define OPA_CFGR1_IF_OUT2                       ((uint16_t)0x2000) /* Interrupt flag for polling to an OPA2 output high */
+#define OPA_CFGR1_IF_CNT                        ((uint16_t)0x4000) /* Interrupt flag for the end of the OPA polling interval */
+
+/******************  Bit definition for OPA_CFGR2 register  *******************/
+#define OPA_CFGR2_POLL_VLU                      ((uint16_t)0x01ff) /* OPA positive end polling interval */
+#define OPA_CFGR2_POLL1_NUM                     ((uint16_t)0x0600) /* Configure the number of positive ends polled by OPA1 */
+#define OPA_CFGR2_POLL1_NUM_1                   ((uint16_t)0x0000) /* 1, O1P0 */
+#define OPA_CFGR2_POLL1_NUM_2                   ((uint16_t)0x0200) /* 2, O1P0 + O1P1 */
+#define OPA_CFGR2_POLL1_NUM_3                   ((uint16_t)0x0400) /* 3, O1P0 + O1P1 + O1P2*/
+#define OPA_CFGR2_POLL2_NUM                     ((uint16_t)0x1800) /* Configure the number of positive ends polled by OPA2 */
+#define OPA_CFGR2_POLL2_NUM_1                   ((uint16_t)0x0000) /* 1, O2P0 */
+#define OPA_CFGR2_POLL2_NUM_2                   ((uint16_t)0x0800) /* 2, O2P0 + O2P1 */
+#define OPA_CFGR2_POLL2_NUM_3                   ((uint16_t)0x1000) /* 3, O2P0 + O2P1 + O2P2*/
+
+/******************  Bit definition for OPA_CTLR1 register  *******************/
+#define OPA_CTLR1_EN1                           ((uint32_t)0x00000001) /* OPA1 enable */
+#define OPA_CTLR1_MODE1                         ((uint32_t)0x00000002) /* OPA1 output channel selection */
+#define OPA_CTLR1_MODE1_PA3                     ((uint32_t)0x00000000) /* OPA1 output channel is PA3 */
+#define OPA_CTLR1_MODE1_PB5                     ((uint32_t)0x00000002) /* OPA1 output channel is PB5 */
+#define OPA_CTLR1_PSEL1                         ((uint32_t)0x00000018) /* OPA1 positive input selection */
+#define OPA_CTLR1_PSEL1_PB0                     ((uint32_t)0x00000000) /* OPA1 positive input is PB0 */
+#define OPA_CTLR1_PSEL1_PB8                     ((uint32_t)0x00000008) /* OPA1 positive input is PB8 */
+#define OPA_CTLR1_PSEL1_PB4                     ((uint32_t)0x00000010) /* OPA1 positive input is PB4 */
+#define OPA_CTLR1_FB_EN1                        ((uint32_t)0x00000020) /* OPA1 internal feedback resistor enable */
+#define OPA_CTLR1_NSEL1                         ((uint32_t)0x000001c0) /* OPA1 negative input selection and gain selection */
+#define OPA_CTLR1_NSEL1_PA6                     ((uint32_t)0x00000000) /* OPA1 negative input is PA6 */
+#define OPA_CTLR1_NSEL1_PB6                     ((uint32_t)0x00000040) /* OPA1 negative input is PB6 */
+#define OPA_CTLR1_NSEL1_PA1                     ((uint32_t)0x00000080) /* OPA1 negative input is PA1, PGA 16x */
+#define OPA_CTLR1_NSEL1_PGA_4X                  ((uint32_t)0x000000c0) /* OPA1 PGA  4x amplification */
+#define OPA_CTLR1_NSEL1_PGA_8X                  ((uint32_t)0x00000100) /* OPA1 PGA  8x amplification */
+#define OPA_CTLR1_NSEL1_PGA_16X                 ((uint32_t)0x00000140) /* OPA1 PGA 16x amplification */
+#define OPA_CTLR1_NSEL1_PGA_32X                 ((uint32_t)0x00000180) /* OPA1 PGA 32x amplification */
+#define OPA_CTLR1_NSEL1_OFF                     ((uint32_t)0x000001c0) /* OPA1 negative input off */
+
+#define OPA_CTLR1_EN2                           ((uint32_t)0x00010000) /* OPA2 enable */
+#define OPA_CTLR1_MODE2                         ((uint32_t)0x00020000) /* OPA2 output channel selection */
+#define OPA_CTLR1_MODE2_PA4                     ((uint32_t)0x00000000) /* OPA2 output channel is PA4 */
+#define OPA_CTLR1_MODE2_PA2                     ((uint32_t)0x00020000) /* OPA2 output channel is PA2 */
+#define OPA_CTLR1_PSEL2                         ((uint32_t)0x00180000) /* OPA2 positive input selection */
+#define OPA_CTLR1_PSEL2_PA7                     ((uint32_t)0x00000000) /* OPA2 positive input is PA7 */
+#define OPA_CTLR1_PSEL2_PB3                     ((uint32_t)0x00080000) /* OPA2 positive input is PB3 */
+#define OPA_CTLR1_PSEL2_PB7                     ((uint32_t)0x00100000) /* OPA2 positive input is PB7 */
+#define OPA_CTLR1_FB_EN2                        ((uint32_t)0x00200000) /* OPA2 internal feedback resistor enable */
+#define OPA_CTLR1_NSEL2                         ((uint32_t)0x01c00000) /* OPA2 negative input selection and gain selection */
+#define OPA_CTLR1_NSEL2_PA5                     ((uint32_t)0x00000000) /* OPA2 negative input is PA5 */
+#define OPA_CTLR1_NSEL2_PB1                     ((uint32_t)0x00400000) /* OPA2 negative input is PB1 */
+#define OPA_CTLR1_NSEL2_PA1                     ((uint32_t)0x00800000) /* OPA2 negative input is PA1, PGA 16x */
+#define OPA_CTLR1_NSEL2_PGA_4X                  ((uint32_t)0x00c00000) /* OPA2 PGA  4x amplification */
+#define OPA_CTLR1_NSEL2_PGA_8X                  ((uint32_t)0x01000000) /* OPA2 PGA  8x amplification */
+#define OPA_CTLR1_NSEL2_PGA_16X                 ((uint32_t)0x01400000) /* OPA2 PGA 16x amplification */
+#define OPA_CTLR1_NSEL2_PGA_32X                 ((uint32_t)0x01800000) /* OPA2 PGA 32x amplification */
+#define OPA_CTLR1_NSEL2_OFF                     ((uint32_t)0x01c00000) /* OPA2 negative input off */
+
+#define OPA_CTLR1_OPA_LOCK                      ((uint32_t)0x80000000) /* OPA lock */
+
+/******************  Bit definition for OPA_CTLR2 register  *******************/
+#define OPA_CTLR2_EN1                           ((uint32_t)0x00000001) /* CMP1 enable */
+#define OPA_CTLR2_MODE1                         ((uint32_t)0x00000002) /* CMP1 output channel selection */
+#define OPA_CTLR2_MODE1_T2C1                    ((uint32_t)0x00000000) /* CMP1 output channel is TIM2_CH1 */
+#define OPA_CTLR2_MODE1_PA1                     ((uint32_t)0x00000002) /* CMP1 output channel is PA1 */
+#define OPA_CTLR2_NSEL1                         ((uint32_t)0x00000004) /* CMP1 negative input channel selection */
+#define OPA_CTLR2_NSEL1_PC3                     ((uint32_t)0x00000000) /* CMP1 negative input is PC3 */
+#define OPA_CTLR2_NSEL1_PA23                    ((uint32_t)0x00000004) /* CMP1 negative input is PA23 */
+#define OPA_CTLR2_PSEL1                         ((uint32_t)0x00000008) /* CMP1 negative input channel selection */
+#define OPA_CTLR2_PSEL1_PC19                    ((uint32_t)0x00000000) /* CMP1 negative input is PC3 */
+#define OPA_CTLR2_PSEL1_PA0                     ((uint32_t)0x00000008) /* CMP1 negative input is PA23 */
+#define OPA_CTLR2_HYEN1                         ((uint32_t)0x00000010) /* CMP1 comparator hysteresis enable */
+
+#define OPA_CTLR2_EN2                           ((uint32_t)0x00000020) /* CMP2 enable */
+#define OPA_CTLR2_MODE2                         ((uint32_t)0x00000040) /* CMP2 output channel selection */
+#define OPA_CTLR2_MODE2_T2C2                    ((uint32_t)0x00000000) /* CMP2 output channel is TIM2_CH2 */
+#define OPA_CTLR2_MODE2_PB2                     ((uint32_t)0x00000040) /* CMP2 output channel is PB2 */
+#define OPA_CTLR2_NSEL2                         ((uint32_t)0x00000080) /* CMP2 negative input channel selection */
+#define OPA_CTLR2_NSEL2_PA22                    ((uint32_t)0x00000000) /* CMP2 negative input is PA22 */
+#define OPA_CTLR2_NSEL2_PC3                     ((uint32_t)0x00000080) /* CMP2 negative input is PC3 */
+#define OPA_CTLR2_PSEL2                         ((uint32_t)0x00000100) /* CMP2 negative input channel selection */
+#define OPA_CTLR2_PSEL2_PA12                    ((uint32_t)0x00000000) /* CMP2 negative input is PA12 */
+#define OPA_CTLR2_PSEL2_PA11                    ((uint32_t)0x00000100) /* CMP2 negative input is PA11 */
+#define OPA_CTLR2_HYEN2                         ((uint32_t)0x00000200) /* CMP2 comparator hysteresis enable */
+
+#define OPA_CTLR2_EN3                           ((uint32_t)0x00000400) /* CMP3 enable */
+#define OPA_CTLR2_MODE3                         ((uint32_t)0x00000800) /* CMP3 output channel selection */
+#define OPA_CTLR2_MODE3_T2C3                    ((uint32_t)0x00000000) /* CMP3 output channel is TIM2_CH3 */
+#define OPA_CTLR2_MODE3_PB3                     ((uint32_t)0x00000800) /* CMP3 output channel is PB3 */
+#define OPA_CTLR2_NSEL3                         ((uint32_t)0x00001000) /* CMP3 negative input channel selection */
+#define OPA_CTLR2_NSEL3_PA2                     ((uint32_t)0x00000000) /* CMP3 negative input is PA2 */
+#define OPA_CTLR2_NSEL3_PC3                     ((uint32_t)0x00001000) /* CMP3 negative input is PC3 */
+#define OPA_CTLR2_PSEL3                         ((uint32_t)0x00002000) /* CMP3 negative input channel selection */
+#define OPA_CTLR2_PSEL3_PA13                    ((uint32_t)0x00000000) /* CMP3 negative input is PA13 */
+#define OPA_CTLR2_PSEL3_PA14                    ((uint32_t)0x00002000) /* CMP3 negative input is PA14 */
+#define OPA_CTLR2_HYEN3                         ((uint32_t)0x00004000) /* CMP3 comparator hysteresis enable */
+
+#define OPA_CTLR2_CMP_LOCK                      ((uint32_t)0x80000000) /* CMP lock */
+
+/*******************  Bit definition for OPA_KEY register  ********************/
+#define OPA_KEY1                                ((uint32_t)0x45670123) /* OPA unlock keys */
+#define OPA_KEY2                                ((uint32_t)0xCDEF89AB) /* OPA unlock keys */
+
+/*******************  Bit definition for CMP_KEY register  ********************/
+#define CMP_KEY1                                ((uint32_t)0x45670123) /* CMP unlock keys */
+#define CMP_KEY2                                ((uint32_t)0xCDEF89AB) /* CMP unlock keys */
+
+/*******************  Bit definition for POLL_KEY register  *******************/
+#define POLL_KEY1                               ((uint32_t)0x45670123) /* POLL unlock keys */
+#define POLL_KEY2                               ((uint32_t)0xCDEF89AB) /* POLL unlock keys */
 
 /******************************************************************************/
 /*                             Power Control                                  */
@@ -3334,10 +3461,34 @@ typedef struct
 #define USBFS_UIS_TOKEN_IN                      ((uint8_t)0x20)
 #define USBFS_UIS_TOKEN_SETUP                   ((uint8_t)0x30)
 #define USBFS_UIS_TOG_OK                        ((uint8_t)0x40)        /* Current synchronous flag match status */
-#define USBFS_UIS_IS_NAK                        ((uint8_t)0x80)        /* USB device: NAK acknowledge status */
+#define USBFS_UIS_SETUP_ACT                     ((uint8_t)0x80)        /* SETUP transaction complete */
 
 /*****************************  RX_LEN register  *****************************/
-#define USBFS_RX_LEN_MASK                       ((uint16_t)0x03ff)     /* Number of bytes received by current endpoint */
+#define USBFS_RX_LEN_MASK                       ((uint16_t)0x007f)     /* Number of bytes received by current endpoint */
+
+/********************************  UEP4_1_MOD  *******************************/
+#define USBFS_UEP4_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 4 data buffer mode */
+#define USBFS_UEP4_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 4 transmission (IN) */
+#define USBFS_UEP4_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 4 reception (OUT) */
+#define USBFS_UEP1_BUF_MOD                      ((uint8_t)0x10)        /* Endpoint 1 data buffer mode */
+#define USBFS_UEP1_TX_EN                        ((uint8_t)0x40)        /* Enable endpoint 1 transmission (IN) */
+#define USBFS_UEP1_RX_EN                        ((uint8_t)0x80)        /* Enable endpoint 1 reception (OUT) */
+
+/********************************  UEP2_3_MOD  *******************************/
+#define USBFS_UEP2_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 2 data buffer mode */
+#define USBFS_UEP2_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 2 transmission (IN) */
+#define USBFS_UEP2_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 2 reception (OUT) */
+#define USBFS_UEP3_BUF_MOD                      ((uint8_t)0x10)        /* Endpoint data buffer mode */
+#define USBFS_UEP3_TX_EN                        ((uint8_t)0x40)        /* Enable endpoint transmission (IN) */
+#define USBFS_UEP3_RX_EN                        ((uint8_t)0x80)        /* Enable endpoint 3 reception (OUT) */
+
+/********************************  UEP567_MOD  ********************************/
+#define USBFS_UEP5_TX_EN                        ((uint8_t)0x01)        /* Enable endpoint 5 transmission (IN) */
+#define USBFS_UEP5_RX_EN                        ((uint8_t)0x02)        /* Enable endpoint 5 reception (OUT) */
+#define USBFS_UEP6_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 6 transmission (IN) */
+#define USBFS_UEP6_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 6 reception (OUT) */
+#define USBFS_UEP7_TX_EN                        ((uint8_t)0x10)        /* Enable endpoint 7 transmission (IN) */
+#define USBFS_UEP7_RX_EN                        ((uint8_t)0x20)        /* Enable endpoint 7 reception (OUT) */
 
 /********************************  UDEV_CTRL  ********************************/
 #define USBFS_UD_PORT_EN                        ((uint8_t)0x01)        /* USB device physical port enable */
@@ -3347,50 +3498,47 @@ typedef struct
 #define USBFS_UD_DP_PIN                         ((uint8_t)0x20)        /* Current UDP pin status */
 #define USBFS_UD_PD_DIS                         ((uint8_t)0x80)        /* UDP/UDM pull-down disable */
 
-/********************************  UEP4_1_MOD  *******************************/
-#define USBFS_UEP4_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 4 (8/12) data buffer mode */
-#define USBFS_UEP4_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 4 (8/12) transmission (IN) */
-#define USBFS_UEP4_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 4 (8/12) reception (OUT) */
-#define USBFS_UEP1_BUF_MOD                      ((uint8_t)0x10)        /* Endpoint 1 (9) data buffer mode */
-#define USBFS_UEP1_TX_EN                        ((uint8_t)0x40)        /* Enable endpoint 1 (9) transmission (IN) */
-#define USBFS_UEP1_RX_EN                        ((uint8_t)0x80)        /* Enable endpoint 1 (9) reception (OUT) */
-
-/********************************  UEP2_3_MOD  *******************************/
-#define USBFS_UEP2_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 2 (10) data buffer mode */
-#define USBFS_UEP2_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 2 (10) transmission (IN) */
-#define USBFS_UEP2_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 2 (10) reception (OUT) */
-#define USBFS_UEP3_BUF_MOD                      ((uint8_t)0x10)        /* Endpoint 3 (11) data buffer mode */
-#define USBFS_UEP3_TX_EN                        ((uint8_t)0x40)        /* Enable endpoint 3 (11) transmission (IN) */
-#define USBFS_UEP3_RX_EN                        ((uint8_t)0x80)        /* Enable endpoint 3 (11) reception (OUT) */
-
-/********************************  UEP5_6_MOD  *******************************/
-#define USBFS_UEP5_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 5 (13) data buffer mode */
-#define USBFS_UEP5_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 5 (13) transmission (IN) */
-#define USBFS_UEP5_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 5 (13) reception (OUT) */
-#define USBFS_UEP6_BUF_MOD                      ((uint8_t)0x10)        /* Endpoint 6 (14) data buffer mode */
-#define USBFS_UEP6_TX_EN                        ((uint8_t)0x40)        /* Enable endpoint 6 (14) transmission (IN) */
-#define USBFS_UEP6_RX_EN                        ((uint8_t)0x80)        /* Enable endpoint 6 (14) reception (OUT) */
-
-/*********************************  UEP7_MOD  ********************************/
-#define USBFS_UEP7_BUF_MOD                      ((uint8_t)0x01)        /* Endpoint 7 (15) data buffer mode */
-#define USBFS_UEP7_TX_EN                        ((uint8_t)0x04)        /* Enable endpoint 7 (15) transmission (IN) */
-#define USBFS_UEP7_RX_EN                        ((uint8_t)0x08)        /* Enable endpoint 7 (15) reception (OUT) */
-
-/********************************  UEPn_CTRL  ********************************/
-#define USBFS_UEP_T_RES_MASK                    ((uint8_t)0x03)        /* Response control by transmitter to IN services */
-#define USBFS_UEP_T_RES_ACK                     ((uint8_t)0x00)        /* Rensponse ACK (ready) to IN services */
-#define USBFS_UEP_T_RES_TOUT                    ((uint8_t)0x01)        /* No response to IN services */
-#define USBFS_UEP_T_RES_NAK                     ((uint8_t)0x02)        /* Rensponse NAK (busy) to IN services */
-#define USBFS_UEP_T_RES_STALL                   ((uint8_t)0x03)        /* Rensponse STALL (error) to IN services */
-#define USBFS_UEP_R_RES_MASK                    ((uint8_t)0x0c)        /* Response control by transmitter to OUT services */
-#define USBFS_UEP_R_RES_ACK                     ((uint8_t)0x00)        /* Rensponse ACK (ready) to OUT services */
-#define USBFS_UEP_R_RES_TOUT                    ((uint8_t)0x04)        /* No response to OUT services */
-#define USBFS_UEP_R_RES_NAK                     ((uint8_t)0x08)        /* Rensponse NAK (busy) to OUT services */
-#define USBFS_UEP_R_RES_STALL                   ((uint8_t)0x0c)        /* Rensponse STALL (error) to OUT services */
-#define USBFS_UEP_AUTO_TOG                      ((uint8_t)0x10)        /* Synchronous trigger bit auto flip enable */
-#define USBFS_UEP_T_TOG                         ((uint8_t)0x40)        /* Synchronization trigger bit for IN services */
-#define USBFS_UEP_R_TOG                         ((uint8_t)0x80)        /* Synchronization trigger bit for OUT services */
+/********************************  UEPn_CTRL_H  ******************************/
+#define USBFS_UEP_T_RES_MASK                    ((uint16_t)0x0003)     /* Response control by transmitter to IN services */
+#define USBFS_UEP_T_RES_ACK                     ((uint16_t)0x0000)     /* Rensponse ACK (ready) to IN services */
+#define USBFS_UEP_T_RES_TOUT                    ((uint16_t)0x0001)     /* No response to IN services */
+#define USBFS_UEP_T_RES_NAK                     ((uint16_t)0x0002)     /* Rensponse NAK (busy) to IN services */
+#define USBFS_UEP_T_RES_STALL                   ((uint16_t)0x0003)     /* Rensponse STALL (error) to IN services */
+#define USBFS_UEP_R_RES_MASK                    ((uint16_t)0x000c)     /* Response control by transmitter to OUT services */
+#define USBFS_UEP_R_RES_ACK                     ((uint16_t)0x0000)     /* Rensponse ACK (ready) to OUT services */
+#define USBFS_UEP_R_RES_TOUT                    ((uint16_t)0x0004)     /* No response to OUT services */
+#define USBFS_UEP_R_RES_NAK                     ((uint16_t)0x0008)     /* Rensponse NAK (busy) to OUT services */
+#define USBFS_UEP_R_RES_STALL                   ((uint16_t)0x000c)     /* Rensponse STALL (error) to OUT services */
+#define USBFS_UEP_AUTO_TOG                      ((uint16_t)0x0010)     /* Synchronous trigger bit auto flip enable */
+#define USBFS_UEP_T_TOG                         ((uint16_t)0x0040)     /* Synchronization trigger bit for IN services */
+#define USBFS_UEP_R_TOG                         ((uint16_t)0x0080)     /* Synchronization trigger bit for OUT services */
 #define USBFS_UEP_RES_MASK                      (USBFS_UEP_T_RES_MASK | USBFS_UEP_R_RES_MASK)
+
+/*********************************  UEPX_MOD  *********************************/
+#define USBFS_UEP8_TX_EN                        ((uint32_t)0x00000001) /* Enable endpoint 8 transmission (IN) */
+#define USBFS_UEP9_TX_EN                        ((uint32_t)0x00000002) /* Enable endpoint 9 transmission (IN) */
+#define USBFS_UEP10_TX_EN                       ((uint32_t)0x00000004) /* Enable endpoint 10 transmission (IN) */
+#define USBFS_UEP11_TX_EN                       ((uint32_t)0x00000008) /* Enable endpoint 11 transmission (IN) */
+#define USBFS_UEP12_TX_EN                       ((uint32_t)0x00000010) /* Enable endpoint 12 transmission (IN) */
+#define USBFS_UEP13_TX_EN                       ((uint32_t)0x00000020) /* Enable endpoint 13 transmission (IN) */
+#define USBFS_UEP14_TX_EN                       ((uint32_t)0x00000040) /* Enable endpoint 14 transmission (IN) */
+#define USBFS_UEP15_TX_EN                       ((uint32_t)0x00000080) /* Enable endpoint 15 transmission (IN) */
+#define USBFS_UEP8_RX_EN                        ((uint32_t)0x00000100) /* Enable endpoint 8 reception (OUT) */
+#define USBFS_UEP9_RX_EN                        ((uint32_t)0x00000200) /* Enable endpoint 9 reception (OUT) */
+#define USBFS_UEP10_RX_EN                       ((uint32_t)0x00000400) /* Enable endpoint 10 reception (OUT) */
+#define USBFS_UEP11_RX_EN                       ((uint32_t)0x00000800) /* Enable endpoint 11 reception (OUT) */
+#define USBFS_UEP12_RX_EN                       ((uint32_t)0x00001000) /* Enable endpoint 12 reception (OUT) */
+#define USBFS_UEP13_RX_EN                       ((uint32_t)0x00002000) /* Enable endpoint 13 reception (OUT) */
+#define USBFS_UEP14_RX_EN                       ((uint32_t)0x00004000) /* Enable endpoint 14 reception (OUT) */
+#define USBFS_UEP15_RX_EN                       ((uint32_t)0x00008000) /* Enable endpoint 15 reception (OUT) */
+#define USBFS_UEP8_TX_AF                        ((uint32_t)0x00010000) /* Enable endpoint 8 alternate (IN) */
+#define USBFS_UEP9_TX_AF                        ((uint32_t)0x00020000) /* Enable endpoint 9 alternate (IN) */
+#define USBFS_UEP10_TX_AF                       ((uint32_t)0x00040000) /* Enable endpoint 10 alternate (IN) */
+#define USBFS_UEP11_TX_AF                       ((uint32_t)0x00080000) /* Enable endpoint 11 alternate (IN) */
+#define USBFS_UEP12_TX_AF                       ((uint32_t)0x00100000) /* Enable endpoint 12 alternate (IN) */
+#define USBFS_UEP13_TX_AF                       ((uint32_t)0x00200000) /* Enable endpoint 13 alternate (IN) */
+#define USBFS_UEP14_TX_AF                       ((uint32_t)0x00400000) /* Enable endpoint 14 alternate (IN) */
+#define USBFS_UEP15_TX_AF                       ((uint32_t)0x00800000) /* Enable endpoint 15 alternate (IN) */
 
 /********************************  UHOST_CTRL  *******************************/
 #define USBFS_UH_PORT_EN                        ((uint8_t)0x01)        /* USB host port enable */

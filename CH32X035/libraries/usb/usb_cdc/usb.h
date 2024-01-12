@@ -241,16 +241,16 @@ typedef struct __attribute__((packed)) {
 } USB_ENDP_DESCR;
 
 typedef struct __attribute__((packed)) {
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint16_t bString[];
-} USB_STR_DESCR, *PUSB_STR_DESCR;
-
-typedef struct __attribute__((packed)) {
     USB_CFG_DESCR   cfg_descr;
     USB_ITF_DESCR   itf_descr;
     USB_ENDP_DESCR  endp_descr[1];
 } USB_CFG_DESCR_LONG, *PUSB_CFG_DESCR_LONG;
+
+typedef struct __attribute__((packed)) {
+    uint8_t  bLength;
+    uint8_t  bDescriptorType;
+    uint16_t bString[];
+} USB_STR_DESCR, *PUSB_STR_DESCR;
 
 typedef struct __attribute__((packed)) {
     uint8_t  bDescLength;

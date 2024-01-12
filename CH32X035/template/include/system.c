@@ -57,7 +57,7 @@ void CLK_reset(void) {
 // Setup pin PB9 for MCO (output, push-pull, alternate)
 void MCO_init(void) {
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPBEN;
-  GPIOA->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1011<<(1<<2));
+  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1011<<(1<<2));
   RCC->CFGR0     |= RCC_CFGR0_MCO_SYSCLK;
 }
 

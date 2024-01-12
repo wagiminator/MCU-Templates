@@ -78,7 +78,7 @@ extern const USB_STR_DESCR InterfDescr;
 
 #define USB_CHAR_GLUE(s) u##s
 #define USB_CHAR_TO_STR_DESCR(s)  {           \
-  .bLength = sizeof(USB_CHAR_GLUE(s)) + 2,    \
+  .bLength = sizeof(USB_CHAR_GLUE(s)),        \
   .bDescriptorType = USB_DESCR_TYP_STRING,    \
   .bString = USB_CHAR_GLUE(s)                 \
 }

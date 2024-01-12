@@ -5,6 +5,8 @@
 
 #include "usb_descr.h"
 
+#define __code const __attribute__((section(".text")))
+
 // ===================================================================================
 // Endpoint Buffers
 // ===================================================================================
@@ -15,7 +17,7 @@ uint8_t __attribute__((aligned(4))) EP2_buffer[EP2_BUF_SIZE];
 // ===================================================================================
 // Device Descriptor
 // ===================================================================================
-const USB_DEV_DESCR DevDescr = {
+__code USB_DEV_DESCR DevDescr = {
   .bLength            = sizeof(DevDescr),       // size of the descriptor in bytes: 18
   .bDescriptorType    = USB_DESCR_TYP_DEVICE,   // device descriptor: 0x01
   .bcdUSB             = 0x0200,                 // USB specification: USB 2.0
@@ -35,7 +37,7 @@ const USB_DEV_DESCR DevDescr = {
 // ===================================================================================
 // Configuration Descriptor
 // ===================================================================================
-const USB_CFG_DESCR_CDC CfgDescr = {
+__code USB_CFG_DESCR_CDC CfgDescr = {
 
   // Configuration Descriptor
   .config = {
@@ -131,20 +133,20 @@ const USB_CFG_DESCR_CDC CfgDescr = {
 // ===================================================================================
 
 // Language Descriptor (Index 0)
-const USB_STR_DESCR LangDescr = {
+__code USB_STR_DESCR LangDescr = {
   .bLength              = 4,
   .bDescriptorType      = USB_DESCR_TYP_STRING,
   .bString              = {USB_LANGUAGE}
 };
 
 // Manufacturer String Descriptor (Index 1)
-const USB_STR_DESCR ManufDescr = USB_CHAR_TO_STR_DESCR(MANUF_STR);
+__code USB_STR_DESCR ManufDescr = USB_CHAR_TO_STR_DESCR(MANUF_STR);
 
 // Product String Descriptor (Index 2)
-const USB_STR_DESCR ProdDescr = USB_CHAR_TO_STR_DESCR(PROD_STR);
+__code USB_STR_DESCR ProdDescr = USB_CHAR_TO_STR_DESCR(PROD_STR);
 
 // Serial String Descriptor (Index 3)
-const USB_STR_DESCR SerDescr = USB_CHAR_TO_STR_DESCR(SERIAL_STR);
+__code USB_STR_DESCR SerDescr = USB_CHAR_TO_STR_DESCR(SERIAL_STR);
 
 // Interface String Descriptor (Index 4)
-const USB_STR_DESCR InterfDescr = USB_CHAR_TO_STR_DESCR(INTERF_STR);
+__code USB_STR_DESCR InterfDescr = USB_CHAR_TO_STR_DESCR(INTERF_STR);

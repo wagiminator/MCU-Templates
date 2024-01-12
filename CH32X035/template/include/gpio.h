@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for CH32X035/X034/X033                                * v0.1 *
+// Basic GPIO Functions for CH32X035/X034/X033                                * v0.2 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PB0, PB1, .. - e.g.:
@@ -7,54 +7,81 @@
 //
 // PIN functions available:
 // ------------------------
-// PIN_input(PIN)           Set PIN as INPUT (floating, no pullup/pulldown)
-// PIN_input_PU(PIN)        Set PIN as INPUT with internal PULLUP resistor
-// PIN_input_PD(PIN)        Set PIN as INPUT with internal PULLDOWN resistor
-// PIN_input_AN(PIN)        Set PIN as INPUT for analog peripherals (e.g. ADC) (*)
-// PIN_output(PIN)          Set PIN as OUTPUT (push-pull)
-// PIN_alternate(PIN)       Set PIN as alternate output mode
+// PIN_input(PIN)           set PIN as INPUT (floating, no pullup/pulldown)
+// PIN_input_PU(PIN)        set PIN as INPUT with internal PULLUP resistor
+// PIN_input_PD(PIN)        set PIN as INPUT with internal PULLDOWN resistor
+// PIN_input_AN(PIN)        set PIN as INPUT for analog peripherals (e.g. ADC) (*)
+// PIN_output(PIN)          set PIN as OUTPUT (push-pull)
+// PIN_alternate(PIN)       set PIN as alternate output mode
 //
-// PIN_low(PIN)             Set PIN output value to LOW (*)
-// PIN_high(PIN)            Set PIN output value to HIGH
+// PIN_low(PIN)             set PIN output value to LOW (*)
+// PIN_high(PIN)            set PIN output value to HIGH
 // PIN_toggle(PIN)          TOGGLE PIN output value
-// PIN_read(PIN)            Read PIN input value
-// PIN_write(PIN, val)      Write PIN output value (0 = LOW / 1 = HIGH)
+// PIN_read(PIN)            read PIN input value
+// PIN_write(PIN, val)      write PIN output value (0 = LOW / 1 = HIGH)
 //
 // PORT functions available:
 // -------------------------
-// PORT_enable(PIN)         Enable GPIO PORT of PIN
-// PORTA_enable()           Enable GPIO PORT A
-// PORTB_enable()           Enable GPIO PORT B
-// PORTC_enable()           Enable GPIO PORT C
-// PORTS_enable()           Enable all GPIO PORTS
+// PORT_enable(PIN)         enable GPIO PORT of PIN
+// PORTA_enable()           enable GPIO PORT A
+// PORTB_enable()           enable GPIO PORT B
+// PORTC_enable()           enable GPIO PORT C
+// PORTS_enable()           enable all GPIO PORTS
 //
-// PORT_disable(PIN)        Disable GPIO PORT of PIN
-// PORTA_disable()          Disable GPIO PORT A
-// PORTB_disable()          Disable GPIO PORT B
-// PORTC_disable()          Disable GPIO PORT C
-// PORTS_disable()          Disable all GPIO PORTS
+// PORT_disable(PIN)        disable GPIO PORT of PIN
+// PORTA_disable()          disable GPIO PORT A
+// PORTB_disable()          disable GPIO PORT B
+// PORTC_disable()          disable GPIO PORT C
+// PORTS_disable()          disable all GPIO PORTS
 //
 // Analog-to-Digital Converter (ADC) functions available:
 // ------------------------------------------------------
-// ADC_init()               Init and enable ADC (must be called first)
+// ADC_init()               init and enable ADC (must be called first)
 // ADC_enable()             enable ADC (power-up)
 // ADC_disable()            disable ADC (power-down) (*)
 // ADC_fast()               set fast mode   (fast speed, least accurate)
 // ADC_slow()               set slow mode   (slow speed, most accurate)
 // ADC_medium()             set medium mode (medium speed, medium accurate) (*)
 //
-// ADC_input(PIN)           Set PIN as ADC input
-// ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
+// ADC_input(PIN)           set PIN as ADC input
+// ADC_input_VREF()         set internal voltage referece (Vref) as ADC input
 //
-// ADC_read()               Sample and read 12-bit ADC value (0..4095)
-// ADC_read_VDD()           Sample and read supply voltage (VDD) in millivolts (mV)
+// ADC_read()               sample and read 12-bit ADC value (0..4095)
+// ADC_read_VDD()           sample and read supply voltage (VDD) in millivolts (mV)
 //
-// Op-Amp (OPA) functions available:
-// ---------------------------------
-// not yet implemented
+// Analog Comparator (CMP) functions available:
+// --------------------------------------------
+// CMP_lock()               lock comparators (*)
+// CMP_unlock()             unlock comparators
 //
-// Comparator (CMP) functions available:
-// -------------------------------------
+// CMPx_enable()            enable CMPx (x = 1..3)
+// CMPx_disable()           disable CMPx (*)
+// CMPx_HYS_enable()        enable CMPx hysteresis
+// CMPx_HYS_disable()       disable CMPx hysteresis (*)
+//
+// CMP1_OUT_PA1()           set CMP1 output to pin PA1
+// CMP1_OUT_T2C1()          set CMP1 output to timer2, channel1 (*)
+// CMP1_NEG_PA23()          set CMP1 negative input to pin PA23
+// CMP1_NEG_PC3()           set CMP1 negative input to pin PC3 (*)
+// CMP1_POS_PA0()           set CMP1 positive input to pin PA0
+// CMP1_POS_PC19()          set CMP1 positive input to pin PC19 (*)
+//
+// CMP2_OUT_PB2()           set CMP2 output to pin PB2
+// CMP2_OUT_T2C2()          set CMP2 output to timer2, channel2 (*)
+// CMP2_NEG_PC3()           set CMP2 negative input to pin PC3
+// CMP2_NEG_PA22()          set CMP2 negative input to pin PA22 (*)
+// CMP2_POS_PA11()          set CMP2 positive input to pin PA11
+// CMP2_POS_PA12()          set CMP2 positive input to pin PA12 (*)
+//
+// CMP3_OUT_PB3()           set CMP3 output to pin PB3
+// CMP3_OUT_T2C3()          set CMP3 output to timer2, channel3 (*)
+// CMP3_NEG_PC3()           set CMP3 negative input to pin PC3
+// CMP3_NEG_PA2()           set CMP3 negative input to pin PA2 (*)
+// CMP3_POS_PA14()          set CMP3 positive input to pin PA14
+// CMP3_POS_PA13()          set CMP3 positive input to pin PA13 (*)
+//
+// Operational Amplifier (OPA) functions available:
+// ------------------------------------------------
 // not yet implemented
 //
 // Notes:
@@ -407,12 +434,46 @@ static inline uint16_t ADC_read_VDD(void) {
 }
 
 // ===================================================================================
-// OPA Functions
+// CMP Functions
 // ===================================================================================
-// not yet implemented
+#define CMP_lock()          OPA->CTLR2 |= OPA_CTLR2_CMP_LOCK
+#define CMP_unlock()        {CMP->KEY = CMP_KEY1; CMP->KEY = CMP_KEY2;}
+
+#define CMP1_enable()       OPA->CTLR2 |=  OPA_CTLR2_EN1
+#define CMP1_disable()      OPA->CTLR2 &= ~OPA_CTLR2_EN1
+#define CMP1_HYS_enable()   OPA->CTLR2 |=  OPA_CTLR2_HYEN1
+#define CMP1_HYS_disable()  OPA->CTLR2 &= ~OPA_CTLR2_HYEN1
+#define CMP1_OUT_PA1()      OPA->CTLR2 |=  OPA_CTLR2_MODE1
+#define CMP1_OUT_T2C1()     OPA->CTLR2 &= ~OPA_CTLR2_MODE1
+#define CMP1_NEG_PA23()     OPA->CTLR2 |=  OPA_CTLR2_NSEL1
+#define CMP1_NEG_PC3()      OPA->CTLR2 &= ~OPA_CTLR2_NSEL1
+#define CMP1_POS_PA0()      OPA->CTLR2 |=  OPA_CTLR2_PSEL1
+#define CMP1_POS_PC19()     OPA->CTLR2 &= ~OPA_CTLR2_PSEL1
+
+#define CMP2_enable()       OPA->CTLR2 |=  OPA_CTLR2_EN2
+#define CMP2_disable()      OPA->CTLR2 &= ~OPA_CTLR2_EN2
+#define CMP2_HYS_enable()   OPA->CTLR2 |=  OPA_CTLR2_HYEN2
+#define CMP2_HYS_disable()  OPA->CTLR2 &= ~OPA_CTLR2_HYEN2
+#define CMP2_OUT_PB2()      OPA->CTLR2 |=  OPA_CTLR2_MODE2
+#define CMP2_OUT_T2C2()     OPA->CTLR2 &= ~OPA_CTLR2_MODE2
+#define CMP2_NEG_PC3()      OPA->CTLR2 |=  OPA_CTLR2_NSEL2
+#define CMP2_NEG_PA22()     OPA->CTLR2 &= ~OPA_CTLR2_NSEL2
+#define CMP2_POS_PA11()     OPA->CTLR2 |=  OPA_CTLR2_PSEL2
+#define CMP2_POS_PA12()     OPA->CTLR2 &= ~OPA_CTLR2_PSEL2
+
+#define CMP3_enable()       OPA->CTLR2 |=  OPA_CTLR2_EN3
+#define CMP3_disable()      OPA->CTLR2 &= ~OPA_CTLR2_EN3
+#define CMP3_HYS_enable()   OPA->CTLR2 |=  OPA_CTLR2_HYEN3
+#define CMP3_HYS_disable()  OPA->CTLR2 &= ~OPA_CTLR2_HYEN3
+#define CMP3_OUT_PB3()      OPA->CTLR2 |=  OPA_CTLR2_MODE3
+#define CMP3_OUT_T2C3()     OPA->CTLR2 &= ~OPA_CTLR2_MODE3
+#define CMP3_NEG_PC3()      OPA->CTLR2 |=  OPA_CTLR2_NSEL3
+#define CMP3_NEG_PA2()      OPA->CTLR2 &= ~OPA_CTLR2_NSEL3
+#define CMP3_POS_PA14()     OPA->CTLR2 |=  OPA_CTLR2_PSEL3
+#define CMP3_POS_PA13()     OPA->CTLR2 &= ~OPA_CTLR2_PSEL3
 
 // ===================================================================================
-// CMP Functions
+// OPA Functions
 // ===================================================================================
 // not yet implemented
 
