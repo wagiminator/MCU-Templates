@@ -26,26 +26,28 @@ extern "C" {
 // ===================================================================================
 // Custom External USB Handler Functions
 // ===================================================================================
-uint8_t CDC_control(void);
-void CDC_EP_init(void);
-void CDC_EP0_OUT(void);
-void CDC_EP2_IN(void);
-void CDC_EP2_OUT(void);
+void HID_EP_init(void);
+void HID_EP1_IN(void);
+
+#ifdef EP2_SIZE
+void HID_EP2_OUT(void);
+#endif
 
 // ===================================================================================
 // USB Handler Defines
 // ===================================================================================
 // Custom USB handler functions
-#define USB_INIT_endpoints        CDC_EP_init   // custom USB EP init handler
-#define USB_CLASS_SETUP_handler   CDC_control   // handle custom class requests
-#define USB_CLASS_OUT_handler     CDC_EP0_OUT   // handle class out
+#define USB_INIT_endpoints        HID_EP_init   // custom USB EP init handler
 
 // Endpoint callback functions
 #define EP0_SETUP_callback        USB_EP0_SETUP
 #define EP0_IN_callback           USB_EP0_IN
 #define EP0_OUT_callback          USB_EP0_OUT
-#define EP2_IN_callback           CDC_EP2_IN
-#define EP2_OUT_callback          CDC_EP2_OUT
+#define EP1_IN_callback           HID_EP1_IN
+
+#ifdef EP2_SIZE
+#define EP2_OUT_callback          HID_EP2_OUT
+#endif
 
 // ===================================================================================
 // Variables
