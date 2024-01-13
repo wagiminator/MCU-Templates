@@ -13,10 +13,14 @@ extern "C" {
 #include "usb_descr.h"
 
 // ===================================================================================
-// USB Handler Parameters
+// USB Handler Parameters and Checks
 // ===================================================================================
 #ifndef USB_VDD
   #define USB_VDD                 0             // MCU supply voltage (0: 3.3V, 1: 5V)
+#endif
+
+#if SYS_USE_VECTORS == 0
+  #error Interrupt vector table must be enabled (SYS_USE_VECTORS in system.h)!
 #endif
 
 // ===================================================================================

@@ -5,18 +5,21 @@
 // Functions available:
 // --------------------
 // CDC_init()               setup USB CDC
-// CDC_read()               read single character from IN buffer
-// CDC_write(c)             write single character to OUT buffer
-// CDC_flush()              flush OUT buffer
-// CDC_writeflush(c)        write & flush char
+// CDC_read()               read single character from receive buffer
+// CDC_write(c)             write single character to transmit buffer
+// CDC_flush()              flush transmit buffer
+// CDC_writeflush(c)        write & flush character
 // CDC_newline()            newline and flush
 //
-// CDC_available()          check number of bytes in the IN buffer
-// CDC_ready()              check if OUT buffer is ready to be written
+// CDC_available()          check number of bytes in the receive buffer
+// CDC_ready()              check if transmit buffer is ready to be written
 //
 // CDC_getDTR()             get DTR flag
 // CDC_getRTS()             get RTS flag
 // CDC_getBAUD()            get BAUD rate
+// CDC_getParity()          get parity (0:none, 1:odd, 2:even, 3:mark, 4:space)
+// CDC_getStopbits()        get number of stop bits (0:1bit, 1:1.5bits, 2:2bits)
+// CDC_getDatabits()        get number of data bits (5, 6, 7, 8, or 16)
 //
 // If print functions are activated (see below, print.h must be included):
 // -----------------------------------------------------------------------
@@ -79,7 +82,10 @@ typedef struct {
 } CDC_LINE_CODING_TYPE;
 
 extern CDC_LINE_CODING_TYPE CDC_lineCoding;
-#define CDC_getBAUD()   (CDC_lineCoding.baudrate)
+#define CDC_getBAUD()       (CDC_lineCoding.baudrate)
+#define CDC_getParity()     (CDC_lineCoding.parity)
+#define CDC_getStopbits()   (CDC_lineCoding.stopbits)
+#define CDC_getDatabits()   (CDC_lineCoding.databits)
 
 // ===================================================================================
 // Additional Print Functions (if activated, see above)
