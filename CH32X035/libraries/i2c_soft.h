@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions                                              * v1.1 *
+// Software I2C Master Functions for CH32X035/X034/X033                       * v1.0 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -17,7 +17,7 @@
 // Define SDA/SCL pin and clock rate below!
 //
 // Further information:     https://github.com/wagiminator/ATtiny13-TinyOLEDdemo
-// 2022 by Stefan Wagner:   https://github.com/wagiminator
+// 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #pragma once
 
@@ -31,8 +31,8 @@ extern "C" {
 
 // I2C parameters
 #ifndef PIN_SDA
-#define PIN_SDA       PC1         // pin connected to serial data of the I2C bus
-#define PIN_SCL       PC2         // pin connected to serial clock of the I2C bus
+#define PIN_SDA       PA11        // pin connected to serial data of the I2C bus
+#define PIN_SCL       PA10        // pin connected to serial clock of the I2C bus
 #endif
 #define I2C_CLKRATE   400000      // I2C bus clock rate in Hz
 

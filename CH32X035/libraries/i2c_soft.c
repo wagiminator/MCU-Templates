@@ -1,12 +1,12 @@
 // ===================================================================================
-// Software I2C Master Functions                                              * v1.1 *
+// Software I2C Master Functions for CH32X035/X034/X033                       * v1.0 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
 // slave is not allowed. External pull-up resistors (4k7 - 10k) are mandatory!
 //
 // Further information:     https://github.com/wagiminator/ATtiny13-TinyOLEDdemo
-// 2022 by Stefan Wagner:   https://github.com/wagiminator
+// 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_soft.h"
 
@@ -14,7 +14,7 @@
 // I2C Delay
 // ===================================================================================
 #define I2C_DLY_TICKS_H   (((F_CPU *  9) / (I2C_CLKRATE * 25)) - 3)
-#define I2C_DLY_TICKS_L   (((F_CPU * 16) / (I2C_CLKRATE * 25)) - 12)
+#define I2C_DLY_TICKS_L   (((F_CPU * 16) / (I2C_CLKRATE * 25)) - 22)
 
 #if I2C_DLY_TICKS_H >= 1
   #define I2C_DELAY_H()   DLY_ticks(I2C_DLY_TICKS_H)
@@ -31,11 +31,11 @@
 // ===================================================================================
 // I2C Pin Macros
 // ===================================================================================
-#define I2C_SDA_HIGH()  PIN_high(PIN_SDA)   // release SDA -> pulled HIGH by resistor
-#define I2C_SDA_LOW()   PIN_low(PIN_SDA)    // SDA LOW     -> pulled LOW  by MCU
-#define I2C_SCL_HIGH()  PIN_high(PIN_SCL)   // release SCL -> pulled HIGH by resistor
-#define I2C_SCL_LOW()   PIN_low(PIN_SCL)    // SCL LOW     -> pulled LOW  by MCU
-#define I2C_SDA_READ()  PIN_read(PIN_SDA)   // read SDA pin
+#define I2C_SDA_HIGH()  PIN_input(PIN_SDA)   // release SDA -> pulled HIGH by resistor
+#define I2C_SDA_LOW()   PIN_output(PIN_SDA)  // SDA LOW     -> pulled LOW  by MCU
+#define I2C_SCL_HIGH()  PIN_input(PIN_SCL)   // release SCL -> pulled HIGH by resistor
+#define I2C_SCL_LOW()   PIN_output(PIN_SCL)  // SCL LOW     -> pulled LOW  by MCU
+#define I2C_SDA_READ()  PIN_read(PIN_SDA)    // read SDA pin
 #define I2C_CLOCKOUT()  I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_SCL_LOW()
 
 // ===================================================================================
@@ -44,10 +44,10 @@
 
 // I2C init function
 void I2C_init(void) {
-  PIN_high(PIN_SCL);                        // release SCL
-  PIN_high(PIN_SDA);                        // release SDA
-  PIN_output_OD(PIN_SCL);                   // set SCL pin to open-drain OUTPUT
-  PIN_output_OD(PIN_SDA);                   // set SDA pin to open-drain OUTPUT
+  PIN_input(PIN_SCL);                       // release SCL
+  PIN_input(PIN_SDA);                       // release SDA
+  PIN_low(PIN_SCL);                         // preset for SCL low
+  PIN_low(PIN_SDA);                         // preset for SDA low
 }
 
 // I2C transmit one data byte to the slave, ignore ACK bit, no clock stretching allowed
