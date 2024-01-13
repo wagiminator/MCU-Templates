@@ -25,6 +25,10 @@ extern "C" {
 void HID_EP_init(void);
 void HID_EP1_IN(void);
 
+#ifdef EP2_SIZE
+void HID_EP2_OUT(void);
+#endif
+
 // ===================================================================================
 // USB Handler Defines
 // ===================================================================================
@@ -36,6 +40,10 @@ void HID_EP1_IN(void);
 #define EP0_IN_callback           USB_EP0_IN
 #define EP0_OUT_callback          USB_EP0_OUT
 #define EP1_IN_callback           HID_EP1_IN
+
+#ifdef EP2_SIZE
+#define EP2_OUT_callback          HID_EP2_OUT
+#endif
 
 // ===================================================================================
 // Variables

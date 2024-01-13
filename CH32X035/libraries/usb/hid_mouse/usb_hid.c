@@ -10,6 +10,10 @@
 // ===================================================================================
 volatile uint8_t HID_writeBusyFlag;               // upload pointer busy flag
 
+#ifdef EP2_SIZE
+volatile uint8_t HID_status;                      // status byte returned from host
+#endif
+
 // ===================================================================================
 // Front End Functions
 // ===================================================================================
@@ -52,6 +56,9 @@ void HID_EP1_IN(void) {
   HID_writeBusyFlag = 0;                          // clear busy flag
 }
 
-// Endpoint 2 OUT handler (HID report transfer from host completed)
-// No handling is actually necessary here, the auto-ACK is sufficient.
-// The current report can be read from the EP2 buffer.
+// Endpoint 2 OUT handler (HID status transfer from host completed)
+#ifdef EP2_SIZE
+void HID_EP2_OUT(void) {
+  HID_status = EP2_buffer[0];                     // save status byte
+}
+#endif
