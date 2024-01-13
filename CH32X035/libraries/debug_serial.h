@@ -5,7 +5,7 @@
 // Functions available:
 // --------------------
 // DEBUG_init()             Init serial DEBUG with default BAUD rate (115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_setBAUD(n)         Set BAUD rate
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string

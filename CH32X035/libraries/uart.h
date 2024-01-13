@@ -5,7 +5,7 @@
 // Functions available:
 // --------------------
 // UARTx_init()             Init UART with default BAUD rate (115200)
-// UARTx_setBaud(n)         Set BAUD rate
+// UARTx_setBAUD(n)         Set BAUD rate
 // UARTx_setStopBits(n)     Set number of stop bits (n = 1, 2)
 // UARTx_setNoParity()      Set no parity bit
 // UARTx_setOddParity()     Set parity bit, odd

@@ -18,8 +18,8 @@
 // CDC_getRTS()             get RTS flag
 // CDC_getBAUD()            get BAUD rate
 // CDC_getParity()          get parity (0:none, 1:odd, 2:even, 3:mark, 4:space)
-// CDC_getStopbits()        get number of stop bits (0:1bit, 1:1.5bits, 2:2bits)
-// CDC_getDatabits()        get number of data bits (5, 6, 7, 8, or 16)
+// CDC_getStopBits()        get number of stop bits (0:1bit, 1:1.5bits, 2:2bits)
+// CDC_getDataBits()        get number of data bits (5, 6, 7, 8, or 16)
 //
 // If print functions are activated (see below, print.h must be included):
 // -----------------------------------------------------------------------
@@ -84,8 +84,8 @@ typedef struct {
 extern CDC_LINE_CODING_TYPE CDC_lineCoding;
 #define CDC_getBAUD()       (CDC_lineCoding.baudrate)
 #define CDC_getParity()     (CDC_lineCoding.parity)
-#define CDC_getStopbits()   (CDC_lineCoding.stopbits)
-#define CDC_getDatabits()   (CDC_lineCoding.databits)
+#define CDC_getStopBits()   (CDC_lineCoding.stopbits)
+#define CDC_getDataBits()   (CDC_lineCoding.databits)
 
 // ===================================================================================
 // Additional Print Functions (if activated, see above)
