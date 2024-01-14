@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V103                                        * v1.1 *
+// Basic System Functions for CH32V103                                        * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -296,8 +296,12 @@ int main(void)                __attribute__((section(".text.main"), used));
 void jump_reset(void)         __attribute__((section(".init.jump"), naked, used));
 const uint32_t init_data[]    __attribute__((section(".init.data"), used));
 void vectors(void)            __attribute__((section(".vector"), naked, used));
-void default_handler(void)    __attribute__((section(".text.vector_handler"), naked, used));
 void reset_handler(void)      __attribute__((section(".text.reset_handler"), naked, used));
+
+#if SYS_USE_VECTORS > 0
+// Unless a specific handler is overridden, it just spins forever
+void default_handler(void)    __attribute__((section(".text.vector_handler"), naked, used));
+void default_handler(void)    { while(1); }
 
 // All interrupt handlers are aliased to default_handler unless overridden individually
 #define DUMMY_HANDLER __attribute__((section(".text.vector_handler"), weak, alias("default_handler"), used))
@@ -345,6 +349,7 @@ DUMMY_HANDLER void EXTI15_10_IRQHandler(void);
 DUMMY_HANDLER void RTCAlarm_IRQHandler(void);
 DUMMY_HANDLER void USBWakeUp_IRQHandler(void);
 DUMMY_HANDLER void USBHD_IRQHandler(void);
+#endif  // SYS_USE_VECTORS > 0
 
 // FLASH starts with a jump to the reset handler
 void jump_reset(void) { asm volatile("j reset_handler"); }
@@ -363,6 +368,7 @@ void vectors(void) {
   
   // RISC-V handlers
   " j jump_reset                \n"   //  0 - Reset
+  #if SYS_USE_VECTORS > 0
   " .word 0                     \n"   //  1 - Reserved
   " j NMI_Handler               \n"   //  2 - NMI Handler
   " j HardFault_Handler         \n"   //  3 - Hard Fault Handler
@@ -424,11 +430,9 @@ void vectors(void) {
   " j RTCAlarm_IRQHandler       \n"   // 57 - RTC Alarm through EXTI Line
   " j USBWakeUp_IRQHandler      \n"   // 58 - USB Wake up from suspend
   " j USBHD_IRQHandler          \n"   // 59 - USBHD
+  #endif  // SYS_USE_VECTORS > 0
   );
 }
-
-// Unless a specific handler is overridden, it just spins forever
-void default_handler(void) { while(1); }
 
 // Reset handler
 void reset_handler(void) {
@@ -436,7 +440,10 @@ void reset_handler(void) {
 
   // Set pointers, vectors, processor status, and interrupts
   asm volatile(
-  " la gp, __global_pointer$    \n\
+  " .option push                \n\
+    .option norelax             \n\
+    la gp, __global_pointer$    \n\
+    .option pop                 \n\
     la sp, _eusrstack           \n\
     li a0, 0x88                 \n\
     csrw mstatus, a0            \n\
@@ -453,8 +460,10 @@ void reset_handler(void) {
   while(dst < &_edata) *dst++ = *src++;
 
   // Clear uninitialized variables
+  #if SYS_CLEAR_BSS > 0
   dst = &_sbss;
   while(dst < &_ebss) *dst++ = 0;
+  #endif
 
   // C++ Support
   #ifdef __cplusplus

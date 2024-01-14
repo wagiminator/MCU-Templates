@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V103                                        * v1.1 *
+// Basic System Functions for CH32V103                                        * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -108,6 +108,8 @@ extern "C" {
 #define SYS_TICK_INIT     1         // 1: init and start SYSTICK on startup
 #define SYS_GPIO_EN       1         // 1: enable GPIO ports on startup
 #define SYS_USE_HSE       0         // 1: use external crystal
+#define SYS_CLEAR_BSS     1         // 1: clear uninitialized variables
+#define SYS_USE_VECTORS   1         // 1: create interrupt vector table
 
 // ===================================================================================
 // Sytem Clock Defines

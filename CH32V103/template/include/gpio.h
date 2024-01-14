@@ -66,7 +66,7 @@
 extern "C" {
 #endif
 
-#include "ch32v103.h"
+#include "system.h"
 
 // ===================================================================================
 // Enumerate PIN Designators (use these designators to define pins)
