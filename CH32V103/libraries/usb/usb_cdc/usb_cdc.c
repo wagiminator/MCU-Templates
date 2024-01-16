@@ -100,36 +100,31 @@ void CDC_EP_init(void) {
 uint8_t CDC_control(void) {
   uint8_t i;
   switch(USB_SetupReq) {
-    case GET_LINE_CODING:                       // 0x21  currently configured
+    case GET_LINE_CODING:                   // 0x21  currently configured 
       for(i=0; i<sizeof(CDC_lineCoding); i++)
         EP0_buffer[i] = ((uint8_t*)&CDC_lineCoding)[i]; // transmit line coding to host
-      return sizeof(CDC_lineCoding);
-    case SET_CONTROL_LINE_STATE:                // 0x22  generates RS-232/V.24 style control signals
-      CDC_controlLineState = EP0_buffer[2];     // read control line state
+      if(USB_SetupLen > sizeof(CDC_lineCoding)) USB_SetupLen = sizeof(CDC_lineCoding);
+      return USB_SetupLen;
+    case SET_CONTROL_LINE_STATE:            // 0x22  generates RS-232/V.24 style control signals
+      CDC_controlLineState = EP0_buffer[2]; // read control line state
       return 0;
-    case SET_LINE_CODING:                       // 0x20  Configure
+    case SET_LINE_CODING:                   // 0x20  Configure
       return 0;            
     default:
-      return 0xff;                              // command not supported
+      return 0xff;                          // command not supported
   }
 }
 
 // Endpoint 0 CLASS OUT handler
 void CDC_EP0_OUT(void) {
   uint8_t i, len;
-  if(USB_SetupReq == SET_LINE_CODING) {         // set line coding
-    if(USBHD->INT_FG & U_TOG_OK) {
-      len = (uint8_t)USBHD->RX_LEN;
-      for(i=0; i<((sizeof(CDC_lineCoding)<=len)?sizeof(CDC_lineCoding):len); i++)
-        ((uint8_t*)&CDC_lineCoding)[i] = EP0_buffer[i];   // receive line coding from host
-      USBHD->UEP0_T_LEN = 0;                              // send 0-length packet
-      USBHD->UEP0_CTRL = (USBHD->UEP0_CTRL & ~MASK_UEP_RES) | UEP_R_RES_ACK | UEP_T_RES_ACK;
-    }
+  if(USB_SetupReq == SET_LINE_CODING) {                 // set line coding
+    len = (uint8_t)USBHD->RX_LEN;
+    for(i=0; i<((sizeof(CDC_lineCoding)<=len)?sizeof(CDC_lineCoding):len); i++)
+      ((uint8_t*)&CDC_lineCoding)[i] = EP0_buffer[i];   // receive line coding from host
+    USB_SetupLen = 0;
   }
-  else {
-    USBHD->UEP0_T_LEN = 0;
-    USBHD->UEP0_CTRL  = UEP_R_RES_ACK | UEP_T_RES_ACK;
-  }
+  USBHD->UEP0_CTRL = UEP_T_TOG | UEP_T_RES_ACK | UEP_R_RES_ACK;
 }
 
 // Endpoint 1 IN handler
