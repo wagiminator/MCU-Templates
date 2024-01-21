@@ -11,6 +11,7 @@
 // CLK_init_HSI_PLL()       init internal oscillator with PLL as system clock source
 // CLK_init_HSE()           init external crystal (non PLL) as system clock source
 // CLK_init_HSE_PLL()       init external crystal (PLL) as system clock source
+// CLK_reset()              reset system clock to default state
 //
 // HSI_enable()             enable internal 8MHz high-speed clock (HSI)
 // HSI_disable()            disable HSI
@@ -108,6 +109,8 @@ extern "C" {
 #define SYS_TICK_INIT     1         // 1: init and start SYSTICK on startup
 #define SYS_GPIO_EN       1         // 1: enable GPIO ports on startup
 #define SYS_USE_HSE       0         // 1: use external crystal
+#define SYS_CLEAR_BSS     1         // 1: clear uninitialized variables
+#define SYS_USE_VECTORS   1         // 1: create interrupt vector table
 
 // ===================================================================================
 // Sytem Clock Defines
@@ -184,6 +187,7 @@ void CLK_init_HSI(void);      // init internal oscillator (non PLL) as system cl
 void CLK_init_HSI_PLL(void);  // init internal oscillator with PLL as system clock source
 void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock source
 void CLK_init_HSE_PLL(void);  // init external crystal (PLL) as system clock source
+void CLK_reset(void);         // reset system clock to default state
 
 // Internal 8MHz high-speed clock (HSI) functions
 #define HSI_enable()      RCC->CTLR |= RCC_HSION        // enable HSI

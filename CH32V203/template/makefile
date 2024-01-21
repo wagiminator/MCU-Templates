@@ -29,9 +29,9 @@ ISPTOOL  = python3 $(TOOLS)/chprog.py $(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = $(CPUARCH) -DF_CPU=$(F_CPU) -I$(NEWLIB) -I$(INCLUDE) -I. -L$(TOOLS)
-CFLAGS  += -g -Os -flto -ffunction-sections -fno-builtin -Wall
-LDFLAGS  = -T$(LDSCRIPT) -nostdlib -lgcc -static-libgcc -Wl,--gc-sections
+CFLAGS   = -g -Os -flto -ffunction-sections -fno-builtin -nostdlib -Wall
+CFLAGS  += $(CPUARCH) -DF_CPU=$(F_CPU) -I$(NEWLIB) -I$(INCLUDE) -I.
+LDFLAGS  = -T$(LDSCRIPT) -L$(INCLUDE)/libgcc -lgcc -Wl,--gc-sections
 CFILES   = $(MAINFILE) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
 
 # Symbolic Targets

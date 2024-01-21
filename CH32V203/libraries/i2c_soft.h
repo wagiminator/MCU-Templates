@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions for CH32X035/X034/X033                       * v1.0 *
+// Software I2C Master Functions for CH32V203                                 * v1.0 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -30,8 +30,8 @@ extern "C" {
 
 // I2C parameters
 #ifndef PIN_SDA
-#define PIN_SDA       PA11        // pin connected to serial data of the I2C bus
-#define PIN_SCL       PA10        // pin connected to serial clock of the I2C bus
+#define PIN_SDA       PA6         // pin connected to serial data of the I2C bus
+#define PIN_SCL       PA5         // pin connected to serial clock of the I2C bus
 #endif
 #define I2C_CLKRATE   400000      // I2C bus clock rate in Hz
 
