@@ -1,17 +1,15 @@
 // ===================================================================================
-// Basic USB CDC Functions for CH559                                          * v1.0 *
+// Basic USB CDC Functions for CH559                                          * v1.1 *
 // ===================================================================================
 
-#include "ch559.h"
 #include "usb_cdc.h"
-#include "usb_descr.h"
 
 // ===================================================================================
 // Variables and Defines
 // ===================================================================================
 
 // Initialize line coding
-__xdata CDC_LINE_CODING_TYPE CDC_lineCodingB = {
+__xdata CDC_LINE_CODING_TYPE CDC_lineCoding = {
   .baudrate = 115200,       // baudrate 115200
   .stopbits = 0,            // 1 stopbit
   .parity   = 0,            // no parity
@@ -104,42 +102,32 @@ void CDC_EP_init(void) {
   CDC_writeBusyFlag = 0;                    // reset write busy flag
 }
 
-// Handle non-standard control requests
+// Handle CLASS SETUP requests
 uint8_t CDC_control(void) {
   uint8_t i;
-  if((USB_SetupTyp & USB_REQ_TYP_MASK) == USB_REQ_TYP_CLASS) {
-    switch(USB_SetupReq) {
-      case GET_LINE_CODING:                       // 0x21  currently configured
-        for(i=0; i<sizeof(CDC_lineCodingB); i++)
-          EP0_buffer[i] = ((uint8_t*)&CDC_lineCodingB)[i]; // transmit line coding to host
-        return sizeof(CDC_lineCodingB);
-      case SET_CONTROL_LINE_STATE:                // 0x22  generates RS-232/V.24 style control signals
-        CDC_controlLineState = EP0_buffer[2];     // read control line state
-        return 0;
-      case SET_LINE_CODING:                       // 0x20  Configure
-        return 0;            
-      default:
-        return 0xff;                              // command not supported
-    }
+  switch(USB_SetupReq) {
+    case GET_LINE_CODING:                         // 0x21  currently configured
+      for(i=0; i<sizeof(CDC_lineCoding); i++)
+        EP0_buffer[i] = ((uint8_t*)&CDC_lineCoding)[i]; // transmit line coding to host
+      return sizeof(CDC_lineCoding);
+    case SET_CONTROL_LINE_STATE:                  // 0x22  generates RS-232/V.24 style control signals
+      CDC_controlLineState = EP0_buffer[2];       // read control line state
+      return 0;
+    case SET_LINE_CODING:                         // 0x20  Configure
+      return 0;            
+    default:
+      return 0xff;                                // command not supported
   }
-  else return 0xff;
 }
 
-// Endpoint 0 OUT handler
+// Endpoint 0 CLASS OUT handler
 void CDC_EP0_OUT(void) {
   uint8_t i;
   if(USB_SetupReq == SET_LINE_CODING) {           // set line coding
-    if(U_TOG_OK) {
-      for(i=0; i<((sizeof(CDC_lineCodingB)<=USB_RX_LEN)?sizeof(CDC_lineCodingB):USB_RX_LEN); i++)
-        ((uint8_t*)&CDC_lineCodingB)[i] = EP0_buffer[i];          // receive line coding from host
-      UEP0_T_LEN = 0;                                             // send 0-length packet
-      UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_ACK; // -> respond ACK
-    }
+    for(i=0; i<((sizeof(CDC_lineCoding)<=USB_RX_LEN)?sizeof(CDC_lineCoding):USB_RX_LEN); i++)
+      ((uint8_t*)&CDC_lineCoding)[i] = EP0_buffer[i];      // receive line coding from host
   }
-  else {
-    UEP0_T_LEN = 0;
-    UEP0_CTRL  = (UEP0_CTRL & ~MASK_UEP_T_RES) | UEP_T_RES_NAK;   // default NAK
-  }
+  UEP0_CTRL = bUEP_T_TOG | UEP_T_RES_ACK | UEP_R_RES_ACK;
 }
 
 // Endpoint 1 IN handler
@@ -147,7 +135,6 @@ void CDC_EP0_OUT(void) {
 
 // Endpoint 2 IN handler (bulk data transfer to host completed)
 void CDC_EP2_IN(void) {
-  UEP2_T_LEN = 0;                                 // no data to send anymore
   UEP2_CTRL  = (UEP2_CTRL & ~MASK_UEP_T_RES)
              | UEP_T_RES_NAK;                     // -> respond NAK for now
   CDC_writeBusyFlag = 0;                          // clear busy flag

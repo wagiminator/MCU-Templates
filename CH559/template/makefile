@@ -23,7 +23,7 @@ CODE_SIZE  = 0xF000
 CC         = sdcc
 OBJCOPY    = objcopy
 PACK_HEX   = packihx
-ISPTOOL   ?= python3 $(TOOLS)/chprog.py
+ISPTOOL   ?= python3 $(TOOLS)/chprog.py $(TARGET).bin
 
 # Compiler Flags
 CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I.
@@ -59,7 +59,7 @@ $(TARGET).bin: $(TARGET).ihx
 	
 flash: $(TARGET).bin size removetemp
 	@echo "Uploading to CH55x ..."
-	@$(ISPTOOL) $(TARGET).bin
+	@$(ISPTOOL)
 
 all: $(TARGET).bin $(TARGET).hex size
 
