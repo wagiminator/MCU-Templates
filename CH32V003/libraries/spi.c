@@ -13,7 +13,7 @@ void SPI_init(void) {
   // Setup GPIO pins PC5 (SCK), PC6 (MOSI), PC7 (MISO)
   GPIOC->CFGLR  = (GPIOC->CFGLR & ~(((uint32_t)0b1111<<(5<<2)) | ((uint32_t)0b1111<<(6<<2)) | ((uint32_t)0b1111<<(7<<2)) ))
                                 |  (((uint32_t)0b1001<<(5<<2)) | ((uint32_t)0b1001<<(6<<2)) | ((uint32_t)0b1000<<(7<<2)) );
-  GPIOC->OUTDR |=  1<<7;
+  GPIOC->BSHR   = (uint32_t)1<<7;
 
   // Setup and enable SPI master, standard configuration
   SPI1->CTLR1 = (SPI_PRESC << 3)      // set prescaler
