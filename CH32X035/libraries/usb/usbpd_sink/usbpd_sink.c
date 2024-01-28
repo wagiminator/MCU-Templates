@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v0.1 *
+// USB PD SINK Handler for CH32X035                                           * v0.2 *
 // ===================================================================================
 //
 // Reference:               https://github.com/openwch/ch32x035
@@ -83,7 +83,7 @@ uint16_t PD_getPDOCurrent(uint8_t pdonum) {
   else return PD_control.PPSSourceCap[pdonum - ppspos - 1].Current;
 }
 
-// Set specified PDO; returns 0:failed, 1:success
+// Set specified PDO and voltage; returns 0:failed, 1:success
 uint8_t PD_setPDO(uint8_t pdonum, uint16_t voltage) {
   PD_control.SetPDONum  = pdonum;
   PD_control.SetVoltage = voltage;
@@ -141,7 +141,7 @@ uint8_t PD_connect(void) {
   AFIO->CTLR     |= USBPD_IN_HVT | USBPD_PHY_V33;
   #endif
   USBPD->DMA      = (uint32_t)PD_TR_buffer;
-  USBPD->CONFIG   = USBPD_PD_DMA_EN;
+  USBPD->CONFIG   = USBPD_IE_RX_ACT | USBPD_IE_RX_RESET | USBPD_IE_TX_END  | USBPD_PD_DMA_EN;
   USBPD->STATUS   = USBPD_BUF_ERR   | USBPD_IF_RX_BIT   | USBPD_IF_RX_BYTE 
                   | USBPD_IF_RX_ACT | USBPD_IF_RX_RESET | USBPD_IF_TX_END;
   return PD_waitReady();
@@ -153,8 +153,6 @@ uint8_t PD_connect(void) {
 
 // Enter reception mode
 void PD_RX_mode(void) {
-  USBPD->CONFIG     |=  USBPD_PD_ALL_CLR;
-  USBPD->CONFIG      =  USBPD_IE_RX_ACT | USBPD_IE_RX_RESET | USBPD_PD_DMA_EN;
   USBPD->BMC_CLK_CNT =  USBPD_TMR_RX;
   USBPD->CONTROL     = (USBPD->CONTROL & ~USBPD_PD_TX_EN) | USBPD_BMC_START;
 }
@@ -190,8 +188,6 @@ void PD_memcpy(uint8_t* dest, const uint8_t* src, uint8_t n) {
 
 // Send PD data
 void PD_sendData(uint8_t length) {
-  USBPD->CONFIG |= USBPD_IE_TX_END;
-
   if((USBPD->CONFIG & USBPD_CC_SEL) == USBPD_CC_SEL) USBPD->PORT_CC2 |= USBPD_CC_LVE;
   else                                               USBPD->PORT_CC1 |= USBPD_CC_LVE;
 
