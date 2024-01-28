@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v0.2 *
+// USB PD SINK Handler for CH32X035                                           * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -14,7 +14,7 @@
 // PD_getPDOVoltage(p)      Get voltage of specified fixed power PDO (1..PD_getFixedNum())
 // PD_getPDOMinVoltage(p)   Get min voltage of specified PDO (p = 1..PD_getPDONum())
 // PD_getPDOMaxVoltage(p)   Get max voltage of specified PDO (p = 1..PD_getPDONum())
-// PD_getPDOCurrent(p)      Get max current of specified PDO (p = 1..PD_getPDONum())
+// PD_getPDOMaxCurrent(p)   Get max current of specified PDO (p = 1..PD_getPDONum())
 //
 // PD_getPDO()              Get active PDO
 // PD_getVoltage()          Get active voltage
@@ -123,7 +123,7 @@ uint8_t  PD_getPPSNum(void);                    // Get number of programmable po
 uint16_t PD_getPDOVoltage(uint8_t pdonum);      // Get voltage of specified fixed power PDO
 uint16_t PD_getPDOMinVoltage(uint8_t pdonum);   // Get minimum voltage of specified PDO
 uint16_t PD_getPDOMaxVoltage(uint8_t pdonum);   // Get maximum voltage of specified PDO
-uint16_t PD_getPDOCurrent(uint8_t pdonum);      // Get max current of specified PDO
+uint16_t PD_getPDOMaxCurrent(uint8_t pdonum);   // Get max current of specified PDO
 
 uint8_t  PD_getPDO(void);                       // Get active PDO
 uint16_t PD_getVoltage(void);                   // Get active voltage

@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v0.2 *
+// USB PD SINK Handler for CH32X035                                           * v1.0 *
 // ===================================================================================
 //
 // Reference:               https://github.com/openwch/ch32x035
@@ -76,7 +76,7 @@ uint16_t PD_getPDOMaxVoltage(uint8_t pdonum) {
 }
 
 // Get max current of specified PDO (fixed and programmable)
-uint16_t PD_getPDOCurrent(uint8_t pdonum) {
+uint16_t PD_getPDOMaxCurrent(uint8_t pdonum) {
   uint8_t ppspos = PD_control.SourcePDONum - PD_control.SourcePPSNum;
   if(pdonum <= ppspos)
     return PD_control.FixedSourceCap[pdonum - 1].Current;
@@ -262,11 +262,7 @@ void PD_PDO_request(void) {
   }
 
   *(uint16_t*)&PD_TR_buffer[0] = mh.d16;
-  //*(uint32_t*)&PD_TR_buffer[2] = pdo.d32;
-  PD_TR_buffer[2] =  pdo.d32      & 0xff;
-  PD_TR_buffer[3] = (pdo.d32>>8)  & 0xff;
-  PD_TR_buffer[4] = (pdo.d32>>16) & 0xff;
-  PD_TR_buffer[5] = (pdo.d32>>24) & 0xff;
+  *(uint32_t*)&PD_TR_buffer[2] = pdo.d32;
   PD_sendData(6);
 }
 
