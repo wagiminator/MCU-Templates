@@ -13,7 +13,13 @@
 // ===================================================================================
 // SPI Delay
 // ===================================================================================
-#define SPI_delay()   DLY_ticks(((F_CPU / SPI_CLKRATE) / 2) - 7)
+#define SPI_DLY_TICKS   (((F_CPU / SPI_CLKRATE) / 2) - 7)
+
+#if SPI_DLY_TICKS >= 1
+#define SPI_delay()     DLY_ticks(SPI_DLY_TICKS)
+#else
+#define SPI_delay()
+#endif
 
 // ===================================================================================
 // SPI Functions

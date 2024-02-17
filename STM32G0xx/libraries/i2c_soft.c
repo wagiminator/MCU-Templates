@@ -13,8 +13,20 @@
 // ===================================================================================
 // I2C Delay
 // ===================================================================================
-#define I2C_DELAY_H()   DLY_ticks((((F_CPU *  9) / 25) / I2C_CLKRATE) - 7)
-#define I2C_DELAY_L()   DLY_ticks((((F_CPU * 16) / 25) / I2C_CLKRATE) - 7)
+#define I2C_DLY_TICKS_H   (((F_CPU *  9) / (I2C_CLKRATE * 25)) - 3)
+#define I2C_DLY_TICKS_L   (((F_CPU * 16) / (I2C_CLKRATE * 25)) - 12)
+
+#if I2C_DLY_TICKS_H >= 1
+  #define I2C_DELAY_H()   DLY_ticks(I2C_DLY_TICKS_H)
+#else
+  #define I2C_DELAY_H()
+#endif
+
+#if I2C_DLY_TICKS_L >= 1
+  #define I2C_DELAY_L()   DLY_ticks(I2C_DLY_TICKS_L)
+#else
+  #define I2C_DELAY_L()
+#endif
 
 // ===================================================================================
 // I2C Pin Macros
