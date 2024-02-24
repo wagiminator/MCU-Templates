@@ -27,7 +27,6 @@ extern "C" {
 
 #include "system.h"
 #include "gpio.h"
-#include "config.h"
 
 // I2C parameters
 #ifndef PIN_SDA
