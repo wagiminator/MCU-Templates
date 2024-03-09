@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306 128x64 Pixels OLED Terminal Functions                              * v1.0 *
+// SSD1306 128x64 Pixels OLED Terminal Functions                              * v1.1 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306 128x64 pixels
@@ -19,7 +19,7 @@
 #include "oled_term.h"
 
 // Standard ASCII 5x8 font (chars 32 - 127)
-__code uint8_t OLED_FONT[] = {
+const uint8_t OLED_FONT[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5F, 0x00, 0x00, 0x00, 0x07, 0x00, 0x07, 0x00,
   0x14, 0x7F, 0x14, 0x7F, 0x14, 0x24, 0x2A, 0x7F, 0x2A, 0x12, 0x23, 0x13, 0x08, 0x64, 0x62,
   0x36, 0x49, 0x55, 0x22, 0x50, 0x00, 0x04, 0x03, 0x00, 0x00, 0x00, 0x1C, 0x22, 0x41, 0x00,
@@ -55,7 +55,7 @@ __code uint8_t OLED_FONT[] = {
 };
 
 // OLED initialisation sequence
-__code uint8_t OLED_INIT_CMD[] = {
+const uint8_t OLED_INIT_CMD[] = {
   OLED_MULTIPLEX,   0x3F,                 // set multiplex ratio  
   OLED_CHARGEPUMP,  0x14,                 // set DC-DC enable  
   OLED_MEMORYMODE,  0x02,                 // set page addressing mode
@@ -65,7 +65,7 @@ __code uint8_t OLED_INIT_CMD[] = {
 };
 
 // OLED global variables
-__xdata uint8_t line, column, scroll;
+uint8_t line, column, scroll;
 
 // OLED set cursor to line start
 void OLED_setline(uint8_t line) {
@@ -126,14 +126,14 @@ void OLED_plotChar(char c) {
   ptr += ptr << 2;                        // -> ptr = (ch - 32) * 5;
   I2C_start(OLED_ADDR);                   // start transmission to OLED
   I2C_write(OLED_DAT_MODE);               // set data mode
-  for(i=5 ; i; i--) I2C_write(OLED_FONT[ptr++]);
   I2C_write(0x00);                        // write space between characters
+  for(i=5; i; i--) I2C_write(OLED_FONT[ptr++]); // write character
   I2C_stop();                             // stop transmission
 }
 
 // OLED write a character or handle control characters
 void OLED_write(char c) {
-  c = c & 0x7F;                           // ignore top bit
+  c &= 0x7f;                              // ignore top bit
   // normal character
   if(c >= 32) {
     OLED_plotChar(c);
@@ -156,15 +156,4 @@ void OLED_write(char c) {
     column = 0;
     OLED_setline((line + scroll) & 0x07);
   }
-}
-
-// OLED print string
-void OLED_print(char* str) {
-  while(*str) OLED_write(*str++);
-}
-
-// OLED print string with newline
-void OLED_println(char* str) {
-  OLED_print(str);
-  OLED_write('\n');
 }

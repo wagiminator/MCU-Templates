@@ -1,5 +1,5 @@
 # MCU Templates
-Discover a set of templates designed to simplify the initial stages of bare-metal firmware development for various microcontrollers. These templates eliminate the need for complicated Hardware Abstraction Layers (HALs) and heavy closed-source development tools. They come with pre-configured Makefiles, linker scripts, programming tools, and libraries to streamline the development process.
+Discover a set of templates designed to simplify the initial stages of bare-metal firmware development for various microcontrollers. These templates eliminate the need for complicated Hardware Abstraction Layers (HALs) and heavy closed-source development tools. They come with pre-configured Makefiles, linker scripts, programming tools, and internal peripheral libraries to streamline the development process.
 
 - [ATtiny814, tinyAVR 0/1-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATtiny814)
 - [CH551, CH552, CH554](https://github.com/wagiminator/MCU-Templates/tree/main/CH552)
@@ -14,6 +14,8 @@ Discover a set of templates designed to simplify the initial stages of bare-meta
 - [STM32F030, STM32F031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32F03x)
 - [STM32G030, STM32G031, STM32G041](https://github.com/wagiminator/MCU-Templates/tree/main/STM32G0xx)
 - [STM32L010, STM32L011, STM32L021, STM32L031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32L0xx)
+
+In the "Libraries" folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
 
 ## Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
