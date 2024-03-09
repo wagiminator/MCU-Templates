@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB Handler for CH32X035/X034/X033                                         * v1.0 *
+// USB Handler for CH32X035/X034/X033                                         * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -39,12 +39,23 @@ void USB_init(void) {
   GPIOC->CFGXR    = (GPIOC->CFGXR & ~((uint32_t)0b11111111)) | ((uint32_t)0b10000100);
   GPIOC->BSXR     = ((uint32_t)1<<1);
 
-  #if USB_VDD > 0
-  AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE | AFIO_CTLR_USB_PHY_V33)) 
-             | AFIO_CTLR_UDP_PUE_10K | AFIO_CTLR_USB_IOEN;
+  #ifdef USB_VDD
+    #if USB_VDD > 0
+      AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE | AFIO_CTLR_USB_PHY_V33)) 
+                 | AFIO_CTLR_UDP_PUE_10K | AFIO_CTLR_USB_IOEN;
+    #else
+      AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE )) 
+                 | AFIO_CTLR_USB_PHY_V33 | AFIO_CTLR_UDP_PUE_1K5 | AFIO_CTLR_USB_IOEN;
+    #endif
   #else
-  AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE )) 
-             | AFIO_CTLR_USB_PHY_V33 | AFIO_CTLR_UDP_PUE_1K5 | AFIO_CTLR_USB_IOEN;
+    RCC->APB1PCENR |= RCC_PWREN;
+    PWR->CTLR |= PWR_CTLR_PLS;
+    if(PWR->CSR & PWR_CSR_PVDO)
+      AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE )) 
+                 | AFIO_CTLR_USB_PHY_V33 | AFIO_CTLR_UDP_PUE_1K5 | AFIO_CTLR_USB_IOEN;
+    else
+      AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE | AFIO_CTLR_USB_PHY_V33)) 
+                 | AFIO_CTLR_UDP_PUE_10K | AFIO_CTLR_USB_IOEN;
   #endif
 
   USBFSD->BASE_CTRL = 0x00;

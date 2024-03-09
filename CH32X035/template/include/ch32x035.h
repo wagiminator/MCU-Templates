@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32X035/X034/X033                                         * v0.4 *
+// Header file for CH32X035/X034/X033                                         * v0.5 *
 // ===================================================================================
 // This contains a copy of ch32x035.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -2650,6 +2650,11 @@ typedef struct
 #define PWR_CTLR_PLS                            ((uint16_t)0x0060) /* PLS[2:0] bits (PVD Level Selection) */
 #define PWR_CTLR_PLS_0                          ((uint16_t)0x0020) /* Bit 0 */
 #define PWR_CTLR_PLS_1                          ((uint16_t)0x0040) /* Bit 1 */
+
+#define PWR_CTLR_PLS_2V1                        ((uint16_t)0x0000)
+#define PWR_CTLR_PLS_2V3                        ((uint16_t)0x0020)
+#define PWR_CTLR_PLS_3V0                        ((uint16_t)0x0040)
+#define PWR_CTLR_PLS_4V0                        ((uint16_t)0x0060)
 
 #define PWR_CTLR_LP_REG                         ((uint16_t)0x0200) /* Software configure flash into lower energy mode */
 #define PWR_CTLR_LP                             ((uint16_t)0x0C00) /* Software configure flash Status */

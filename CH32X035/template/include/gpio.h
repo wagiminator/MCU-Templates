@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for CH32X035/X034/X033                                * v0.2 *
+// Basic GPIO Functions for CH32X035/X034/X033                                * v0.3 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PB0, PB1, .. - e.g.:
@@ -40,8 +40,8 @@
 // ADC_enable()             enable ADC (power-up)
 // ADC_disable()            disable ADC (power-down) (*)
 // ADC_fast()               set fast mode   (fast speed, least accurate)
-// ADC_slow()               set slow mode   (slow speed, most accurate)
-// ADC_medium()             set medium mode (medium speed, medium accurate) (*)
+// ADC_slow()               set slow mode   (slow speed, most accurate) (*)
+// ADC_medium()             set medium mode (medium speed, medium accurate)
 //
 // ADC_input(PIN)           set PIN as ADC input
 // ADC_input_VREF()         set internal voltage referece (Vref) as ADC input
@@ -83,6 +83,12 @@
 // Operational Amplifier (OPA) functions available:
 // ------------------------------------------------
 // not yet implemented
+//
+// Touch Key (TK) functions available:
+// -----------------------------------
+// TK_init()                init and enable touch key functions (must be called first)
+// TK_input(PIN)            set PIN as touch key input
+// TK_read()                returns TRUE if touch key is pressed
 //
 // Notes:
 // ------
@@ -391,7 +397,7 @@ enum{
 (0))))
 
 // ===================================================================================
-// ADC Functions
+// Analog-to-Digital Converter (ADC) Functions
 // ===================================================================================
 #define ADC_enable()        ADC1->CTLR2  |=  ADC_ADON
 #define ADC_disable()       ADC1->CTLR2  &= ~ADC_ADON
@@ -399,10 +405,10 @@ enum{
 #define ADC_fast()          { ADC1->CTLR3   = 0b00000000000000000000000000000101; \
                               ADC1->SAMPTR1 = 0b00000000000000000000000000000000; \
                               ADC1->SAMPTR2 = 0b00000000000000000000000000000000; }
-#define ADC_slow()          { ADC1->CTLR3   = 0b00000000000000000000000000001111; \
+#define ADC_slow()          { ADC1->CTLR3   = 0b00000000000000000000000000001011; \
                               ADC1->SAMPTR1 = 0b00111111111111111111111111111111; \
                               ADC1->SAMPTR2 = 0b00111111111111111111111111111111; }
-#define ADC_medium()        { ADC1->CTLR3   = 0b00000000000000000000000000001011; \
+#define ADC_medium()        { ADC1->CTLR3   = 0b00000000000000000000000000001000; \
                               ADC1->SAMPTR1 = 0b00011011011011011011011011011011; \
                               ADC1->SAMPTR2 = 0b00011011011011011011011011011011; }
 
@@ -416,7 +422,7 @@ enum{
 
 static inline void ADC_init(void) {
   RCC->APB2PCENR |= RCC_ADC1EN | RCC_AFIOEN;    // enable ADC and AFIO
-  ADC_medium();                                 // set medium speed as default
+  ADC_slow();                                   // set slow speed as default
   ADC1->CTLR2  = ADC_ADON                       // turn on ADC
                | ADC_EXTSEL;                    // software triggering
 }
@@ -434,7 +440,7 @@ static inline uint16_t ADC_read_VDD(void) {
 }
 
 // ===================================================================================
-// CMP Functions
+// Analog Comparator (CMP) Functions
 // ===================================================================================
 #define CMP_lock()          OPA->CTLR2 |= OPA_CTLR2_CMP_LOCK
 #define CMP_unlock()        {CMP->KEY = CMP_KEY1; CMP->KEY = CMP_KEY2;}
@@ -473,9 +479,34 @@ static inline uint16_t ADC_read_VDD(void) {
 #define CMP3_POS_PA13()     OPA->CTLR2 &= ~OPA_CTLR2_PSEL3
 
 // ===================================================================================
-// OPA Functions
+// Operational Amplifier (OPA) Functions
 // ===================================================================================
 // not yet implemented
+
+// ===================================================================================
+// Touch Key (TK) Functions
+// ===================================================================================
+#define TK_input(PIN)       ADC_input(PIN)
+
+static inline void TK_init(void) {
+  ADC_init();                       // init ADC
+  ADC1->CTLR1  |= ADC_TKENABLE;     // enable touch key
+  ADC1->IDATAR1 = 0x80;             // TKEY1->CHGOFFSET = 0x80;
+}
+
+static inline uint8_t TK_read(void) {
+  uint8_t  result;
+  uint16_t value;
+  ADC_enable();                     // (re-)enable ADC
+  ADC1->RDATAR = 0x08;              // (TKEY1->ACT_DCG) set discharge time and start
+  while(!(ADC1->STATR & ADC_EOC));  // wait until sampling completed
+  value = ADC1->RDATAR;             // read sampling value
+  result = (value == 2047);         // 2047 if pressed
+  ADC1->RDATAR = 0x08;              // second sampling (blind)
+  while(!(ADC1->STATR & ADC_EOC));
+  value = ADC1->RDATAR;
+  return result;
+}
 
 #ifdef __cplusplus
 };

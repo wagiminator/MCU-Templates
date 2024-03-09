@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v1.1 *
+// USB PD SINK Handler for CH32X035                                           * v1.2 *
 // ===================================================================================
 //
 // Reference:               https://github.com/openwch/ch32x035
@@ -135,11 +135,19 @@ uint8_t PD_connect(void) {
   RCC->AHBPCENR  |= RCC_USBPD;
   GPIOB->CFGHR    = (GPIOB->CFGHR & ~( (uint32_t)0b1111<<(((14)&7)<<2) | (uint32_t)0b1111<<(((15)&7)<<2)))
                                   |  ( (uint32_t)0b0100<<(((14)&7)<<2) | (uint32_t)0b0100<<(((15)&7)<<2));
-  #if USB_VDD > 0
-  AFIO->CTLR     |= USBPD_IN_HVT;
+  #ifdef USB_VDD
+    #if USB_VDD > 0
+      AFIO->CTLR |= USBPD_IN_HVT;
+    #else
+      AFIO->CTLR |= USBPD_IN_HVT | USBPD_PHY_V33;
+    #endif
   #else
-  AFIO->CTLR     |= USBPD_IN_HVT | USBPD_PHY_V33;
+    RCC->APB1PCENR |= RCC_PWREN;
+    PWR->CTLR |= PWR_CTLR_PLS;
+    if(PWR->CSR & PWR_CSR_PVDO) AFIO->CTLR |= USBPD_IN_HVT | USBPD_PHY_V33;
+    else                        AFIO->CTLR |= USBPD_IN_HVT;
   #endif
+
   USBPD->DMA      = (uint32_t)PD_TR_buffer;
   USBPD->CONFIG   = USBPD_IE_RX_ACT | USBPD_IE_RX_RESET | USBPD_IE_TX_END  | USBPD_PD_DMA_EN;
   USBPD->STATUS   = USBPD_BUF_ERR   | USBPD_IF_RX_BIT   | USBPD_IF_RX_BYTE 
