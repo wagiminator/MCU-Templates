@@ -1,6 +1,7 @@
 # Programming the MCU using the factory built-in serial bootloader
 ## Description
-With this tool, some entry-level STM32 microcontrollers can be flashed via a simple USB-to-serial converter by utilizing the factory built-in embedded bootloader. It currently supports the following devices:
+With this tool, some entry-level STM32 microcontrollers can be flashed via a simple USB-to-serial converter by utilizing the factory built-in UART bootloader. It currently supports the following devices:
+- STM32C011/031
 - STM32F03xx4/6
 - STM32G03x/04x
 - STM32L01x/02x
@@ -19,6 +20,14 @@ If necessary, a driver for the USB-to-serial converter used must be installed.
 Connect your USB-to-serial converter to your STM32 MCU as follows:
 
 ```
+USB2SERIAL      STM32C011/031
++--------+      +------------+
+|     RXD| <--- |PA9  (PA11) |
+|     TXD| ---> |PA10 (PA12) |
+|     3V3| ---> |VDD (3V3)   |
+|     GND| ---> |GND         |
++--------+      +------------+
+
 USB2SERIAL      STM32F03xx4/6
 +--------+      +------------+
 |     RXD| <--- |PA9  or PA14|
@@ -49,7 +58,7 @@ Set your MCU to boot mode by using ONE of the following method:
 - Disconnect your board from all power supplies, pull BOOT0 pin to VCC (or press and hold the BOOT button if your board has one), then connect the board to your USB port. The BOOT button can be released now.
 - Connect your USB-to-serial converter to your USB port. Pull BOOT0 pin to VCC, then pull nRST shortly to GND (or press and hold the BOOT button, then press and release the RESET button and then release the BOOT button, if your board has them).
 
-On STM32G03x/04x microcontrollers, the BOOT0 pin is initially disabled. When the chip is brand new or the main flash memory is erased, this isn't an issue as the embedded bootloader automatically kicks in. By using the stm32isp tool, the BOOT0 pin will be activated for subsequent use. However, if the chip has been previously programmed using a different software tool, the bootloader might not be accessible through the BOOT0 pin anymore. In such cases, the nBOOT_SEL bit in the User Option Bytes must be cleared (set to 0) using an SWD programmer like ST-Link and the appropriate software.
+On STM32C and STM32G microcontrollers, the BOOT0 pin is initially disabled. When the chip is brand new or the main flash memory is erased, this isn't an issue as the embedded bootloader automatically kicks in. By using the stm32isp tool, the BOOT0 pin will be activated for subsequent use. However, if the chip has been previously programmed using a different software tool, the bootloader might not be accessible through the BOOT0 pin anymore. In such cases, the nBOOT_SEL bit in the User Option Bytes must be cleared (set to 0) using an SWD programmer like ST-Link and the appropriate software.
 
 ## Usage
 ```

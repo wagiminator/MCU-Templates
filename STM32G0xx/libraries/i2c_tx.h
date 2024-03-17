@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include "stm32g0xx.h"
+#include "system.h"
 
 // I2C Parameters
 #define I2C_CLKRATE   400000    // I2C bus clock rate (Hz)

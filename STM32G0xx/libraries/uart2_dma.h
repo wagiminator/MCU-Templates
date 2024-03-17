@@ -52,7 +52,7 @@
 extern "C" {
 #endif
 
-#include "stm32g0xx.h"
+#include "system.h"
 
 // UART parameters
 #define UART2_BAUD            115200      // default UART baud rate

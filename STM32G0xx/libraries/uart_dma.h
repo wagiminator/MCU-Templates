@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART1 Functions for STM32G0xx  (no buffer, no interrupt, no DMA)    * v1.0 *
+// USART1 with DMA RX Buffer for STM32G0xx                                    * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -60,13 +60,14 @@ extern "C" {
 
 // UART parameters
 #define UART_BAUD             115200      // default UART baud rate
+#define UART_RX_BUF_SIZE      64          // UART RX buffer size
 #define UART_MAP              1           // UART pin mapping (see above)
+#define UART_DMA_CHANNEL      1           // DMA channel (1 - 3)
 #define UART_FIFO             1           // 1: enable 8-byte FIFO
 #define UART_PRINT            0           // 1: include print functions (needs print.h)
 
 // UART macros
 #define UART_ready()          (USART1->ISR & USART_ISR_TXE_TXFNF)   // ready to write
-#define UART_available()      (USART1->ISR & USART_ISR_RXNE_RXFNE)  // ready to read
 #define UART_completed()      (USART1->ISR & USART_ISR_TC)          // transmission completed
 
 #define UART_enable()         USART1->CR1 |= USART_CR1_UE           // enable USART
@@ -93,6 +94,7 @@ extern "C" {
 void UART_init(void);                     // init UART with default BAUD rate
 char UART_read(void);                     // read character via UART
 void UART_write(const char c);            // send character via UART
+uint8_t UART_available(void);             // check if there is something to read
 
 // Additional print functions (if activated, see above)
 #if UART_PRINT == 1
@@ -106,6 +108,18 @@ void UART_write(const char c);            // send character via UART
 #define UART_print            UART_printS             // alias
 #define UART_newline()        UART_write('\n')        // send newline
 #define UART_printf(f, ...)   printF(UART_write, f, ##__VA_ARGS__)
+#endif
+
+// DMA channel defines
+#if   UART_DMA_CHANNEL == 1
+  #define UART_DMA_CHAN   DMA1_Channel1
+  #define UART_DMA_MUX    DMAMUX1_Channel0
+#elif UART_DMA_CHANNEL == 2
+  #define UART_DMA_CHAN   DMA1_Channel2
+  #define UART_DMA_MUX    DMAMUX1_Channel1
+#elif UART_DMA_CHANNEL == 3
+  #define UART_DMA_CHAN   DMA1_Channel3
+  #define UART_DMA_MUX    DMAMUX1_Channel2
 #endif
 
 #ifdef __cplusplus
