@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#include "py32f0xx.h"
+#include "system.h"
 
 // DEBUG parameters
 #define DEBUG_ENABLE      1               // enable serial DEBUG (0:no, 1:yes)

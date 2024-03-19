@@ -166,9 +166,15 @@ extern "C" {
   #elif F_CPU == 16000000
      #define CLK_MASK     ((0b010<<13) | *(uint32_t *)(0x1fff0f08))
      #define CLK_DIV      (0b000<<11)
+  #elif F_CPU == 12000000
+     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+     #define CLK_DIV      (0b001<<11)
   #elif F_CPU ==  8000000
      #define CLK_MASK     ((0b001<<13) | *(uint32_t *)(0x1fff0f04))
      #define CLK_DIV      (0b000<<11)
+  #elif F_CPU ==  6000000
+     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+     #define CLK_DIV      (0b010<<11)
   #elif F_CPU ==  4000000
      #define CLK_MASK     ((0b000<<13) | *(uint32_t *)(0x1fff0f00))
      #define CLK_DIV      (0b000<<11)

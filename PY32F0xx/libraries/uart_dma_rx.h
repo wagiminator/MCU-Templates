@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#include "py32f0xx.h"
+#include "system.h"
 
 // UART parameters
 #define UART_BAUD             115200    // default UART baud rate
