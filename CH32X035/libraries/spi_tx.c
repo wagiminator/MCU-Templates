@@ -24,8 +24,8 @@ void SPI_init(void) {
               | SPI_CTLR1_SPE;        // enable SPI
 }
 
-// Transfer one data byte (read and write)
-void SPI_transfer(uint8_t data) {
+// Transmit one data byte
+void SPI_write(uint8_t data) {
   while(!SPI_ready());                // wait for ready to write
   SPI1->DATAR = data;                 // send data byte
 }

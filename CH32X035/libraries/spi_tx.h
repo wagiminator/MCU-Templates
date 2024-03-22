@@ -5,7 +5,7 @@
 // Functions available:
 // --------------------
 // SPI_init()               Init SPI with defined clock rate (see below)
-// SPI_transfer(d)          Transmit one data byte
+// SPI_write(d)             Transmit one data byte
 //
 // SPI_busy()               Check if SPI bus is busy
 // SPI_ready()              Check if SPI is ready to write
@@ -34,7 +34,7 @@ extern "C" {
 #include "system.h"
 
 // SPI Parameters
-#define SPI_PRESC           6     // SPI_CLKRATE = F_CPU / (2 ^ (SPI_PRESC + 1))
+#define SPI_PRESC           6     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)
 
 // I2C Functions and Macros
 #define SPI_busy()          (SPI1->STATR & SPI_STATR_BSY)
@@ -47,7 +47,7 @@ extern "C" {
 #define SPI_setBAUD(n)      SPI1->CTLR1 = (SPI1->CTLR1&~SPI_CTLR1_BR) | (((n)&7)<<3)
 
 void SPI_init(void);
-void SPI_transfer(uint8_t data);
+void SPI_write(uint8_t data);
 
 #ifdef __cplusplus
 };

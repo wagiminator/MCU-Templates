@@ -36,7 +36,7 @@ extern "C" {
 #include "ch32v003.h"
 
 // SPI Parameters
-#define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 ^ (SPI_PRESC + 1))
+#define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)
 
 // I2C Functions and Macros
 #define SPI_busy()          (SPI1->STATR & SPI_STATR_BSY)
