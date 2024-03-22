@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic I2C Master Functions for PY32F0xx (write only)                       * v1.0 *
+// Basic I2C Master Functions with DMA for PY32F0xx                           * v1.0 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
-#include "i2c_tx.h"
+#include "i2c_dma.h"
+
+// Read/write flag
+uint8_t I2C_rwflag;
 
 // Init I2C
 void I2C_init(void) {
@@ -88,6 +91,8 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APBENR1 |= RCC_APBENR1_I2CEN;              // enable I2C module clock
+  I2C1->CR1     = I2C_CR1_SWRST;                  // reset I2C module
+  I2C1->CR1     = 0;
   I2C1->CR2     = 4;                              // set input clock rate
   #if I2C_CLKRATE > 100000
   I2C1->CCR     = (F_CPU / (3 * I2C_CLKRATE))     // set clock division factor
@@ -98,6 +103,17 @@ void I2C_init(void) {
   I2C1->TRISE   = 16;                             // set maximum rise time (1000ns)
   #endif
   I2C1->CR1     = I2C_CR1_PE;                     // enable I2C
+
+  // Setup DMA
+  RCC->AHBENR   |= RCC_AHBENR_DMAEN;              // enable DMA module clock
+  RCC->APBENR2  |= RCC_APBENR2_SYSCFGEN;          // enable SYSCFG module clock
+  SYSCFG->CFGR3 |= (uint32_t)0b01001 << I2C_DMA_POS; // set I2C1 TX as trigger
+  I2C_DMA_CHAN->CPAR  = (uint32_t)&I2C1->DR;      // peripheral address
+  I2C_DMA_CHAN->CCR   = DMA_CCR_MINC              // increment memory address
+                      | DMA_CCR_DIR               // memory to I2C
+                      | DMA_CCR_TCIE;             // transfer complete interrupt enable
+  DMA1->IFCR = (uint32_t)0b1111 << I2C_DMA_SHIFT; // clear interrupt flags
+  NVIC_EnableIRQ(I2C_DMA_IRQn);                   // enable the DMA IRQ
 }
 
 // Start I2C transmission (addr must contain R/W bit)
@@ -105,11 +121,13 @@ void I2C_init(void) {
 #pragma GCC diagnostic ignored "-Wunused-variable"
 void I2C_start(uint8_t addr) {
   while(I2C1->SR2 & I2C_SR2_BUSY);                // wait until bus ready
-  I2C1->CR1 |= I2C_CR1_START;                     // set START condition
+  I2C1->CR1 |= I2C_CR1_START                      // set START condition
+             | I2C_CR1_ACK;                       // set ACK
   while(!(I2C1->SR1 & I2C_SR1_SB));               // wait for START generated
   I2C1->DR = addr;                                // send slave address + R/W bit
   while(!(I2C1->SR1 & I2C_SR1_ADDR));             // wait for address transmitted
   uint16_t reg = I2C1->SR2;                       // clear flags
+  I2C_rwflag = addr & 1;                          // set read/write flag
 }
 #pragma GCC diagnostic pop
 
@@ -119,8 +137,38 @@ void I2C_write(uint8_t data) {
   I2C1->DR = data;                                // send data byte
 }
 
+// Read data byte via I2C bus (ack=0 for last byte, ack>0 if more bytes to follow)
+uint8_t I2C_read(uint8_t ack) {
+  if(!ack) {                                      // last byte?
+    I2C1->CR1 &= ~I2C_CR1_ACK;                    // -> set NAK
+    I2C1->CR1 |=  I2C_CR1_STOP;                   // -> set STOP condition
+  }
+  while(!(I2C1->SR1 & I2C_SR1_RXNE));             // wait for data byte received
+  return I2C1->DR;                                // return received data byte
+}
+
 // Stop I2C transmission
 void I2C_stop(void) {
+  if(!I2C_rwflag) {                               // for read operation only
+    while(!(I2C1->SR1 & I2C_SR1_BTF));            // wait for last byte transmitted
+    I2C1->CR1 |= I2C_CR1_STOP;                    // set STOP condition
+  }
+}
+
+// Send data buffer via I2C bus using DMA
+void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  I2C_DMA_CHAN->CNDTR = len + 1;                  // number of bytes to be transfered
+  I2C_DMA_CHAN->CMAR  = (uint32_t)buf;            // memory address
+  I2C_DMA_CHAN->CCR  |= DMA_CCR_EN;               // enable DMA channel
+  I2C1->CR2          |= I2C_CR2_DMAEN;            // enable DMA request
+}
+
+// Interrupt service routine
+void I2C_DMA_ISR(void) __attribute__((interrupt));
+void I2C_DMA_ISR(void) {
+  I2C1->CR2 &= ~I2C_CR2_DMAEN;                    // disable DMA request
+  I2C_DMA_CHAN->CCR &= ~DMA_CCR_EN;               // disable DMA channel
+  DMA1->IFCR = (uint32_t)0b1111 << I2C_DMA_SHIFT; // clear interrupt flags
   while(!(I2C1->SR1 & I2C_SR1_BTF));              // wait for last byte transmitted
   I2C1->CR1 |= I2C_CR1_STOP;                      // set STOP condition
 }
