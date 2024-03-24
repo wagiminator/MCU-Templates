@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#include "ch32v003.h"
+#include "system.h"
 
 // SPI Parameters
 #define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)

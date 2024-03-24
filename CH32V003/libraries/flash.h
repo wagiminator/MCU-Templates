@@ -61,7 +61,7 @@
 extern "C" {
 #endif
 
-#include "ch32v003.h"
+#include "system.h"
 
 void FLASH_write(uint32_t addr, uint16_t data);
 void FLASH_PAGE_erase(uint8_t page);

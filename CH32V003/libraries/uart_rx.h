@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#include "ch32v003.h"
+#include "system.h"
 
 // UART Parameters
 #define UART_BAUD             115200      // default UART baud rate
