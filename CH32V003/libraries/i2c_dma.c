@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.0 *
+// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -108,4 +108,9 @@ void DMA1_Channel6_IRQHandler(void) {
   DMA1->INTFCR         = DMA_CGIF6;               // clear interrupt flags
   while(!(I2C1->STAR1 & I2C_STAR1_BTF));          // wait for last byte transmitted
   I2C1->CTLR1         |= I2C_CTLR1_STOP;          // set STOP condition
+}
+
+// Read data via I2C bus to buffer and stop
+void I2C_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = I2C_read(len > 0);
 }

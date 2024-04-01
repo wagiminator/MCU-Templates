@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for CH32V003                       * v1.2 *
+// Basic I2C Master Functions (write only) for CH32V003                       * v1.3 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -64,4 +64,10 @@ void I2C_write(uint8_t data) {
 void I2C_stop(void) {
   while(!(I2C1->STAR1 & I2C_STAR1_BTF));          // wait for last byte transmitted
   I2C1->CTLR1 |= I2C_CTLR1_STOP;                  // set STOP condition
+}
+
+// Send data buffer via I2C bus and stop
+void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) I2C_write(*buf++);           // write buffer
+  I2C_stop();                               // stop transmission
 }

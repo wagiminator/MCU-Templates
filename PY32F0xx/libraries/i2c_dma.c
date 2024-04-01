@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions with DMA for PY32F0xx                           * v1.0 *
+// Basic I2C Master Functions with DMA for PY32F0xx                           * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -171,4 +171,9 @@ void I2C_DMA_ISR(void) {
   DMA1->IFCR = (uint32_t)0b1111 << I2C_DMA_SHIFT; // clear interrupt flags
   while(!(I2C1->SR1 & I2C_SR1_BTF));              // wait for last byte transmitted
   I2C1->CR1 |= I2C_CR1_STOP;                      // set STOP condition
+}
+
+// Read data via I2C bus to buffer and stop
+void I2C_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = I2C_read(len > 0);
 }

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions                                              * v1.1 *
+// Software I2C Master Functions                                              * v1.2 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -13,6 +13,9 @@
 // I2C_stop()               I2C stop transmission
 // I2C_write(data)          I2C transmit one data byte to the slave
 // I2C_read(ack)            I2C receive one data byte (set ack=0 for last byte)
+//
+// I2C_writeBuffer(buf,len) Send buffer (*buf) with length (len) via I2C and stop
+// I2C_readBuffer(buf,len)  Read buffer (*buf) with length (len) via I2C and stop
 //
 // Define SDA/SCL pin and clock rate below!
 //
@@ -42,6 +45,9 @@ void I2C_restart(uint8_t addr);   // I2C restart transmission
 void I2C_stop(void);              // I2C stop transmission
 void I2C_write(uint8_t data);     // I2C transmit one data byte to the slave
 uint8_t I2C_read(uint8_t ack);    // I2C receive one data byte from the slave
+
+void I2C_writeBuffer(uint8_t* buf, uint16_t len);
+void I2C_readBuffer(uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };
