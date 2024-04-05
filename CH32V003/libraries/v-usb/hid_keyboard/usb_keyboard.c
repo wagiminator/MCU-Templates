@@ -93,9 +93,10 @@ void KBD_release(uint8_t key) {
 // Press and release a key on keyboard
 // ===================================================================================
 void KBD_type(uint8_t key) {
-  KBD_press(key);
-  DLY_ms(20);
-  KBD_release(key);
+  KBD_press(key);                                 // press key
+  DLY_ms(10);                                     // wait for next USB poll
+  KBD_release(key);                               // release key
+  DLY_ms(10);                                     // wait for next USB poll
 }
 
 // ===================================================================================
@@ -110,7 +111,7 @@ void KBD_releaseAll(void) {
 // Write text with keyboard
 // ===================================================================================
 void KBD_print(char* str) {
-  while(*str) KBD_type(*str++);
+  while(*str) KBD_type(*str++);                   // type each character of the string
 }
 
 // ===================================================================================

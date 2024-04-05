@@ -21,6 +21,6 @@
 
 // USB descriptor strings
 #define MANUF_STR           "wagiminator"
-#define PROD_STR            "MouseWiggler"
+#define PROD_STR            "CH32V003 Mouse"
 #define SERIAL_STR          "CH32V003HID"
 

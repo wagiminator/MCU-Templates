@@ -21,6 +21,6 @@
 
 // USB descriptor strings
 #define MANUF_STR           "wagiminator"
-#define PROD_STR            "CAPsBLOCKER"
+#define PROD_STR            "CH32V003 Keyboard"
 #define SERIAL_STR          "CH32V003HID"
 
