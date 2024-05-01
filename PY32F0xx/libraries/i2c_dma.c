@@ -157,7 +157,7 @@ void I2C_stop(void) {
 
 // Send data buffer via I2C bus using DMA
 void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
-  I2C_DMA_CHAN->CNDTR = len + 1;                  // number of bytes to be transfered
+  I2C_DMA_CHAN->CNDTR = len;                      // number of bytes to be transfered
   I2C_DMA_CHAN->CMAR  = (uint32_t)buf;            // memory address
   I2C_DMA_CHAN->CCR  |= DMA_CCR_EN;               // enable DMA channel
   I2C1->CR2          |= I2C_CR2_DMAEN;            // enable DMA request
