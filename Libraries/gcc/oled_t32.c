@@ -70,7 +70,7 @@ const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000}; // BCD conversion array
 // OLED init function
 void OLED_init(void) {
   DLY_ms(50);                                     // time for the OLED to boot up
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   for (uint8_t i = 0; i < sizeof(OLED_INIT_CMD); i++)
     I2C_write(OLED_INIT_CMD[i]);                  // send the command bytes
@@ -79,7 +79,7 @@ void OLED_init(void) {
 
 // OLED set contrast
 void OLED_contrast(uint8_t val) {
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(OLED_CONTRAST);                       // contrast command
   I2C_write(val);                                 // set contrast value
@@ -89,7 +89,7 @@ void OLED_contrast(uint8_t val) {
 // OLED set the cursor
 void OLED_cursor(uint8_t xpos, uint8_t ypos) {
   xpos &= 0x7F; ypos &= 0x03;                     // limit cursor position values
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(xpos & 0x0F);                         // set low nibble of start column
   I2C_write(0x10 | (xpos >> 4));                  // set high nibble of start column
@@ -100,7 +100,7 @@ void OLED_cursor(uint8_t xpos, uint8_t ypos) {
 
 // OLED clear rest of the current line
 void OLED_clearLine(void) {
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_DAT_MODE);                       // set data mode
   while(OLED_x++ < 128) I2C_write(0);             // clear rest of the line
   I2C_stop();                                     // stop transmission
@@ -123,14 +123,14 @@ void OLED_plotChar(char c) {
   if (OLED_x > 122) {                             // line end ?
     I2C_stop();                                   // stop data transmission
     OLED_setCursor(0,++OLED_y);                   // set next line start
-    I2C_start(OLED_ADDR);                         // start transmission to OLED
+    I2C_start(OLED_ADDR << 1);                    // start transmission to OLED
     I2C_write(OLED_DAT_MODE);                     // set data mode
   }
 }
 
 // OLED print a string
 void OLED_print(const char* str) {
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_DAT_MODE);                       // set data mode
   while(*str) OLED_plotChar(*str++);              // plot each character
   I2C_stop();                                     // stop transmission
@@ -145,7 +145,7 @@ void OLED_println(const char* str) {
 // OLED print value (BCD conversion by substraction method)
 void OLED_printVal(uint16_t value, uint8_t digits, uint8_t decimal, char ch) {
   uint8_t leadflag = 0;                           // flag for leading spaces
-  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_DAT_MODE);                       // set data mode
   while(digits--) {                               // for all digits digits
     uint8_t digitval = 0;                         // start with digit value 0

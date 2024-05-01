@@ -22,7 +22,7 @@ char RDA_rdsStationName[8];                       // just for internal use
 
 // RDA write specified register
 void RDA_writeReg(uint8_t reg) {
-  I2C_start(RDA_ADDR_INDEX);                      // start I2C for index write to RDA
+  I2C_start((RDA_ADDR_INDEX << 1) | 0);           // start I2C for index write to RDA
   I2C_write(0x02 + reg);                          // set the register to write
   I2C_write(RDA_write_regs[reg] >> 8);            // send high byte
   I2C_write(RDA_write_regs[reg]);                 // send low byte
@@ -31,7 +31,7 @@ void RDA_writeReg(uint8_t reg) {
 
 // RDA write all registers
 void RDA_writeAllRegs(void) {
-  I2C_start(RDA_ADDR_SEQ);                        // start I2C for sequential write to RDA
+  I2C_start((RDA_ADDR_SEQ << 1) | 0);             // start I2C for sequential write to RDA
   for(uint8_t i=0; i<6; i++) {                    // write to 6 registers
     I2C_write(RDA_write_regs[i] >> 8);            // send high byte
     I2C_write(RDA_write_regs[i]);                 // send low byte
@@ -41,7 +41,7 @@ void RDA_writeAllRegs(void) {
 
 // RDA read all registers
 void RDA_readAllRegs(void) {
-  I2C_start(RDA_ADDR_SEQ | 1);                    // start I2C for sequential read from RDA
+  I2C_start((RDA_ADDR_SEQ << 1) | 1);             // start I2C for sequential read from RDA
   for(uint8_t i=0; i<6; i++)                      // read 6 registers
     RDA_read_regs[i] = (uint16_t)(I2C_read(1) << 8) | I2C_read(5-i);
   I2C_stop();                                     // stop I2C

@@ -24,7 +24,7 @@ extern "C" {
 #include "system.h"
 
 // EEPROM definitions
-#define EEPROM_ADDR       0xa0      // EEPROM I2C device address including write bit
+#define EEPROM_ADDR       0x50      // EEPROM I2C device address
 #define EEPROM_PAGESIZE   8         // page size of EEPROM
 
 // EEPROM functions

@@ -19,7 +19,7 @@ extern "C" {
 #include "i2c_soft.h"
 
 // INA219 register values for 10 mOhms shunt resistor
-#define INA_ADDR        0x80                      // I2C write address of INA219
+#define INA_ADDR        0x40                      // INA219 I2C device address
 #define INA_CONFIG      0b0010011111111111        // INA config register according to datasheet
 #define INA_CALIB       4096                      // INA calibration register according to R_SHUNT
 #define INA_REG_CONFIG  0x00                      // INA configuration register address

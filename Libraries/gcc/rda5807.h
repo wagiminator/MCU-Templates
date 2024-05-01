@@ -32,8 +32,8 @@ extern "C" {
 #define RDA_INIT_VOL    3             // volume on system start (0..15)
 
 // RDA definitions
-#define RDA_ADDR_SEQ    0x20          // RDA I2C write address for sequential access
-#define RDA_ADDR_INDEX  0x22          // RDA I2C write address for indexed access
+#define RDA_ADDR_SEQ    0x10          // RDA5807 I2C device address for sequential access
+#define RDA_ADDR_INDEX  0x11          // RDA5807 I2C device address for indexed access
 
 #ifndef RDA_INIT_VOL
 #define RDA_INIT_VOL    1             // start volume (0..15)

@@ -24,8 +24,8 @@ extern "C" {
 
 #include "i2c_soft.h"
 
-// KT0802 I2C address
-#define KT_I2C_ADDR         0b0111110
+// KT0802 I2C device address
+#define KT_I2C_ADDR         0x3e
 
 // Pre-emphasis time-constant depending on region
 #define KT_USA_JAPAN        0

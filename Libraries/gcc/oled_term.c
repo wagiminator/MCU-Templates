@@ -71,7 +71,7 @@ uint8_t line, column, scroll;
 
 // OLED set cursor to line start
 void OLED_setline(uint8_t line) {
-  I2C_start(OLED_ADDR);                   // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);              // start transmission to OLED
   I2C_write(OLED_CMD_MODE);               // set command mode
   I2C_write(OLED_PAGE + line);            // set line
   I2C_write(0x00); I2C_write(0x10);       // set column to "0"
@@ -82,7 +82,7 @@ void OLED_setline(uint8_t line) {
 void OLED_clearline(uint8_t line) {
   uint8_t i;
   OLED_setline(line);                     // set cursor to line start
-  I2C_start(OLED_ADDR);                   // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);              // start transmission to OLED
   I2C_write(OLED_DAT_MODE);               // set data mode
   for(i=128; i; i--) I2C_write(0x00);     // clear the line
   I2C_stop();                             // stop transmission
@@ -101,7 +101,7 @@ void OLED_clear(void) {
 void OLED_scrollDisplay(void) {
   OLED_clearline(scroll);                 // clear line
   scroll = (scroll + 1) & 0x07;           // set next line
-  I2C_start(OLED_ADDR);                   // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);              // start transmission to OLED
   I2C_write(OLED_CMD_MODE);               // set command mode
   I2C_write(OLED_OFFSET);                 // set display offset:
   I2C_write(scroll << 3);                 // scroll up
@@ -113,7 +113,7 @@ void OLED_init(void) {
   uint8_t i;
   I2C_init();                             // initialize I2C first
   DLY_ms(50);                             // time for the OLED to boot up
-  I2C_start(OLED_ADDR);                   // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);              // start transmission to OLED
   I2C_write(OLED_CMD_MODE);               // set command mode
   for(i = 0; i < sizeof(OLED_INIT_CMD); i++)
     I2C_write(OLED_INIT_CMD[i]);          // send the command bytes
@@ -127,7 +127,7 @@ void OLED_plotChar(char c) {
   uint8_t i;
   uint16_t ptr = c - 32;                  // character pointer
   ptr += ptr << 2;                        // -> ptr = (ch - 32) * 5;
-  I2C_start(OLED_ADDR);                   // start transmission to OLED
+  I2C_start(OLED_ADDR << 1);              // start transmission to OLED
   I2C_write(OLED_DAT_MODE);               // set data mode
   I2C_write(0x00);                        // write space between characters
   for(i=5; i; i--) I2C_write(OLED_FONT[ptr++]); // write character

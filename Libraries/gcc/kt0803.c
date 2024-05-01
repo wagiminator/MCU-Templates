@@ -11,7 +11,7 @@ uint8_t KT_regs[] = { 0x81, 0xC3, 0x41 };
 // Update KT0803 registers 0x00 - 0x02
 void KT_update(void) {
   uint8_t i;
-  I2C_start(KT_I2C_ADDR << 1 | 0);
+  I2C_start((KT_I2C_ADDR << 1) | 0);
   I2C_write(0);
   for(i=0; i<3; i++) I2C_write(KT_regs[i]);
   I2C_stop();

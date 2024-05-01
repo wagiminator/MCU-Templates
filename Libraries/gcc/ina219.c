@@ -7,7 +7,7 @@
 
 // INA219 write a register value
 void INA_write(uint8_t reg, uint16_t value) {
-  I2C_start(INA_ADDR);                            // start transmission to INA219
+  I2C_start((INA_ADDR << 1) | 0);                 // start transmission to INA219
   I2C_write(reg);                                 // write register address
   I2C_write(value >> 8);                          // write register content high byte
   I2C_write(value);                               // write register content low  byte
@@ -17,9 +17,9 @@ void INA_write(uint8_t reg, uint16_t value) {
 // INA219 read a register
 uint16_t INA_read(uint8_t reg) {
   uint16_t result;                                // result variable
-  I2C_start(INA_ADDR);                            // start transmission to INA219
+  I2C_start((INA_ADDR << 1) | 0);                 // start transmission to INA219
   I2C_write(reg);                                 // write register address
-  I2C_restart(INA_ADDR | 0x01);                   // restart for reading
+  I2C_restart((INA_ADDR << 1) | 1);               // restart for reading
   result = (uint16_t)(I2C_read(1) << 8) | I2C_read(0);  // read register content
   I2C_stop();                                     // stop transmission
   return result;                                  // return result
