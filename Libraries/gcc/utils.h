@@ -4,7 +4,7 @@
 //
 // Functions available:
 // --------------------
-// abs(n)                   returns positive value if n
+// abs(n)                   returns positive value of n
 // min(x,y)                 returns minimum of x and y
 // max(x,y)                 returns maximum of x and y
 // swap(x,y)                swaps values of x and y

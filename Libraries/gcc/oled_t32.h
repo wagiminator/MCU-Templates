@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #include "i2c_soft.h"
+#include "system.h"
 
 // OLED definitions
 #define OLED_ADDR         0x78    // OLED write address (0x3C << 1)

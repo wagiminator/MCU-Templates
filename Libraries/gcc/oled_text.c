@@ -96,6 +96,7 @@ void OLED_clear(void) {
 void OLED_init(void) {
   uint8_t i;
   I2C_init();                             // initialize I2C first
+  DLY_ms(50);                             // time for the OLED to boot up
   I2C_start(OLED_ADDR);                   // start transmission to OLED
   I2C_write(OLED_CMD_MODE);               // set command mode
   for(i = 0; i < sizeof(OLED_INIT_CMD); i++)

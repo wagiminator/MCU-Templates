@@ -19,12 +19,9 @@
 // OLED init settings
 const uint8_t OLED_INIT_CMD[] = {
   OLED_DISPLAY_OFF,                               // display off
-  OLED_CLOCK,      0x80,                          // set oscillator frequency
   OLED_MULTIPLEX,  0x1f,                          // set multiplex ratio for 128x32
-  OLED_OFFSET,     0x00,                          // set display offset
   OLED_MEMORYMODE, 0x01,                          // set vertical addressing mode
   OLED_COMPINS,    0x02,                          // set COM pins to sequential
-  OLED_PRECHARGE,  0xf1,                          // set pre-charge period
   OLED_CHARGEPUMP, 0x14,                          // enable charge pump
   OLED_YFLIP, OLED_XFLIP,                         // flip screen
   OLED_DISPLAY_ON,                                // display on
@@ -72,6 +69,7 @@ const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000}; // BCD conversion array
 
 // OLED init function
 void OLED_init(void) {
+  DLY_ms(50);                                     // time for the OLED to boot up
   I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   for (uint8_t i = 0; i < sizeof(OLED_INIT_CMD); i++)

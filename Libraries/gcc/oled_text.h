@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 #include "i2c_soft.h"
+#include "system.h"
 
 // OLED parameters
 #define OLED_PRINT        1       // 1: include print functions (needs print.h)
