@@ -23,7 +23,9 @@ const uint8_t OLED_INIT_CMD[] = {
   OLED_MEMORYMODE, 0x01,                          // set vertical addressing mode
   OLED_COMPINS,    0x02,                          // set COM pins to sequential
   OLED_CHARGEPUMP, 0x14,                          // enable charge pump
-  OLED_YFLIP, OLED_XFLIP,                         // flip screen
+  #if OLED_FLIP_SCREEN > 0
+  OLED_XFLIP, OLED_YFLIP,                         // flip screen
+  #endif
   OLED_DISPLAY_ON,                                // display on
 };
 
@@ -69,7 +71,12 @@ const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000}; // BCD conversion array
 
 // OLED init function
 void OLED_init(void) {
-  DLY_ms(50);                                     // time for the OLED to boot up
+  #if OLED_INIT_I2C > 0
+  I2C_init();                                     // initialize I2C first
+  #endif
+  #if OLED_BOOT_TIME > 0
+  DLY_ms(OLED_BOOT_TIME);                         // time for the OLED to boot up
+  #endif
   I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   for (uint8_t i = 0; i < sizeof(OLED_INIT_CMD); i++)
@@ -77,12 +84,28 @@ void OLED_init(void) {
   I2C_stop();                                     // stop transmission
 }
 
-// OLED set contrast
+// Switch display on/off (0: display off, 1: display on)
+void OLED_display(uint8_t val) {
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_write(OLED_CMD_MODE);                       // set command mode
+  I2C_write(val ? OLED_DISPLAY_ON : OLED_DISPLAY_OFF); // set display power
+  I2C_stop();                                     // stop transmission
+}
+
+// Set display contrast (0-255)
 void OLED_contrast(uint8_t val) {
   I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(OLED_CONTRAST);                       // contrast command
   I2C_write(val);                                 // set contrast value
+  I2C_stop();                                     // stop transmission
+}
+
+// Invert display (0: inverse off, 1: inverse on)
+void OLED_invert(uint8_t val) {
+  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_write(OLED_CMD_MODE);                       // set command mode
+  I2C_write(val ? OLED_INVERT : OLED_INVERT_OFF); // set invert mode
   I2C_stop();                                     // stop transmission
 }
 

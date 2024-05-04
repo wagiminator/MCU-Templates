@@ -8,6 +8,9 @@
 // Functions available:
 // --------------------
 // OLED_init()              Init OLED display
+// OLED_display(v)          Switch display on/off (0: display off, 1: display on)
+// OLED_contrast(v)         Set OLED contrast (0-255)
+// OLED_invert(v)           Invert display (0: inverse off, 1: inverse on)
 // OLED_clear()             Clear screen of OLED display
 // OLED_write(c)            Write a character or handle control characters
 // OLED_cursor(x, y)        Set cursor (0..20, 0..7)
@@ -41,11 +44,14 @@
 extern "C" {
 #endif
 
-#include "i2c_soft.h"
+#include "i2c_soft.h"             // choose your I2C library
 #include "system.h"
 
 // OLED parameters
-#define OLED_PRINT        1       // 1: include print functions (needs print.h)
+#define OLED_BOOT_TIME    50      // OLED boot up time in milliseconds
+#define OLED_INIT_I2C     1       // 1: init I2C with OLED_init()
+#define OLED_FLIP_SCREEN  1       // 1: flip screen with OLED_init()
+#define OLED_PRINT        0       // 1: include print functions (needs print.h)
 
 // OLED definitions
 #define OLED_ADDR         0x3C    // OLED I2C device address
@@ -63,6 +69,8 @@ extern "C" {
 #define OLED_CHARGEPUMP   0x8D    // (following byte - 0x14:enable, 0x10: disable)
 #define OLED_XFLIP_OFF    0xA0    // don't flip display horizontally
 #define OLED_XFLIP        0xA1    // flip display horizontally
+#define OLED_RESUME       0xA4    // display all on resume
+#define OLED_ALL_ON       0xA5    // display all on
 #define OLED_INVERT_OFF   0xA6    // set non-inverted display
 #define OLED_INVERT       0xA7    // set inverse display
 #define OLED_MULTIPLEX    0xA8    // set multiplex ratio (following byte)
@@ -75,9 +83,13 @@ extern "C" {
 #define OLED_CLOCK        0xD5    // set frequency (bits 7-4) and divider (bits 3-0)
 #define OLED_PRECHARGE    0xD9    // set pre-charge period (following byte)
 #define OLED_COMPINS      0xDA    // set COM pin config (following byte)
+#define OLED_VCOM_DETECT  0xDB    // set VCOM detect (following byte)
 
 // OLED functions
 void OLED_init(void);             // OLED init function
+void OLED_display(uint8_t val);   // Switch display on/off (0: display off, 1: display on)
+void OLED_contrast(uint8_t val);  // Set display contrast (0-255)
+void OLED_invert(uint8_t val);    // Invert display (0: inverse off, 1: inverse on)
 void OLED_clear(void);            // OLED clear screen
 void OLED_write(char c);          // OLED write a character or handle control characters
 void OLED_cursor(uint8_t x, uint8_t y); // OLED set cursor (0..20, 0..7)
