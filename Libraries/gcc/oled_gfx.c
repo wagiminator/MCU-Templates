@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306 I2C OLED Graphics Functions                                        * v1.1 *
+// SSD1306 I2C OLED Graphics Functions                                        * v1.2 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -9,6 +9,15 @@
 // Screen Buffer
 // ===================================================================================
 uint8_t __attribute__ ((aligned(4))) OLED_buffer[OLED_WIDTH * OLED_HEIGHT / 8];
+
+#if OLED_DOUBLEBUF == 0
+  #define OLED_drawbuffer OLED_buffer
+  #define OLED_sendbuffer OLED_buffer
+#else
+  uint8_t __attribute__ ((aligned(4))) OLED_buffer2[OLED_WIDTH * OLED_HEIGHT / 8];
+  uint8_t* OLED_drawbuffer = OLED_buffer;
+  uint8_t* OLED_sendbuffer = OLED_buffer2;
+#endif
 
 // ===================================================================================
 // Standard ASCII 5x8 font (chars 32 - 127)
@@ -72,22 +81,15 @@ const uint8_t OLED_INIT_CMD[] = {
 void OLED_init(void) {
   I2C_init();                                     // initialize I2C first
   DLY_ms(50);                                     // time for the OLED to boot up
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_writeBuffer((uint8_t*)OLED_INIT_CMD, sizeof(OLED_INIT_CMD)); // send the command bytes
   I2C_stop();                                     // stop transmission
 }
 
-// Refresh screen buffer (send buffer via I2C)
-void OLED_refresh(void) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
-  I2C_write(OLED_DAT_MODE);                       // set command mode
-  I2C_writeBuffer(OLED_buffer, sizeof(OLED_buffer)); // send screen buffer using DMA
-}
-
 // Switch display on/off (0: display off, 1: display on)
 void OLED_display(uint8_t val) {
-  I2C_start(OLED_ADDR << 1);                           // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(val ? OLED_DISPLAY_ON : OLED_DISPLAY_OFF); // set display power
   I2C_stop();                                     // stop transmission
@@ -95,7 +97,7 @@ void OLED_display(uint8_t val) {
 
 // Set display contrast (0-255)
 void OLED_contrast(uint8_t val) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(OLED_CONTRAST);                       // contrast command
   I2C_write(val);                                 // set contrast value
@@ -104,7 +106,7 @@ void OLED_contrast(uint8_t val) {
 
 // Invert display (0: inverse off, 1: inverse on)
 void OLED_invert(uint8_t val) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(val ? OLED_INVERT : OLED_INVERT_OFF); // set invert mode
   I2C_stop();                                     // stop transmission
@@ -112,7 +114,7 @@ void OLED_invert(uint8_t val) {
 
 // Flip display (0: flip off, 1: flip on)
 void OLED_flip(uint8_t xflip, uint8_t yflip) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(xflip ? OLED_XFLIP : OLED_XFLIP_OFF); // set x-flip
   I2C_write(yflip ? OLED_YFLIP : OLED_YFLIP_OFF); // set y-flip
@@ -121,7 +123,7 @@ void OLED_flip(uint8_t xflip, uint8_t yflip) {
 
 // Scroll display vertically
 void OLED_vscroll(uint8_t y) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(OLED_OFFSET);                         // offset command
   I2C_write(y);                                   // set y-scroll
@@ -130,7 +132,7 @@ void OLED_vscroll(uint8_t y) {
 
 // Set home postition (should be 0,0)
 void OLED_home(uint8_t x, uint8_t y) {
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
   I2C_write(OLED_PAGE        | (y >> 3));         // set line
   I2C_write(OLED_COLUMN_LOW  | (x & 0xf));        // set column
@@ -142,24 +144,70 @@ void OLED_home(uint8_t x, uint8_t y) {
 // OLED Graphics Functions
 // ===================================================================================
 
-// Clear OLED screen
+// Refresh screen buffer (send buffer via I2C)
+void OLED_refresh(void) {
+  #if OLED_DOUBLEBUF > 0
+  uint8_t* temp = OLED_drawbuffer;                // switch buffers
+  OLED_drawbuffer = OLED_sendbuffer;
+  OLED_sendbuffer = temp;
+  #endif
+
+  I2C_start(OLED_ADDR);                           // start transmission to OLED
+  I2C_write(OLED_DAT_MODE);                       // set command mode
+  I2C_writeBuffer(OLED_sendbuffer, sizeof(OLED_buffer)); // send screen buffer using DMA
+}
+
+// Clear OLED screen buffer
 void OLED_clear(void) {
-  uint32_t* ptr = (uint32_t*)OLED_buffer;
+  uint32_t* ptr = (uint32_t*)OLED_drawbuffer;
   uint32_t  cnt = sizeof(OLED_buffer) >> 2;
   while(cnt--) *ptr++ = (uint32_t)0;
 }
 
-// Get pixel color at (x,y) (0: pixel cleared, 1: pixel set)
-uint8_t OLED_getPixel(int16_t x, int16_t y) {
-  if((x < 0) || (x >= OLED_WIDTH) || (y < 0) || (y >= OLED_HEIGHT)) return 0;
-  return((OLED_buffer[((uint16_t)y >> 3) * OLED_WIDTH + x] >> (y & 7)) & 1);
+// Copy OLED screen buffer
+void OLED_copy(void) {
+  uint32_t* sptr = (uint32_t*)OLED_sendbuffer;
+  uint32_t* dptr = (uint32_t*)OLED_drawbuffer;
+  uint32_t  cnt  = sizeof(OLED_buffer) >> 2;
+  while(cnt--) *dptr++ = *sptr++;
 }
 
-// Set pixel at position (x,y) with color (0: pixel cleared, 1: pixel set)
+// Get pixel color at (x,y) (0: pixel cleared, 1: pixel set)
+uint8_t OLED_getPixel(int16_t x, int16_t y) {
+  #if OLED_PORTRAIT == 0
+  if((x < 0) || (x >= OLED_WIDTH) || (y < 0) || (y >= OLED_HEIGHT)) return 0;
+  return((OLED_drawbuffer[((uint16_t)y >> 3) * OLED_WIDTH + x] >> (y & 7)) & 1);
+  #else
+  x = (int16_t)(OLED_HEIGHT - 1) - x;
+  if((x < 0) || (x >= OLED_HEIGHT) || (y < 0) || (y >= OLED_WIDTH)) return 0;
+  return((OLED_drawbuffer[((uint16_t)x >> 3) * OLED_WIDTH + y] >> (x & 7)) & 1);
+  #endif
+}
+
+// Set pixel at position (x,y) with color (0: clear pixel, 1: set pixel, 2: invert pixel)
 void OLED_setPixel(int16_t x, int16_t y, uint8_t color) {
+  #if OLED_PORTRAIT == 0
   if((x < 0) || (x >= OLED_WIDTH) || (y < 0) || (y >= OLED_HEIGHT)) return;
-  if(color) OLED_buffer[((uint16_t)y >> 3) * OLED_WIDTH + x] |=  ((uint8_t)1 << (y & 7));
-  else      OLED_buffer[((uint16_t)y >> 3) * OLED_WIDTH + x] &= ~((uint8_t)1 << (y & 7));
+  switch(color) {
+    case 0: OLED_drawbuffer[((uint16_t)y >> 3) * OLED_WIDTH + x] &= ~((uint8_t)1 << (y & 7));
+            break;
+    case 1: OLED_drawbuffer[((uint16_t)y >> 3) * OLED_WIDTH + x] |=  ((uint8_t)1 << (y & 7));
+            break;
+    case 2: OLED_drawbuffer[((uint16_t)y >> 3) * OLED_WIDTH + x] ^=  ((uint8_t)1 << (y & 7));
+            break;
+  }
+  #else
+  if((x < 0) || (x >= OLED_HEIGHT) || (y < 0) || (y >= OLED_WIDTH)) return;
+  x = (int16_t)(OLED_HEIGHT - 1) - x;
+  switch(color) {
+    case 0: OLED_drawbuffer[((uint16_t)x >> 3) * OLED_WIDTH + y] &= ~((uint8_t)1 << (x & 7));
+            break;
+    case 1: OLED_drawbuffer[((uint16_t)x >> 3) * OLED_WIDTH + y] |=  ((uint8_t)1 << (x & 7));
+            break;
+    case 2: OLED_drawbuffer[((uint16_t)x >> 3) * OLED_WIDTH + y] ^=  ((uint8_t)1 << (x & 7));
+            break;
+  }
+  #endif
 }
 
 // Draw vertical line starting from (x,y), height (h), color (0: cleared, 1: set)
@@ -205,7 +253,6 @@ void OLED_drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
   OLED_drawVLine(x    , y,     h, color);
   OLED_drawVLine(x+w-1, y,     h, color);
 }
-
 
 // Draw filled rectangle starting from (x,y), width (w), height (h), color
 void OLED_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color) {
