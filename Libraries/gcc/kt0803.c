@@ -19,6 +19,9 @@ void KT_update(void) {
 
 // Setup KT0803
 void KT_init(void) {
+  #if KT_INIT_I2C > 0
+  I2C_init();
+  #endif
   KT_update();
 }
 

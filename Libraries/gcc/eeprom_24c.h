@@ -26,6 +26,7 @@ extern "C" {
 // EEPROM definitions
 #define EEPROM_ADDR       0x50      // EEPROM I2C device address
 #define EEPROM_PAGESIZE   8         // page size of EEPROM
+#define EEPROM_INIT_I2C
 
 // EEPROM functions
 uint8_t EEPROM_read(uint16_t addr);                 // read single byte from EEPROM

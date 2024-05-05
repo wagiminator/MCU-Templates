@@ -26,8 +26,9 @@
 extern "C" {
 #endif
 
-#include "i2c_tx.h"
+#include "i2c_tx.h"                               // choose your I2C library
 
+// TM1650 parameters
 #define TM_HW_DIV         0                       // 1: MCU has hardware division
 #define TM_BRIGHT         1                       // initial display brightness (1-8)
 

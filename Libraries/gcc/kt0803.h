@@ -22,18 +22,21 @@
 extern "C" {
 #endif
 
-#include "i2c_soft.h"
+#include "i2c_soft.h"                 // choose your I2C library
+
+// KT0802 parameters
+#define KT_INIT_I2C           1       // 1: init I2C with KT_init()
 
 // KT0802 I2C device address
-#define KT_I2C_ADDR         0x3e
-
-// Pre-emphasis time-constant depending on region
-#define KT_USA_JAPAN        0
-#define KT_EUROPE_AUSTRALIA 1
+#define KT_I2C_ADDR           0x3e
 
 // Frequency range (in 100kHz)
-#define KT_FREQ_MIN         875
-#define KT_FREQ_MAX         1080
+#define KT_FREQ_MIN           875
+#define KT_FREQ_MAX           1080
+
+// Pre-emphasis time-constant depending on region
+#define KT_USA_JAPAN          0
+#define KT_EUROPE_AUSTRALIA   1
 
 // KT0802 Functions
 void KT_init(void);                   // KT0802 init function (write default values)

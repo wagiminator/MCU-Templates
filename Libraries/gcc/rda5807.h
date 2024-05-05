@@ -26,18 +26,15 @@ extern "C" {
 #endif
 
 #include "system.h"
-#include "i2c_soft.h"
+#include "i2c_soft.h"                 // choose your I2C library
 
 // RDA parameters
+#define RDA_INIT_I2C    1             // init I2C with RDA_init()
 #define RDA_INIT_VOL    3             // volume on system start (0..15)
 
 // RDA definitions
 #define RDA_ADDR_SEQ    0x10          // RDA5807 I2C device address for sequential access
 #define RDA_ADDR_INDEX  0x11          // RDA5807 I2C device address for indexed access
-
-#ifndef RDA_INIT_VOL
-#define RDA_INIT_VOL    1             // start volume (0..15)
-#endif
 
 // RDA state macros
 #define RDA_hasRdsData        ( RDA_read_regs[RDA_REG_A] & 0x8000 )

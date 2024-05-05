@@ -11,7 +11,7 @@ uint16_t RDA_write_regs[6] = {                    // RDA registers for writing:
   0b1101001000001101,                             // RDA register 0x02 preset
   0b0001010111000000,                             // RDA register 0x03 preset
   0b0000101000000000,                             // RDA register 0x04 preset
-  0b1000100010000000,                             // RDA register 0x05 preset
+  0b1000100010000000 | RDA_INIT_VOL,              // RDA register 0x05 preset
   0b0000000000000000,                             // RDA register 0x06 preset
   0b0000000000000000                              // RDA register 0x07 preset
 };
@@ -54,12 +54,14 @@ void RDA_resetStation(void) {
 
 // RDA initialize tuner
 void RDA_init(void) {
+  #if RDA_INIT_I2C > 0
+  I2C_init();                                     // initialize I2C first
+  #endif
   RDA_resetStation();                             // reset station available
   RDA_stationName[8] = 0;                         // set string terminator
   RDA_write_regs[RDA_REG_2] |=  0x0002;           // set soft reset
   RDA_writeReg(RDA_REG_2);                        // write to register 0x02
   RDA_write_regs[RDA_REG_2] &= ~0x0002;           // clear soft reset
-  RDA_write_regs[RDA_REG_5] |=  RDA_INIT_VOL;     // set start volume
   RDA_writeAllRegs();                             // write all registers
 }
 

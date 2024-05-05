@@ -27,6 +27,9 @@ uint16_t INA_read(uint8_t reg) {
 
 // INA219 write inital configuration and calibration values
 void INA_init(void) {
+  #if INA_INIT_I2C > 0
+  I2C_init();                                     // initialize I2C first
+  #endif
   INA_write(INA_REG_CONFIG, INA_CONFIG);          // write INA219 configuration
   INA_write(INA_REG_CALIB,  INA_CALIB);           // write INA219 calibration
 }
