@@ -45,7 +45,6 @@
 // OLED_printH(n)                 Print 16-bit hex half-word value
 // OLED_printB(n)                 Print  8-bit hex byte value
 // OLED_printS(s)                 Print string
-// OLED_print(s)                  Print string (alias)
 // OLED_println(s)                Print string with newline
 // OLED_newline()                 Send newline
 //
