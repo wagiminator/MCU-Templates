@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306 I2C OLED Graphics Functions                                        * v1.3 *
+// SSD1306 I2C OLED Graphics Functions                                        * v1.4 *
 // ===================================================================================
 //
 // Functions available:
@@ -83,6 +83,10 @@ extern "C" {
 #define OLED_DOUBLEBUF    0         // 1: use double buffer
 #define OLED_PRINT        0         // 1: include print functions (needs print.h)
 
+// Segment Digit Parameters
+#define OLED_SEG_FONT     1         // 0: unused, 1: 13x32 digits, 2: 5x16 digits
+#define OLED_SEG_SPACE    3         // width of space between segment digits in pixels
+
 // OLED definitions
 #define OLED_ADDR         0x3C      // OLED I2C device address
 #define OLED_CMD_MODE     0x00      // set command mode
@@ -157,6 +161,10 @@ void OLED_print(int16_t x, int16_t y, char* str, uint8_t color, uint8_t size);
 void OLED_drawChar(int16_t x, int16_t y, char c, uint8_t color, uint8_t size);
 void OLED_smoothChar(int16_t x, int16_t y, char c, uint8_t color);
 void OLED_stretchChar(int16_t x, int16_t y, char c, uint8_t color);
+
+#if OLED_SEG_FONT > 0
+void OLED_printSegment(int16_t x, int16_t y, uint16_t value, uint8_t digits, uint8_t lead, uint8_t decimal);
+#endif
 
 // Additional print functions (if activated, see above)
 #if OLED_PRINT == 1
