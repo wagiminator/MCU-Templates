@@ -11,7 +11,8 @@
 // OLED_flip(xflip,yflip)         Flip display (0: flip off, 1: flip on)
 // OLED_vscroll(y)                Scroll display vertically
 // OLED_home(x,y)                 Set display home position for screen refresh (0,0)
-// OLED_refresh()                 Refresh screen buffer (send buffer via I2C)
+// OLED_refresh()                 Refresh (flush) screen buffer (send buffer via I2C)
+// OLED_flush()                   Refresh (flush) screen buffer (alias)
 //
 // OLED_clear()                   Clear OLED screen buffer
 // OLED_copy()                    Copy OLED screen buffer (for double-buffer mode)
@@ -164,6 +165,8 @@ void OLED_stretchChar(int16_t x, int16_t y, char c, uint8_t color);
 #if OLED_SEG_FONT > 0
 void OLED_printSegment(int16_t x, int16_t y, uint16_t value, uint8_t digits, uint8_t lead, uint8_t decimal);
 #endif
+
+#define OLED_flush  OLED_refresh
 
 // Additional print functions (if activated, see above)
 #if OLED_PRINT == 1
