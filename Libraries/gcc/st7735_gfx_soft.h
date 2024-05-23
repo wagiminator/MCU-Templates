@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.0 *
+// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -7,6 +7,7 @@
 // TFT_init()                     Init TFT
 // TFT_sleep(v)                   Set display sleep mode (0: sleep off, 1: sleep on)
 // TFT_invert(v)                  Invert display (0: inverse off, 1: inverse on)
+// TFT_resync()                   Resync by toggling CS pin (for non-active control of CS-line mode)
 //
 // TFT_clear()                    Clear TFT screen
 // TFT_getPixel(x,y)              Get pixel color at (x,y)
@@ -110,8 +111,9 @@ extern "C" {
 #define TFT_BOOT_TIME     0         // TFT boot up time in milliseconds
 #define TFT_COLORBITS     12        // color depth (12 or 16 bits)
 #define TFT_XFLIP         0         // 1: flip TFT screen X-direction
-#define TFT_YFLIP         1         // 1: flip TFT screen Y-direction
+#define TFT_YFLIP         0         // 1: flip TFT screen Y-direction
 #define TFT_PORTRAIT      0         // 1: use TFT in portrait mode
+#define TFT_CS_CONTROL    0         // 1: active control of CS-line
 #define TFT_PRINT         0         // 1: include print functions (needs print.h)
 
 // Segment Digit Parameters
@@ -134,6 +136,7 @@ extern "C" {
 void TFT_init(void);
 void TFT_invert(uint8_t yes);
 void TFT_sleep(uint8_t yes);
+void TFT_resync(void);
 
 // TFT Graphics Functions
 void TFT_clear(void);
