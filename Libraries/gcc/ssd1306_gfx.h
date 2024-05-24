@@ -105,17 +105,17 @@ extern "C" {
 #define OLED_CONTRAST     0x81      // set display contrast (following byte, 0-255)
 #define OLED_CHARGEPUMP   0x8D      // (following byte - 0x14:enable, 0x10: disable)
 #define OLED_XFLIP_OFF    0xA0      // don't flip display horizontally
-#define OLED_XFLIP        0xA1      // flip display horizontally
+#define OLED_XFLIP_ON     0xA1      // flip display horizontally
 #define OLED_RESUME       0xA4      // display all on resume
 #define OLED_ALL_ON       0xA5      // display all on
 #define OLED_INVERT_OFF   0xA6      // set non-inverted display
-#define OLED_INVERT       0xA7      // set inverse display
+#define OLED_INVERT_ON    0xA7      // set inverse display
 #define OLED_MULTIPLEX    0xA8      // set multiplex ratio (following byte)
 #define OLED_DISPLAY_OFF  0xAE      // set display off (sleep mode)
 #define OLED_DISPLAY_ON   0xAF      // set display on
 #define OLED_PAGE         0xB0      // set start page (0xB0-0xB7 = 0-7)
 #define OLED_YFLIP_OFF    0xC0      // don't flip display vertically
-#define OLED_YFLIP        0xC8      // flip display vertically
+#define OLED_YFLIP_ON     0xC8      // flip display vertically
 #define OLED_OFFSET       0xD3      // set display offset (y-scroll: following byte)
 #define OLED_CLOCK        0xD5      // set frequency (bits 7-4) and divider (bits 3-0)
 #define OLED_PRECHARGE    0xD9      // set pre-charge period (following byte)

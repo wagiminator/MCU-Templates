@@ -45,29 +45,29 @@
 // TFT_println(s)                 Print string with newline
 // TFT_newline()                  Send newline
 //
-// TFT parameter settings:
-// -----------------------
-// Display                        DRIVER    WIDTH HEIGHT  XOFF  YOFF  INVERT  ROTATE  BGR
-// Adafruit   1.44" 128x128       ST7735R    128   128      2     1     0       3      1
-// AliExpress 1.44" 128x128       ST7735R    128   128      2     1     0       3      1
-// Adafruit   0.96" 160x80        ST7735     160    80      0    24     0       6      0
-// AliExpress 0.96" 160x80        ST7735     160    80      1    26     1       0      1
-// Adafruit   1.8"  160x128       ST7735R    160   128      0     0     0       0      1
-// AliExpress 1.8"  160x128 red   ST7735R    160   128      0     0     0       0      1
-// AliExpress 1.8"  160x128 blue  ST7735R    160   128      0     0     0       6      0
-// Adafruit   1.14" 240x135       ST7789     240   135     40    53     1       6      0
-// AliExpress 1.14" 240x135       ST7789     240   135     40    52     1       0      0
-// Adafruit   1.3"  240x240       ST7789     240   240      0    80     1       5      0
-// Adafruit   1.54" 240x240       ST7789     240   240      0    80     1       5      0
-// AliExpress 1.54" 240x240       ST7789     240   240      0    80     1       5      0
-// Adafruit   1.9"  320x170       ST7789     320   170      0    35     1       0      0
-// AliExpress 1.9"  320x170       ST7789     320   170      0    35     1       0      0
-// Adafruit   1.47" 320x172 round ST7789     320   172      0    34     1       0      0
-// AliExpress 1.47" 320x172 round ST7789     320   172      0    34     1       0      0
-// Adafruit   2.0"  320x240       ST7789     320   240      0     0     1       6      0
-// AliExpress 2.0"  320x240       ST7789V    320   240      0     0     1       0      0
-// Adafruit   2.2"  320x240       ILI9340C   320   240      0     0     0       4      1
-// AliExpress 2.4"  320x240       ILI9341    320   240      0     0     0       2      1
+// TFT parameter settings (needs to be checked):
+// ---------------------------------------------
+// Display                        DRIVER    WIDTH HEIGHT  XOFF  YOFF  INVERT BGR XORD YORD ROTATE
+// Adafruit   1.44" 128x128       ST7735R    128   128      2     1      0    1    0    0    1
+// AliExpress 1.44" 128x128       ST7735R    128   128      2     1      0    1    0    0    1
+// Adafruit   0.96" 160x80        ST7735     160    80      0    24      0    0    1    0    0
+// AliExpress 0.96" 160x80        ST7735     160    80      1    26      1    1    0    1    0
+// Adafruit   1.8"  160x128       ST7735R    160   128      0     0      0    1    0    1    0
+// AliExpress 1.8"  160x128 red   ST7735R    160   128      0     0      0    1    0    1    0
+// AliExpress 1.8"  160x128 blue  ST7735R    160   128      1     2      0    0    1    0    0
+// Adafruit   1.14" 240x135       ST7789     240   135     40    52      1    0    1    0    0     
+// AliExpress 1.14" 240x135       ST7789     240   135     40    53      1    0    0    1    0
+// Adafruit   1.3"  240x240       ST7789     240   240      0    80      1    0    1    1    1
+// Adafruit   1.54" 240x240       ST7789     240   240      0    80      1    0    1    1    1
+// AliExpress 1.54" 240x240       ST7789     240   240      0    80      1    0    1    1    1
+// Adafruit   1.9"  320x170       ST7789     320   170      0    36      1    0    0    1    0
+// AliExpress 1.9"  320x170       ST7789     320   170      0    36      1    0    0    1    0
+// Adafruit   1.47" 320x172 round ST7789     320   172      0    35      1    0    0    1    0
+// AliExpress 1.47" 320x172 round ST7789     320   172      0    35      1    0    0    1    0
+// Adafruit   2.0"  320x240       ST7789     320   240      0     0      1    0    1    0    0
+// AliExpress 2.0"  320x240       ST7789V    320   240      0     0      1    0    0    1    0
+// Adafruit   2.2"  320x240       ILI9340C   320   240      0     0      0    1    1    1    0
+// AliExpress 2.4"  320x240       ILI9341    320   240      0     0      0    1    0    0    0
 //
 // Notes:
 // ------

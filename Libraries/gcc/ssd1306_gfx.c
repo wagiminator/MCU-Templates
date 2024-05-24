@@ -3,7 +3,7 @@
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
-#include "oled_gfx.h"
+#include "ssd1306_gfx.h"
 
 // ===================================================================================
 // Screen Buffer
@@ -140,7 +140,7 @@ const uint8_t OLED_INIT_CMD[] = {
   OLED_COMPINS,    0x12,                          // set com pins
   #endif
   #if OLED_FLIP_SCREEN > 0
-  OLED_XFLIP, OLED_YFLIP,                         // flip screen
+  OLED_XFLIP_ON, OLED_YFLIP_ON,                   // flip screen
   #endif
   OLED_DISPLAY_ON                                 // display on
 };
@@ -180,7 +180,7 @@ void OLED_contrast(uint8_t val) {
 void OLED_invert(uint8_t val) {
   I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
-  I2C_write(val ? OLED_INVERT : OLED_INVERT_OFF); // set invert mode
+  I2C_write(val ? OLED_INVERT_ON : OLED_INVERT_OFF); // set invert mode
   I2C_stop();                                     // stop transmission
 }
 
@@ -188,8 +188,8 @@ void OLED_invert(uint8_t val) {
 void OLED_flip(uint8_t xflip, uint8_t yflip) {
   I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
   I2C_write(OLED_CMD_MODE);                       // set command mode
-  I2C_write(xflip ? OLED_XFLIP : OLED_XFLIP_OFF); // set x-flip
-  I2C_write(yflip ? OLED_YFLIP : OLED_YFLIP_OFF); // set y-flip
+  I2C_write(xflip ? OLED_XFLIP_ON : OLED_XFLIP_OFF); // set x-flip
+  I2C_write(yflip ? OLED_YFLIP_ON : OLED_YFLIP_OFF); // set y-flip
   I2C_stop();                                     // stop transmission
 }
 
