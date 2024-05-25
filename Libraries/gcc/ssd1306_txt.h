@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306/SH1106 I2C OLED Text Functions                                     * v1.2 *
+// SSD1306/SH1106 I2C OLED Text Functions                                     * v1.3 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306/SH1106 I2C 
@@ -17,6 +17,7 @@
 // OLED_clearLine(y)        Clear line y
 // OLED_cursor(x, y)        Set cursor
 // OLED_write(c)            Write a character or handle control characters
+// OLED_print(s)            Print a string
 //
 // If print functions are activated (see below, print.h must be included):
 // -----------------------------------------------------------------------
@@ -26,7 +27,6 @@
 // OLED_printH(n)           Print 16-bit hex half-word value
 // OLED_printB(n)           Print  8-bit hex byte value
 // OLED_printS(s)           Print string
-// OLED_print(s)            Print string (alias)
 // OLED_println(s)          Print string with newline
 // OLED_newline()           Send newline
 //
@@ -68,6 +68,10 @@ extern "C" {
 #define OLED_INIT_I2C     1         // 1: init I2C with OLED_init()
 #define OLED_FLIP_SCREEN  1         // 1: flip screen with OLED_init()
 #define OLED_PRINT        0         // 1: include print functions (needs print.h)
+
+// Segment Font Settings
+#define OLED_SEG_FONT     1         // 0: standard font, 1: 13x32 digits, 2: 5x16 digits
+#define OLED_SEG_SPACE    3         // width of space between segment digits in pixels
 
 // OLED Modes
 #define OLED_CMD_MODE     0x00      // set command mode
@@ -112,7 +116,12 @@ void OLED_vscroll(uint8_t y);       // Scroll display vertically (0-64)
 void OLED_clear(void);              // OLED clear screen
 void OLED_clearLine(uint8_t y);     // OLED clear line y
 void OLED_write(char c);            // OLED write a character or handle control characters
+void OLED_print(char* str);         // OLED print a string
 void OLED_cursor(uint8_t x, uint8_t y); // OLED set cursor
+
+// OLED Special Functions
+void OLED_drawBitmap(const uint8_t* bmp, uint8_t w, uint8_t h);
+void OLED_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t decimal);
 
 // OLED Cursor Position
 extern uint8_t OLED_x, OLED_y;
@@ -126,7 +135,6 @@ extern uint8_t OLED_x, OLED_y;
 #define OLED_printB(n)    printB(OLED_write, n)   // print byte as string
 #define OLED_printS(s)    printS(OLED_write, s)   // print string
 #define OLED_println(s)   println(OLED_write, s)  // print string with newline
-#define OLED_print        OLED_printS             // alias
 #define OLED_newline()    OLED_write('\n')        // send newline
 #define OLED_printf(f, ...)   printF(OLED_write, f, ##__VA_ARGS__)
 #endif
