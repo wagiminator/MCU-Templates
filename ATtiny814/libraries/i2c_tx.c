@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.0 *
+// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.1 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -39,4 +39,10 @@ void I2C_write(uint8_t data) {
 void I2C_stop(void) {
   while(~TWI0.MSTATUS & TWI_WIF_bm);            // wait for last transfer to complete
   TWI0.MCTRLB = TWI_MCMD_STOP_gc;               // send stop condition
+}
+
+// Send data buffer via I2C bus and stop
+void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) I2C_write(*buf++);           // write buffer
+  I2C_stop();                               // stop transmission
 }

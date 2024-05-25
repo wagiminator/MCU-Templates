@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.0 *
+// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -10,6 +10,9 @@
 // I2C_write(b)             I2C transmit one data byte via I2C
 // I2C_read(ack)            I2C receive one data byte from slave, ack=0: last byte
 // I2C_stop()               I2C stop transmission
+//
+// I2C_writeBuffer(buf,len) Send buffer (*buf) with length (len) via I2C and stop
+// I2C_readBuffer(buf,len)  Read buffer (*buf) with length (len) via I2C and stop
 //
 // I2C pin mapping (set below in I2C parameters):
 // ----------------------------------------------
@@ -39,6 +42,9 @@ void I2C_restart(uint8_t addr); // I2C restart transmission
 void I2C_write(uint8_t data);   // I2C transmit one data byte via I2C
 uint8_t I2C_read(uint8_t ack);  // I2C receive one data byte from slave
 void I2C_stop(void);            // I2C stop transmission
+
+void I2C_writeBuffer(uint8_t* buf, uint16_t len);
+void I2C_readBuffer(uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };
