@@ -7,28 +7,34 @@
 //
 // Functions available:
 // --------------------
-// OLED_init()              Init OLED display
-// OLED_display(v)          Switch display on/off (0: display off, 1: display on)
-// OLED_contrast(v)         Set OLED contrast (0-255)
-// OLED_invert(v)           Invert display (0: inverse off, 1: inverse on)
-// OLED_flip(xflip,yflip)   Flip display (0: flip off, 1: flip on)
-// OLED_vscroll(y)          Scroll display vertically (0-64)
-// OLED_clear()             Clear screen of OLED display
-// OLED_clearLine(y)        Clear line y
-// OLED_cursor(x, y)        Set cursor
-// OLED_write(c)            Write a character or handle control characters
-// OLED_print(s)            Print a string
+// OLED_init()                  Init OLED display
+// OLED_display(v)              Switch display on/off (0: display off, 1: display on)
+// OLED_contrast(v)             Set OLED contrast (0-255)
+// OLED_invert(v)               Invert display (0: inverse off, 1: inverse on)
+// OLED_flip(xflip,yflip)       Flip display (0: flip off, 1: flip on)
+// OLED_vscroll(y)              Scroll display vertically (0-64)
+// OLED_clear()                 Clear screen of OLED display
+// OLED_clearLine(y)            Clear line y
+//
+// OLED_cursor(x,y)             Set text cursor at position (x,y)
+// OLED_write(c)                Write character at cursor position or handle control characters
+// OLED_print(str)              Print string (*str) at cursor position
+// OLED_printSegment(v,d,l,dp)  Print value (v) at cursor position using defined segment font
+//                              with (d) number of digits, (l) leading (0: space, 1: '0') and 
+//                              decimal point at position (dp) counted from the right
+// OLED_drawBitmap(bmp,w,h)     Draw bitmap (pointer *bmp) at cursor position 
+//                              width (w) in pixels, hight (h) in 8-pixel lines
 //
 // If print functions are activated (see below, print.h must be included):
 // -----------------------------------------------------------------------
-// OLED_printf(f, ...)      printf (supports %s, %c, %d, %u, %x, %b, %02d, %%)
-// OLED_printD(n)           Print decimal value
-// OLED_printW(n)           Print 32-bit hex word value
-// OLED_printH(n)           Print 16-bit hex half-word value
-// OLED_printB(n)           Print  8-bit hex byte value
-// OLED_printS(s)           Print string
-// OLED_println(s)          Print string with newline
-// OLED_newline()           Send newline
+// OLED_printf(f, ...)          printf (supports %s, %c, %d, %u, %x, %b, %02d, %%)
+// OLED_printD(n)               Print decimal value
+// OLED_printW(n)               Print 32-bit hex word value
+// OLED_printH(n)               Print 16-bit hex half-word value
+// OLED_printB(n)               Print  8-bit hex byte value
+// OLED_printS(s)               Print string
+// OLED_println(s)              Print string with newline
+// OLED_newline()               Send newline
 //
 // Tested devices:
 // ---------------
