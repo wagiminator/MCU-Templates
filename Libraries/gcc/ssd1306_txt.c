@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306/SH1106 I2C OLED Text Functions                                     * v1.3 *
+// SSD1306/SH1106/SH1107 I2C OLED Text Functions                              * v1.3 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306/SH1106 I2C 
@@ -222,7 +222,7 @@ void OLED_vscroll(uint8_t y) {
 // ===================================================================================
 
 // OLED global variables
-uint8_t OLED_x, OLED_y;
+uint8_t OLED_x, OLED_y, OLED_i;
 
 // OLED clear line
 void OLED_clearLine(uint8_t y) {
@@ -255,23 +255,95 @@ void OLED_cursor(uint8_t x, uint8_t y) {
   OLED_y = y;
 }
 
+// OLED set text invert
+void OLED_textinvert(uint8_t yes) {
+  OLED_i = yes;
+}
+
+#if OLED_BIGCHARS > 0
+
+// Character buffer
+uint8_t OLED_buf[2*10];
+uint8_t OLED_sz;
+
+// Converts bit pattern abcdefgh into aabbccddeeffgghh
+uint16_t OLED_stretch(uint16_t x) {
+  x = (x & 0xF0)<<4 | (x & 0x0F);
+  x = (x<<2 | x) & 0x3333;
+  x = (x<<1 | x) & 0x5555;
+  return x | x<<1;
+}
+
+// Set character size
+void OLED_textsize(uint8_t size) {
+  OLED_sz = size;
+}
+
+#endif  // OLED_BIGCHARS > 0
+
 // OLED plot a single character
 void OLED_plotChar(char c) {
   uint16_t ptr = c - 32;                          // character pointer
   ptr += ptr << 2;                                // -> ptr = (ch - 32) * 5;
-  I2C_start(OLED_ADDR << 1);                      // start transmission to OLED
-  I2C_write(OLED_DAT_MODE);                       // set data mode
-  I2C_write(0x00);                                // write space between characters
-  I2C_writeBuffer((uint8_t*)&OLED_FONT[ptr], 5);  // write character
-  OLED_x += 6;                                    // move cursor
-  if(OLED_x > OLED_WIDTH - 6) OLED_cursor(0, OLED_y + 1);
+  #if OLED_BIGCHARS > 0
+  if(OLED_sz == 0) {                              // normal character (5x8)
+  #endif
+    I2C_start(OLED_ADDR << 1);                    // start transmission to OLED
+    I2C_write(OLED_DAT_MODE);                     // set data mode
+    I2C_write(OLED_i ? 0xff : 0x00);              // write space between characters
+    for(uint8_t i=5; i; i--) I2C_write(OLED_i ? ~OLED_FONT[ptr++] : OLED_FONT[ptr++]);
+    I2C_stop();
+    OLED_x += 6;                                  // move cursor
+    if(OLED_x > OLED_WIDTH - 6) OLED_cursor(0, OLED_y + 1);
+  #if OLED_BIGCHARS > 0
+  }
+  else if(OLED_sz == 1) {                         // v-stretched character (5x16)
+    for(uint8_t i=0; i<5; i++) {
+      uint16_t ch = OLED_stretch(OLED_FONT[ptr++]);
+      OLED_buf[i] = ch; OLED_buf[i+5] = ch >> 8;
+    }
+    OLED_drawBitmap(OLED_buf, 5, 2);
+    OLED_clearRect(1, 2);
+    if(OLED_x > OLED_WIDTH - 6) OLED_cursor(0, OLED_y + 2);
+  }
+  else {                                          // double-sized smoothed character (10x16)
+    uint16_t col0L, col0R, col1L, col1R;          // David Johnson-Davies' Smooth Big Text algorithm
+    uint8_t col0 = OLED_FONT[ptr++];
+    col0L = OLED_stretch(col0);
+    col0R = col0L;
+    for(uint8_t col=0; col<10; col+=2) {
+      uint8_t col1 = OLED_FONT[ptr++];
+      if(col == 8) col1 = 0;
+      col1L = OLED_stretch(col1);
+      col1R = col1L;    
+      for(int8_t i=6; i>=0; i--) {
+        for(int8_t j=1; j<3; j++) {
+          if(((col0>>i & 0b11) == (3 - j)) && ((col1>>i & 0b11) == j)) {
+            col0R = col0R | 1<<((i << 1) + j);
+            col1L = col1L | 1<<((i << 1) + 3 - j);
+          }
+        }
+      }
+      OLED_buf[col] = col0L; OLED_buf[col + 1] = col0R;
+      OLED_buf[col + 10] = col0L >> 8; OLED_buf[col + 11] = col0R >> 8;
+      col0 = col1; col0L = col1L; col0R = col1R;
+    }
+    OLED_drawBitmap(OLED_buf, 10, 2);
+    OLED_clearRect(2, 2);
+    if(OLED_x > OLED_WIDTH - 12) OLED_cursor(0, OLED_y + 2);
+  }
+  #endif
 }
 
 // OLED write a character or handle control characters
 void OLED_write(char c) {
   c &= 0x7f;                                      // ignore top bit
   if(c >= 32) OLED_plotChar(c);                   // normal character
+  #if OLED_BIGCHARS > 0
+  else if(c == '\n') OLED_cursor(0, OLED_y + (OLED_sz ? 2 : 1));
+  #else
   else if(c == '\n') OLED_cursor(0, OLED_y + 1);  // new line
+  #endif
   else if(c == '\r') OLED_cursor(0, OLED_y);      // carriage return
 }
 
@@ -290,8 +362,8 @@ void OLED_drawBitmap(const uint8_t* bmp, uint8_t w, uint8_t h) {
   while(h--) {
     I2C_start(OLED_ADDR << 1);                    // start transmission to OLED
     I2C_write(OLED_DAT_MODE);                     // set data mode
-    I2C_writeBuffer((uint8_t*)bmp, w);            // send bitmap line
-    bmp += w;
+    for(uint8_t i=w; i; i--) I2C_write(OLED_i ? ~(*bmp++) : *bmp++);
+    I2C_stop();
     OLED_cursor(OLED_x, OLED_y + 1);              // set next line
   }
   OLED_cursor(OLED_x + w, y);                     // move cursor
@@ -307,7 +379,7 @@ void OLED_clearRect(uint8_t w, uint8_t h) {
   while(h--) {
     I2C_start(OLED_ADDR << 1);                    // start transmission to OLED
     I2C_write(OLED_DAT_MODE);                     // set data mode
-    for(uint8_t i=w; i; i--) I2C_write(0);        // clear line
+    for(uint8_t i=w; i; i--) I2C_write(OLED_i ? 0xff : 0x00); // clear line
     I2C_stop();                                   // stop transmission
     OLED_cursor(OLED_x, OLED_y + 1);              // set next line
   }

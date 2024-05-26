@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306/SH1106 I2C OLED Text Functions                                     * v1.3 *
+// SSD1306/SH1106/SH1107 I2C OLED Text Functions                              * v1.3 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306/SH1106 I2C 
@@ -17,6 +17,8 @@
 // OLED_clearLine(y)            Clear line y
 //
 // OLED_cursor(x,y)             Set text cursor at position (x,y)
+// OLED_textinvert(v)           Invert text (0: inverse off, 1: inverse on)
+// OLED_textsize(sz);           Set text size (0: 5x8, 1: 5x16, 2: 10x16), enable OLED_BIGCHARS
 // OLED_write(c)                Write character at cursor position or handle control characters
 // OLED_print(str)              Print string (*str) at cursor position
 // OLED_printSegment(v,d,l,dp)  Print value (v) at cursor position using defined segment font
@@ -38,11 +40,12 @@
 //
 // Tested devices:
 // ---------------
-// - 1.3"  128x64 SH1106
-// - 0.96" 128x64 SSD1306
-// - 0.91" 128x32 SSD1306
-// - 0.49"  64x32 SSD1306
-// - 0.42"  72x40 SSD1306
+// - 1.5"  128x128 SH1107
+// - 1.3"  128x64  SH1106
+// - 0.96" 128x64  SSD1306
+// - 0.91" 128x32  SSD1306
+// - 0.49"  64x32  SSD1306
+// - 0.42"  72x40  SSD1306
 //
 // References:
 // -----------
@@ -68,15 +71,16 @@ extern "C" {
 #define OLED_ADDR         0x3C      // OLED I2C device address
 #define OLED_WIDTH        128       // OLED width in pixels
 #define OLED_HEIGHT       64        // OLED height in pixels
-#define OLED_SH1106       0         // OLED driver - 0: SSD1306, 1: SH1106
+#define OLED_SH1106       0         // OLED driver - 0: SSD1306/SH1107, 1: SH1106
 
 #define OLED_BOOT_TIME    50        // OLED boot up time in milliseconds
 #define OLED_INIT_I2C     1         // 1: init I2C with OLED_init()
 #define OLED_FLIP_SCREEN  1         // 1: flip screen with OLED_init()
 #define OLED_PRINT        0         // 1: include print functions (needs print.h)
 
-// Segment Font Settings
-#define OLED_SEG_FONT     1         // 0: standard font, 1: 13x32 digits, 2: 5x16 digits
+// OLED Font Settings
+#define OLED_BIGCHARS     0         // 1: use big fonts (OLED_textsize())
+#define OLED_SEG_FONT     0         // 0: standard font, 1: 13x32 digits, 2: 5x16 digits
 #define OLED_SEG_SPACE    3         // width of space between segment digits in pixels
 
 // OLED Modes
@@ -119,14 +123,20 @@ void OLED_flip(uint8_t xflip, uint8_t yflip); // Flip display (0: flip off, 1: f
 void OLED_vscroll(uint8_t y);       // Scroll display vertically (0-64)
 
 // OLED Text Functions
-void OLED_clear(void);              // OLED clear screen
-void OLED_clearLine(uint8_t y);     // OLED clear line y
-void OLED_write(char c);            // OLED write a character or handle control characters
-void OLED_print(char* str);         // OLED print a string
-void OLED_cursor(uint8_t x, uint8_t y); // OLED set cursor
+void OLED_clear(void);              // Clear screen
+void OLED_clearLine(uint8_t y);     // Clear line y
+void OLED_write(char c);            // Write a character or handle control characters
+void OLED_print(char* str);         // Print a string
+void OLED_cursor(uint8_t x, uint8_t y); // Set cursor
+void OLED_textinvert(uint8_t yes);  // Invert text
+
+#if OLED_BIGCHARS > 0
+void OLED_textsize(uint8_t size);   // Set text size (0: 5x8, 1: 5x16, 2: 10x16)
+#endif
 
 // OLED Special Functions
 void OLED_drawBitmap(const uint8_t* bmp, uint8_t w, uint8_t h);
+void OLED_clearRect(uint8_t w, uint8_t h);
 void OLED_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t decimal);
 
 // OLED Cursor Position
