@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.1 *
+// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.2 *
 // ===================================================================================
 // with software-SPI
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
@@ -97,16 +97,16 @@ const uint8_t TFT_FONT_SEG1[] = {
 // ===================================================================================
 #if TFT_SEG_FONT == 2
 const uint8_t TFT_FONT_SEG2[] = {
-  0x7C, 0x02, 0x02, 0x02, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 0  0
-  0x00, 0x00, 0x00, 0x00, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 1  1
-  0x00, 0x82, 0x82, 0x82, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x00, // 2  2
-  0x00, 0x82, 0x82, 0x82, 0x7C, 0x00, 0x20, 0x20, 0x20, 0x1F, // 3  3
-  0x7C, 0x80, 0x80, 0x80, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 4  4
-  0x7C, 0x82, 0x82, 0x82, 0x00, 0x00, 0x20, 0x20, 0x20, 0x1F, // 5  5
-  0x7C, 0x82, 0x82, 0x82, 0x00, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 6  6
-  0x7C, 0x02, 0x02, 0x02, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 7  7
-  0x7C, 0x82, 0x82, 0x82, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 8  8
-  0x7C, 0x82, 0x82, 0x82, 0x7C, 0x00, 0x20, 0x20, 0x20, 0x1F  // 9  9
+  0x7C, 0x02, 0x02, 0x02, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 0
+  0x00, 0x00, 0x00, 0x00, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 1
+  0x00, 0x82, 0x82, 0x82, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x00, // 2
+  0x00, 0x82, 0x82, 0x82, 0x7C, 0x00, 0x20, 0x20, 0x20, 0x1F, // 3
+  0x7C, 0x80, 0x80, 0x80, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 4
+  0x7C, 0x82, 0x82, 0x82, 0x00, 0x00, 0x20, 0x20, 0x20, 0x1F, // 5
+  0x7C, 0x82, 0x82, 0x82, 0x00, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 6
+  0x7C, 0x02, 0x02, 0x02, 0x7C, 0x00, 0x00, 0x00, 0x00, 0x1F, // 7
+  0x7C, 0x82, 0x82, 0x82, 0x7C, 0x1F, 0x20, 0x20, 0x20, 0x1F, // 8
+  0x7C, 0x82, 0x82, 0x82, 0x7C, 0x00, 0x20, 0x20, 0x20, 0x1F  // 9
 };
 #endif
 
@@ -172,30 +172,31 @@ void TFT_init(void) {
   #endif
 
   PIN_low(TFT_PIN_CS);
-  TFT_sendCommand(0x01);                          // software reset
-  DLY_ms(250);                                    // delay 250 ms
-  TFT_sendCommand(0x36); TFT_sendData(TFT_ROTATE<<5 | TFT_BGR<<3); // set orientation and rgb/bgr
+  TFT_sendCommand(TFT_RESET);                     // software reset
+  DLY_ms(TFT_RST_TIME);                           // delay
+  TFT_sendCommand(TFT_MADCTL);
+  TFT_sendData(TFT_XORDER<<7 | TFT_YORDER<<6 | TFT_ROTATE<<5 | TFT_BGR<<3); // set orientation and rgb/bgr
+  TFT_sendCommand(TFT_COLMOD);
   #if TFT_COLORBITS == 16
-  TFT_sendCommand(0x3A); TFT_sendData(0x55);      // set color mode - 16-bit color
+  TFT_sendData(0x05);                             // set color mode - 16-bit color
   #else
-  TFT_sendCommand(0x3A); TFT_sendData(0x03);      // set color mode - 12-bit color
+  TFT_sendData(0x03);                             // set color mode - 12-bit color
   #endif
-  TFT_sendCommand(0x20 + TFT_INVERT);             // invert
-  TFT_sendCommand(0x11);                          // out of sleep mode
-  DLY_ms(150);
-  TFT_sendCommand(0x29);                          // turn on display
-  DLY_ms(150);
+  TFT_sendCommand(TFT_INVOFF + TFT_INVERT);       // invert
+  TFT_sendCommand(TFT_SLPOUT);                    // out of sleep mode
+  DLY_ms(TFT_SLPOUT_TIME);
+  TFT_sendCommand(TFT_DISPON);                    // turn on display
   #if TFT_CS_CONTROL > 0
   PIN_high(TFT_PIN_CS);
   #endif
 }
 
-// Invert display
-void TFT_invert(uint8_t yes) {
+// Turn display on/off
+void TFT_power(uint8_t yes) {
   #if TFT_CS_CONTROL > 0
   PIN_low(TFT_PIN_CS);
   #endif
-  TFT_sendCommand(0x20 + yes);
+  TFT_sendCommand(TFT_DISPOFF + yes);
   #if TFT_CS_CONTROL > 0
   PIN_high(TFT_PIN_CS);
   #endif
@@ -206,7 +207,19 @@ void TFT_sleep(uint8_t yes) {
   #if TFT_CS_CONTROL > 0
   PIN_low(TFT_PIN_CS);
   #endif
-  TFT_sendCommand(0x11 - yes);
+  TFT_sendCommand(TFT_SLPOUT - yes);
+  DLY_ms(TFT_SLPOUT_TIME);
+  #if TFT_CS_CONTROL > 0
+  PIN_high(TFT_PIN_CS);
+  #endif
+}
+
+// Invert display
+void TFT_invert(uint8_t yes) {
+  #if TFT_CS_CONTROL > 0
+  PIN_low(TFT_PIN_CS);
+  #endif
+  TFT_sendCommand(TFT_INVOFF + yes);
   #if TFT_CS_CONTROL > 0
   PIN_high(TFT_PIN_CS);
   #endif
@@ -245,34 +258,34 @@ void TFT_setPixel(int16_t x, int16_t y, uint16_t color) {
   #if TFT_PORTRAIT == 0
     if((x < 0) || (x >= TFT_WIDTH) || (y < 0) || (y >= TFT_HEIGHT)) return;
     #if TFT_XFLIP > 0
-      uint16_t row    = (TFT_XOFF + TFT_WIDTH  - 1) - x;
+      uint16_t row = (TFT_XOFF + TFT_WIDTH  - 1) - x;
     #else
-      uint16_t row    = TFT_XOFF + x;
+      uint16_t row = TFT_XOFF + x;
     #endif
     #if TFT_YFLIP > 0
-      uint16_t column = TFT_YOFF + y;
+      uint16_t col = (TFT_YOFF + TFT_HEIGHT - 1) - y;
     #else
-      uint16_t column = (TFT_YOFF + TFT_HEIGHT - 1) - y;
+      uint16_t col = TFT_YOFF + y;
     #endif
 
   #else
     if((x < 0) || (x >= TFT_HEIGHT) || (y < 0) || (y >= TFT_WIDTH)) return;
     #if TFT_YFLIP > 0
-      uint16_t row    = TFT_XOFF + y;
+      uint16_t row = (TFT_XOFF + TFT_WIDTH  - 1) - y;
     #else
-      uint16_t row    = (TFT_XOFF + TFT_WIDTH  - 1) - y;
+      uint16_t row = TFT_XOFF + y;
     #endif
     #if TFT_XFLIP > 0
-      uint16_t column = TFT_YOFF + x;
+      uint16_t col = TFT_YOFF + x;
     #else
-      uint16_t column = (TFT_YOFF + TFT_HEIGHT - 1) - x;
+      uint16_t col = (TFT_YOFF + TFT_HEIGHT - 1) - x;
     #endif
   #endif
 
   #if TFT_CS_CONTROL > 0
     PIN_low(TFT_PIN_CS);
   #endif
-  TFT_sendCommand2(TFT_CASET, column, column);    // column address set
+  TFT_sendCommand2(TFT_CASET, col, col);          // column address set
   TFT_sendCommand2(TFT_RASET, row, row);          // row address set
   TFT_sendCommand(TFT_RAMWR);                     // write to RAM
   TFT_sendData(color >> 8); TFT_sendData(color);  // write pixel color
@@ -286,34 +299,34 @@ uint16_t TFT_getPixel(int16_t x, int16_t y) {
   #if TFT_PORTRAIT == 0
     if((x < 0) || (x >= TFT_WIDTH) || (y < 0) || (y >= TFT_HEIGHT)) return 0;
     #if TFT_XFLIP > 0
-      uint16_t row    = (TFT_XOFF + TFT_WIDTH  - 1) - x;
+      uint16_t row = (TFT_XOFF + TFT_WIDTH  - 1) - x;
     #else
-      uint16_t row    = TFT_XOFF + x;
+      uint16_t row = TFT_XOFF + x;
     #endif
     #if TFT_YFLIP > 0
-      uint16_t column = (TFT_YOFF + TFT_HEIGHT - 1) - y;
+      uint16_t col = (TFT_YOFF + TFT_HEIGHT - 1) - y;
     #else
-      uint16_t column = TFT_YOFF + y;
+      uint16_t col = TFT_YOFF + y;
     #endif
 
   #else
     if((x < 0) || (x >= TFT_HEIGHT) || (y < 0) || (y >= TFT_WIDTH)) return 0;
     #if TFT_YFLIP > 0
-      uint16_t row    = (TFT_XOFF + TFT_WIDTH  - 1) - y;
+      uint16_t row = (TFT_XOFF + TFT_WIDTH  - 1) - y;
     #else
-      uint16_t row    = TFT_XOFF + y;
+      uint16_t row = TFT_XOFF + y;
     #endif
     #if TFT_XFLIP > 0
-      uint16_t column = TFT_YOFF + x;
+      uint16_t col = TFT_YOFF + x;
     #else
-      uint16_t column = (TFT_YOFF + TFT_HEIGHT - 1) - x;
+      uint16_t col = (TFT_YOFF + TFT_HEIGHT - 1) - x;
     #endif
   #endif
 
   #if TFT_CS_CONTROL > 0
     PIN_low(TFT_PIN_CS);
   #endif
-  TFT_sendCommand2(TFT_CASET, column, column);    // column address set
+  TFT_sendCommand2(TFT_CASET, col, col);          // column address set
   TFT_sendCommand2(TFT_RASET, row, row);          // row address set
   TFT_sendCommand(TFT_RAMRD);                     // write to RAM
   uint16_t color = 0;
@@ -343,20 +356,20 @@ void TFT_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
       int16_t row2 = row1 + w - 1;
     #endif
     #if TFT_YFLIP > 0
-      int16_t col1 = TFT_YOFF + y;
-      int16_t col2 = col1 + h - 1;
-    #else
       int16_t col2 = (TFT_YOFF + TFT_HEIGHT - 1) - y;
       int16_t col1 = col2 - h + 1;
+    #else
+      int16_t col1 = TFT_YOFF + y;
+      int16_t col2 = col1 + h - 1;
     #endif
 
   #else
     #if TFT_YFLIP > 0
-      int16_t row1 = TFT_XOFF + y;
-      int16_t row2 = row1 + h - 1;
-    #else
       int16_t row2 = (TFT_XOFF + TFT_WIDTH  - 1) - y;
       int16_t row1 = row2 - h + 1;
+    #else
+      int16_t row1 = TFT_XOFF + y;
+      int16_t row2 = row1 + h - 1;
     #endif
     #if TFT_XFLIP > 0
       int16_t col1 = TFT_YOFF + x;
@@ -522,7 +535,7 @@ void TFT_drawSprite(int16_t x0, int16_t y0, int16_t w, int16_t h, const uint8_t*
 }
 
 // ===================================================================================
-// TFT Character Functions
+// TFT Text Functions
 // ===================================================================================
 
 // Variables
@@ -536,33 +549,13 @@ void TFT_cursor(int16_t x, int16_t y) {
 }
 
 // Set text color
-void TFT_color(uint16_t color) {
+void TFT_textcolor(uint16_t color) {
   TFT_cc = color;
 }
 
 // Set text size
-void TFT_size(uint8_t size) {
+void TFT_textsize(uint8_t size) {
   TFT_cs = size;
-}
-
-// Draw character (c) at cursor position and settings
-void TFT_drawChar(char c) {
-  uint16_t ptr = c - 32;
-  ptr += ptr << 2;
-  for(uint8_t i=5; i; i--) {
-    int16_t y1 = TFT_cy;
-    uint8_t line = TFT_FONT[ptr++];
-    for(uint8_t j=8; j; j--, line>>=1, y1 += TFT_cs) {
-      if(line & 1) {
-        if(TFT_cs == 1) TFT_setPixel(TFT_cx, y1, TFT_cc);
-        else {
-          TFT_fillRect(TFT_cx, y1, TFT_cs, TFT_cs, TFT_cc);
-        }
-      }
-    }
-    TFT_cx += TFT_cs;
-  }
-  TFT_cx += TFT_cs;
 }
 
 // Converts bit pattern abcdefgh into aabbccddeeffgghh
@@ -573,77 +566,100 @@ uint16_t TFT_stretch(uint16_t x) {
   return x | x<<1;
 }
 
-// Draw character (c) at cursor position and color, double-size, smoothed
-// (David Johnson-Davies' Smooth Big Text algorithm)
-void TFT_smoothChar(char c) {
-  uint16_t ptr = c - 32;
-  ptr += ptr << 2;
-  uint16_t col0L, col0R, col1L, col1R;
-  uint8_t col0 = TFT_FONT[ptr++];
-  col0L = TFT_stretch(col0);
-  col0R = col0L;
-  for(uint8_t col=5; col; col--) {
-    uint8_t col1 = TFT_FONT[ptr++];
-    if(col == 1) col1 = 0;
-    col1L = TFT_stretch(col1);
-    col1R = col1L;    
-    for(int8_t i=6; i>=0; i--) {
-      for(int8_t j=1; j<3; j++) {
-        if(((col0>>i & 0b11) == (3 - j)) && ((col1>>i & 0b11) == j)) {
-          col0R = col0R | 1<<((i << 1) + j);
-          col1L = col1L | 1<<((i << 1) + 3 - j);
+// Write a character
+void TFT_write(char c) {
+  c &= 0x7f;
+  if(c >= 32) {
+    uint16_t ptr = c - 32;
+    ptr += ptr << 2;
+
+    // Standard character, if necessary enlarged
+    if(TFT_cs <= 8) {
+      for(uint8_t i=5; i; i--) {
+        int16_t y1 = TFT_cy;
+        uint8_t line = TFT_FONT[ptr++];
+        for(uint8_t j=8; j; j--, line>>=1, y1 += TFT_cs) {
+          if(line & 1) {
+            if(TFT_cs == 1) TFT_setPixel(TFT_cx, y1, TFT_cc);
+            else {
+              TFT_fillRect(TFT_cx, y1, TFT_cs, TFT_cs, TFT_cc);
+            }
+          }
+        }
+        TFT_cx += TFT_cs;
+      }
+      TFT_cx += TFT_cs;
+      return;
+    }
+
+    // Double-sized, smoothed character (10x16, David Johnson-Davies' Smooth Big Text algorithm)
+    if(TFT_cs == TFT_SMOOTH) {
+      uint16_t col0L, col0R, col1L, col1R;
+      uint8_t col0 = TFT_FONT[ptr++];
+      col0L = TFT_stretch(col0);
+      col0R = col0L;
+      for(uint8_t col=5; col; col--) {
+        uint8_t col1 = TFT_FONT[ptr++];
+        if(col == 1) col1 = 0;
+        col1L = TFT_stretch(col1);
+        col1R = col1L;    
+        for(int8_t i=6; i>=0; i--) {
+          for(int8_t j=1; j<3; j++) {
+            if(((col0>>i & 0b11) == (3 - j)) && ((col1>>i & 0b11) == j)) {
+              col0R = col0R | 1<<((i << 1) + j);
+              col1L = col1L | 1<<((i << 1) + 3 - j);
+            }
+          }
+        }
+        int16_t y1 = TFT_cy;
+        for(int8_t i=16; i; i--, col0L>>=1, col0R>>=1, y1++) {
+          if(col0L & 1) TFT_setPixel(TFT_cx, y1, TFT_cc);
+          if(col0R & 1) TFT_setPixel(TFT_cx+1, y1, TFT_cc);
+        }
+        col0 = col1; col0L = col1L; col0R = col1R; TFT_cx += 2;
+      }
+      TFT_cx += 2;
+      return;
+    }
+
+    // V-stretched character (5x16)
+    for(uint8_t col=5; col; col--) {
+      uint8_t col0 = TFT_FONT[ptr++];
+      int16_t y1 = TFT_cy;
+      for(uint8_t i=8; i; i--, col0>>=1, y1+=2) {
+        if(col0 & 1) {
+          TFT_setPixel(TFT_cx, y1, TFT_cc);
+          TFT_setPixel(TFT_cx, y1+1, TFT_cc);
         }
       }
-    }
-    int16_t y1 = TFT_cy;
-    for(int8_t i=16; i; i--, col0L>>=1, col0R>>=1, y1++) {
-      if(col0L & 1) TFT_setPixel(TFT_cx, y1, TFT_cc);
-      if(col0R & 1) TFT_setPixel(TFT_cx+1, y1, TFT_cc);
-    }
-    col0 = col1; col0L = col1L; col0R = col1R; TFT_cx += 2;
-  }
-  TFT_cx += 2;
-}
-
-// Draw character (c) at cursor position and color, v-stretched
-void TFT_stretchChar(char c) {
-  uint16_t ptr = c - 32;
-  ptr += ptr << 2;
-  for(uint8_t col=5; col; col--) {
-    uint8_t col0 = TFT_FONT[ptr++];
-    int16_t y1 = TFT_cy;
-    for(uint8_t i=8; i; i--, col0>>=1, y1+=2) {
-      if(col0 & 1) {
-        TFT_setPixel(TFT_cx, y1, TFT_cc);
-        TFT_setPixel(TFT_cx, y1+1, TFT_cc);
-      }
+      TFT_cx++;
     }
     TFT_cx++;
+    return;
   }
-  TFT_cx++;
+
+  // New line
+  if(c == '\n') {
+    TFT_cx = 0;
+    if(TFT_cs <= 8) TFT_cy += TFT_cs << 3;
+    else TFT_cy += 16;
+    return;
+  }
+
+  // Carriage return
+  if(c == '\r') TFT_cx = 0;
 }
 
-// ===================================================================================
-// TFT Text Functions
-// ===================================================================================
-
-// Print string (str) at cursor position
+// Print string (str)
 void TFT_print(char* str) {
-  while(*str) {
-    if(TFT_cs <= 8) {
-      TFT_drawChar(*str++);
-      continue;
-    }
-    if(TFT_cs == TFT_SMOOTH) {
-      TFT_smoothChar(*str++);
-      continue;
-    }
-    TFT_stretchChar(*str++);
-  }
+  while(*str) TFT_write(*str++);
 }
+
+// ===================================================================================
+// OLED 7-Segment Functions
+// ===================================================================================
 
 // Print value as 7-segment digits (BCD conversion by substraction method)
-#if TFT_SEG_FONT > 0
 void TFT_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t decimal) {
   static const uint16_t DIVIDER[] = {1, 10, 100, 1000, 10000};
   uint8_t leadflag = 0;                           // flag for leading spaces
@@ -657,22 +673,29 @@ void TFT_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t deci
     }
     if(digits == decimal) leadflag++;             // end leading characters before decimal
     if(leadflag || !lead) {
+      #if TFT_SEG_FONT == 0
+      TFT_write(digitval + '0');
+      #elif TFT_SEG_FONT == 1
       uint16_t ptr = (uint16_t)digitval;          // character pointer
-      #if TFT_SEG_FONT == 1
       ptr = (ptr << 5) + (ptr << 4) + (ptr << 2); // -> ptr = c * 13 * 4;
       TFT_drawSprite(TFT_cx, TFT_cy, 13, 32, (uint8_t*)&TFT_FONT_SEG1[ptr], TFT_cc);
       #elif TFT_SEG_FONT == 2
+      uint16_t ptr = (uint16_t)digitval;          // character pointer
       ptr = (ptr << 3) + (ptr << 1);              // -> ptr = c * 5 * 2;
       TFT_drawSprite(TFT_cx, TFT_cy, 5, 16, (uint8_t*)&TFT_FONT_SEG2[ptr], TFT_cc);
       #endif
     }
-    #if TFT_SEG_FONT == 1
+    #if TFT_SEG_FONT == 0
+    else TFT_write(' ');
+    #elif TFT_SEG_FONT == 1
     TFT_cx += TFT_SEG_SPACE + 13;
     #elif TFT_SEG_FONT == 2
     TFT_cx += TFT_SEG_SPACE + 5;
     #endif
     if(decimal && (digits == decimal)) {
-      #if TFT_SEG_FONT == 1
+      #if TFT_SEG_FONT == 0
+      TFT_write('.');
+      #elif TFT_SEG_FONT == 1
       TFT_fillRect(TFT_cx, TFT_cy + 28, 3, 3, TFT_cc);  // print decimal point
       TFT_cx += TFT_SEG_SPACE + 3;
       #elif TFT_SEG_FONT == 2
@@ -682,28 +705,3 @@ void TFT_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t deci
     }
   }
 }
-#endif  // TFT_SEG_FONT > 0
-
-// Write a character (for printf)
-#if TFT_PRINT == 1
-void TFT_write(char c) {
-  c &= 0x7f;
-  if(c >= 32) {
-    if(TFT_cs <= 8) {
-      TFT_drawChar(c);
-      return;
-    }
-    if(TFT_cs == TFT_SMOOTH) {
-      TFT_smoothChar(c);
-      return;
-    }
-    TFT_stretchChar(c);
-    return;
-  }
-  if(c == '\n') {
-    TFT_cx = 0;
-    if(TFT_cs <= 8) TFT_cy += TFT_cs << 3;
-    else TFT_cy += 16;
-  }
-}
-#endif  // TFT_PRINT == 1
