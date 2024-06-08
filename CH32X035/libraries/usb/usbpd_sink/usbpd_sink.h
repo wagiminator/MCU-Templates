@@ -1,10 +1,11 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v1.2 *
+// USB PD SINK Handler for CH32X035                                           * v1.3 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // PD_connect()             Initialize USB-PD and connect, returns 0 if failed
+// PD_negotiate()           Negotiate current settings, returns 0 if failed
 // PD_setVoltage(mV)        Request specified voltage in millivolts, returns 0 if failed
 //
 // PD_getPDONum()           Get total number of PDOs
@@ -110,6 +111,7 @@ typedef struct {
 // Functions
 // ===================================================================================
 uint8_t  PD_connect(void);                      // Initialize PD and connect
+uint8_t  PD_negotiate(void);                    // Negotiate current settings
 uint8_t  PD_setVoltage(uint16_t voltage);       // Set specified voltage (in millivolts)
 
 uint8_t  PD_getPDONum(void);                    // Get total number of PDOs

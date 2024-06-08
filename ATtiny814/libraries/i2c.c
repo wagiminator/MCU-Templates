@@ -31,7 +31,6 @@ void I2C_init(void) {
 void I2C_start(uint8_t addr) {
   TWI0.MADDR = addr;                              // start sending address
   I2C_rwflag = addr & 1;                          // set read/write flag
-  while(!(TWI0.MSTATUS&(TWI_WIF_bm|TWI_RIF_bm))); // wait for transfer to complete
 }
 
 // I2C restart transmission
