@@ -4,7 +4,7 @@
 
 #pragma once
 
-// USB pin defines
+// USB pin definitions
 #define USB_PORT            A         // [A,C,D] GPIO Port to use with D+, D- and DPU
 #define USB_PIN_DP          1         // [0-4] GPIO Number for USB D+ Pin
 #define USB_PIN_DM          2         // [0-4] GPIO Number for USB D- Pin
@@ -21,6 +21,5 @@
 
 // USB descriptor strings
 #define MANUF_STR           "wagiminator"
-#define PROD_STR            "CH32V003 Keyboard"
+#define PROD_STR            "HID Composite"
 #define SERIAL_STR          "CH32V003HID"
-

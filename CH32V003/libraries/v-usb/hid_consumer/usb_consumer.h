@@ -4,7 +4,7 @@
 //
 // Functions available:
 // --------------------
-// HID_init()               init HID consumer device
+// CON_init()               init HID consumer device
 // CON_press(k)             press a consumer/multimedia key (see below)
 // CON_release()            release consumer/multimedia key
 // CON_type(k)              press and release a consumer/multimedia key

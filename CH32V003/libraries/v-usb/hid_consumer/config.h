@@ -4,16 +4,11 @@
 
 #pragma once
 
-// Rotary encoder in definitions
-#define PIN_ENC_A           PD2       // pin connected to rotary encoder A
-#define PIN_ENC_B           PD3       // pin connected to rotary encoder B
-#define PIN_ENC_SW          PD4       // pin connected to rotary encoder switch
-
 // USB pin definitions
-#define USB_PORT A     // [A,C,D] GPIO Port to use with D+, D- and DPU
-#define USB_PIN_DP 1   // [0-4] GPIO Number for USB D+ Pin
-#define USB_PIN_DM 2   // [0-4] GPIO Number for USB D- Pin
-//#define USB_PIN_DPU 5  // [0-7] GPIO for feeding the 1.5k Pull-Up on USB D- Pin; Comment out if not used / tied to 3V3!
+#define USB_PORT            A         // [A,C,D] GPIO Port to use with D+, D- and DPU
+#define USB_PIN_DP          1         // [0-4] GPIO Number for USB D+ Pin
+#define USB_PIN_DM          2         // [0-4] GPIO Number for USB D- Pin
+//#define USB_PIN_DPU         5         // [0-7] GPIO for feeding the 1.5k Pull-Up on USB D- Pin; Comment out if not used / tied to 3V3!
 
 // USB configuration descriptor
 #define USB_MAX_POWER_mA    50        // max power in mA 
