@@ -10,6 +10,9 @@
 #define USB_PIN_DM          2         // [0-4] GPIO Number for USB D- Pin
 //#define USB_PIN_DPU         5         // [0-7] GPIO for feeding the 1.5k Pull-Up on USB D- Pin; Comment out if not used / tied to 3V3!
 
+// USB joystick defines
+#define USB_BUTTONS         1         // number of joystick buttons [1-8]
+
 // USB configuration descriptor
 #define USB_MAX_POWER_mA    50        // max power in mA 
 
@@ -21,6 +24,6 @@
 
 // USB descriptor strings
 #define MANUF_STR           "wagiminator"
-#define PROD_STR            "HID Keyboard"
+#define PROD_STR            "HID Joystick"
 #define SERIAL_STR          "CH32V003HID"
 
