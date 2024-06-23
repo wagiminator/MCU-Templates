@@ -23,14 +23,18 @@ extern "C" {
 // ===================================================================================
 // RV003USB Defines
 // ===================================================================================
-//Defines the number of endpoints for this device. (Always add one for EP0). For two EPs, this should be 3.
-#define ENDPOINTS 2
+// Defines the number of endpoints for this device. (Always add one for EP0).
+// For two EPs, this should be 3.
+#define ENDPOINTS                     2
 
-#define RV003USB_OPTIMIZE_FLASH 1
-#define RV003USB_HANDLE_IN_REQUEST 1
-#define RV003USB_OTHER_CONTROL 0
-#define RV003USB_HANDLE_USER_DATA 0
-#define RV003USB_HID_FEATURES 0
+// Endpoint handling options
+#define RV003USB_OPTIMIZE_FLASH       1
+#define RV003USB_HANDLE_IN_REQUEST    1
+#define RV003USB_OTHER_CONTROL        0
+#define RV003USB_HANDLE_USER_DATA     0
+#define RV003USB_HID_FEATURES         0
+//#define RV003USB_SUPPORT_CONTROL_OUT  0
+//#define RV003USB_CUSTOM_C             0
 
 #ifndef __ASSEMBLER__
 #include <usb.h>
@@ -44,6 +48,8 @@ static const uint8_t ReportDescr[] = {
   0xa1, 0x01,     // COLLECTION (Application)
   0x09, 0x01,     //   USAGE (Pointer)
   0xa1, 0x00,     //   COLLECTION (Physical)
+
+  // Mouse buttons
   0x05, 0x09,     //     USAGE_PAGE (Button)
   0x19, 0x01,     //     USAGE_MINIMUM (Button 1)
   0x29, 0x03,     //     USAGE_MAXIMUM (Button 3)
@@ -55,6 +61,8 @@ static const uint8_t ReportDescr[] = {
   0x75, 0x05,     //     REPORT_SIZE (5)
   0x95, 0x01,     //     REPORT_COUNT (1)
   0x81, 0x03,     //     INPUT (Cnst,Var,Abs)
+
+  // Mouse pointer and wheel
   0x05, 0x01,     //     USAGE_PAGE (Generic Desktop)
   0x09, 0x30,     //     USAGE (X)
   0x09, 0x31,     //     USAGE (Y)

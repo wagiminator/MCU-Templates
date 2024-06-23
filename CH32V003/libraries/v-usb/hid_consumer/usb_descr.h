@@ -23,14 +23,18 @@ extern "C" {
 // ===================================================================================
 // RV003USB Defines
 // ===================================================================================
-//Defines the number of endpoints for this device. (Always add one for EP0). For two EPs, this should be 3.
-#define ENDPOINTS 2
+// Defines the number of endpoints for this device. (Always add one for EP0). 
+// For two EPs, this should be 3.
+#define ENDPOINTS                     2
 
-#define RV003USB_OPTIMIZE_FLASH 1
-#define RV003USB_HANDLE_IN_REQUEST 1
-#define RV003USB_OTHER_CONTROL 0
-#define RV003USB_HANDLE_USER_DATA 0
-#define RV003USB_HID_FEATURES 0
+// Endpoint handling options
+#define RV003USB_OPTIMIZE_FLASH       1
+#define RV003USB_HANDLE_IN_REQUEST    1
+#define RV003USB_OTHER_CONTROL        0
+#define RV003USB_HANDLE_USER_DATA     0
+#define RV003USB_HID_FEATURES         0
+//#define RV003USB_SUPPORT_CONTROL_OUT  0
+//#define RV003USB_CUSTOM_C             0
 
 #ifndef __ASSEMBLER__
 #include <usb.h>

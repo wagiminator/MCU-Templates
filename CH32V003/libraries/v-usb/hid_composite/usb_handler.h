@@ -18,6 +18,9 @@
 #if SYS_TICK_INIT == 0
   #error SysTick must be enabled (SYS_TICK_INIT in system.h)!
 #endif
+#if F_CPU != 48000000
+  #error System clock (F_CPU) must be 48MHz!
+#endif
 #endif
 
 #define LOCAL_CONCAT_BASE(A, B) A##B##_BASE
@@ -25,17 +28,7 @@
 
 #define USB_GPIO_BASE LOCAL_EXP_BASE( GPIO, USB_PORT )
 
-// Public stuff:
 
-/* Here are your options:
-#define RV003USB_HANDLE_IN_REQUEST   0
-#define RV003USB_OTHER_CONTROL       0
-#define RV003USB_HANDLE_USER_DATA    0
-#define RV003USB_HID_FEATURES        0
-#define RV003USB_SUPPORT_CONTROL_OUT 0
-#define RV003USB_CUSTOM_C            0
-#define RV003USB_USER_DATA_HANDLES_TOKEN 0
-*/
 
 #ifndef __ASSEMBLER__
 
