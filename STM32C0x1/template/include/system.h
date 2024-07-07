@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for STM32C011 and STM32C031                         * v1.0 *
+// Basic System Functions for STM32C011 and STM32C031                         * v1.1 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -270,11 +270,11 @@ void RTC_setAlarm(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t secon
 // ===================================================================================
 // Delay (DLY) Functions (using SYSTICK)
 // ===================================================================================
-#define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
-#define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n)*DLY_US_TIME-1)  // delay n microseconds
-void DLY_ticks(uint32_t n);                             // delay n+1 clock cycles
-static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
+#define DLY_US_TIME       (F_CPU / 1000000)                 // system ticks per us
+#define DLY_MS_TIME       (F_CPU / 1000)                    // system ticks per ms
+#define DLY_us(n)         DLY_ticks((n)*DLY_MS_TIME/1000-1) // delay n microseconds
+void DLY_ticks(uint32_t n);                                 // delay n+1 clock cycles
+static inline void DLY_ms(uint32_t ms) {                    // delay n milliseconds
   while(ms--) DLY_us(1000);
 }
 

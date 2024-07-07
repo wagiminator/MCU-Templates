@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V003                                        * v1.6 *
+// Basic System Functions for CH32V003                                        * v1.7 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -235,11 +235,11 @@ void MCO_init(void);                                    // init clock output to 
 // Delay (DLY) Functions
 // ===================================================================================
 #define STK_init()        STK->CTLR = STK_CTLR_STE | STK_CTLR_STCLK // init SYSTICK @ F_CPU
-#define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
-#define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n) * DLY_US_TIME)  // delay n microseconds
-#define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)  // delay n milliseconds
-void DLY_ticks(uint32_t n);                             // delay n system ticks
+#define DLY_US_TIME       (F_CPU / 1000000)                   // system ticks per us
+#define DLY_MS_TIME       (F_CPU / 1000)                      // system ticks per ms
+#define DLY_us(n)         DLY_ticks((n) * DLY_MS_TIME / 1000) // delay n microseconds
+#define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)        // delay n milliseconds
+void DLY_ticks(uint32_t n);                                   // delay n system ticks
 
 // ===================================================================================
 // Reset (RST) Functions

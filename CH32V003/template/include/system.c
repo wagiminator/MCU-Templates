@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V003                                        * v1.6 *
+// Basic System Functions for CH32V003                                        * v1.7 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -107,16 +107,16 @@ void DLY_ticks(uint32_t n) {
 // Bootloader (BOOT) Functions
 // ===================================================================================
 
-// Perform software reset and jump to bootloader
+// Perform software reset and jump to bootloader (if available)
 void BOOT_now(void) {
   FLASH->KEYR = 0x45670123;
   FLASH->KEYR = 0xCDEF89AB;
   FLASH->BOOT_MODEKEYR = 0x45670123;
   FLASH->BOOT_MODEKEYR = 0xCDEF89AB;      // unlock flash
-  FLASH->STATR |= (uint16_t)1<<14;        // start bootloader after software reset
-  FLASH->CTLR  |= FLASH_CTLR_LOCK;        // lock flash
-  RCC->RSTSCKR |= RCC_RMVF;               // clear reset flags
-  PFIC->CFGR = PFIC_RESETSYS | PFIC_KEY3; // perform software reset
+  FLASH->STATR = (uint16_t)1<<14;         // start bootloader after software reset
+  FLASH->CTLR  = FLASH_CTLR_LOCK;         // lock flash
+  RCC->RSTSCKR = RCC_RMVF;                // clear reset flags
+  PFIC->SCTLR  = PFIC_SYSRESET;           // perform software reset
 }
 
 // ===================================================================================

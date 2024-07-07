@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32X035/X034/X033                              * v1.1 *
+// Basic System Functions for CH32X035/X034/X033                              * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -78,10 +78,10 @@ void BOOT_now(void) {
   FLASH->KEYR = FLASH_KEY2;
   FLASH->BOOT_MODEKEYR = FLASH_KEY1;
   FLASH->BOOT_MODEKEYR = FLASH_KEY2;      // unlock flash
-  FLASH->STATR |= FLASH_STATR_BOOT_MODE;  // start bootloader after software reset
-  FLASH->CTLR  |= FLASH_CTLR_LOCK;        // lock flash
-  RCC->RSTSCKR |= RCC_RMVF;               // clear reset flags
-  NVIC->CFGR = NVIC_RESETSYS | NVIC_KEY3; // perform software reset
+  FLASH->STATR = FLASH_STATR_BOOT_MODE;   // start bootloader after software reset
+  FLASH->CTLR  = FLASH_CTLR_LOCK;         // lock flash
+  RCC->RSTSCKR = RCC_RMVF;                // clear reset flags
+  PFIC->SCTLR  = PFIC_SYSRESET;           // perform software reset
 }
 
 // ===================================================================================

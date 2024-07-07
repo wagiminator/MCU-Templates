@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32V003                                                   * v1.4 *
+// Header file for CH32V003                                                   * v1.5 *
 // ===================================================================================
 // This contains a copy of ch32v00x.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by CNLohr.
@@ -1238,8 +1238,15 @@ typedef struct
 
 /******************  Bit definition for FLASH_STATR register  *******************/
 #define FLASH_STATR_BSY                         ((uint8_t)0x01) /* Busy */
+#define FLASH_STATR_PGERR                       ((uint8_t)0x04) /* Programming Error */
 #define FLASH_STATR_WRPRTERR                    ((uint8_t)0x10) /* Write Protection Error */
 #define FLASH_STATR_EOP                         ((uint8_t)0x20) /* End of operation */
+#define FLASH_STATR_FWAKE_FLAG                  ((uint8_t)0x40) /* Flag of wake */
+#define FLASH_STATR_TURBO                       ((uint8_t)0x80) /* The state of TURBO Enable */
+#define FLASH_STATR_BOOT_AVA                    ((uint16_t)0x100) /* The state of Init Config */
+#define FLASH_STATR_BOOT_STATUS                 ((uint16_t)0x200) /* The source of Execute Program */
+#define FLASH_STATR_BOOT_MODE                   ((uint16_t)0x400) /* The switch of user section or boot section*/
+#define FLASH_STATR_BOOT_LOCK                   ((uint16_t)0x800) /* Lock boot area*/
 
 /*******************  Bit definition for FLASH_CTLR register  *******************/
 #define FLASH_CTLR_PG                           ((uint16_t)0x0001)     /* Programming */
@@ -1297,6 +1304,10 @@ typedef struct
 /******************  Bit definition for FLASH_WRPR1 register  ******************/
 #define FLASH_WRPR1_WRPR1                       ((uint32_t)0x00FF0000) /* Flash memory write protection option bytes */
 #define FLASH_WRPR1_nWRPR1                      ((uint32_t)0xFF000000) /* Flash memory write protection complemented option bytes */
+
+/*******************************  FLASH keys  *********************************/
+#define FLASH_KEY1                              ((uint32_t)0x45670123)
+#define FLASH_KEY2                              ((uint32_t)0xCDEF89AB)
 
 
 /******************************************************************************/

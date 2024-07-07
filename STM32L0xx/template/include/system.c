@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v0.2 *
+// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v1.0 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
