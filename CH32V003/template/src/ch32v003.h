@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32V003                                                   * v1.5 *
+// Header File for CH32V003                                                   * v1.5 *
 // ===================================================================================
 // This contains a copy of ch32v00x.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by CNLohr.

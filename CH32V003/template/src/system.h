@@ -137,7 +137,7 @@ extern "C" {
 // ===================================================================================
 // Set system clock frequency
 #ifndef F_CPU
-  #define F_CPU           24000000  // 24Mhz if not otherwise defined
+  #define F_CPU           48000000  // 48Mhz if not otherwise defined
 #endif
 
 // Calculate system clock settings
@@ -170,10 +170,11 @@ extern "C" {
 #elif F_CPU ==    93750
   #define CLK_DIV         RCC_HPRE_DIV256
 #else
-  #warning Unsupported system clock frequency, using internal 24MHz
+  #warning Unsupported system clock frequency, using internal 48MHz
   #define CLK_DIV         RCC_HPRE_DIV1
+  #define SYS_USE_PLL
   #undef  F_CPU
-  #define F_CPU           24000000
+  #define F_CPU           48000000
 #endif
 
 #if SYS_USE_HSE > 0

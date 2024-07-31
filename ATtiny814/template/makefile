@@ -1,17 +1,26 @@
 # ===================================================================================
+# Project Makefile
+# ===================================================================================
 # Project:  Example for tinyAVR 0/1-series
 # Author:   Stefan Wagner
 # Year:     2021
 # URL:      https://github.com/wagiminator    
 # ===================================================================================
-# Type "make help" in the command line.
+# Install toolchain:
+#   sudo apt install build-essential gcc-avr avr-libc
+#   sudo apt install python3 python3-pip
+#   python3 -m pip install pyserial
+#
+# Type "make flash" in the command line.
 # ===================================================================================
 
 # Files and Folders
-MAINFILE = example.c
-TARGET   = example
+TARGET   = firmware
 INCLUDE  = include
+SOURCE   = src
+BIN      = bin
 TOOLS    = tools
+AVRDEV   = avr
 
 # Microcontroller Settings
 DEVICE  ?= attiny814
@@ -34,9 +43,10 @@ ISPTOOL  = python3 $(TOOLS)/tinyupdi.py
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = -Os -flto -Wall -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -I$(INCLUDE) -I.
-LDFLAGS  = -B $(INCLUDE)/dev/$(DEVICE)
-CFILES   = $(MAINFILE) $(wildcard $(INCLUDE)/*.c) $(wildcard $(INCLUDE)/*.S)
+CFLAGS   = -Os -flto -Wall -mmcu=$(DEVICE) -DF_CPU=$(F_CPU)
+CFLAGS  += -I$(AVRDEV) -I$(INCLUDE) -I$(SOURCE) -I.
+LDFLAGS  = -B$(AVRDEV)/dev/$(DEVICE)
+CFILES   = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c) $(wildcard $(SOURCE)/*.S)
 
 # Symbolic Targets
 help:
@@ -49,43 +59,44 @@ help:
 	@echo "make fuses     write fuses to MCU"
 	@echo "make clean     remove all build files"
 
-$(TARGET).elf: $(CFILES)
-	@echo "Building $(TARGET).elf ..."
+$(BIN)/$(TARGET).elf: $(CFILES)
+	@echo "Building $(BIN)/$(TARGET).elf ..."
+	@mkdir -p $(BIN)
 	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-$(TARGET).lst: $(TARGET).elf
-	@echo "Building $(TARGET).lst ..."
-	@$(OBJDUMP) -S $^ > $(TARGET).lst
+$(BIN)/$(TARGET).lst: $(BIN)/$(TARGET).elf
+	@echo "Building $(BIN)/$(TARGET).lst ..."
+	@$(OBJDUMP) -S $^ > $(BIN)/$(TARGET).lst
 
-$(TARGET).map: $(TARGET).elf
-	@echo "Building $(TARGET).map ..."
-	@$(OBJDUMP) -t $^ > $(TARGET).map
+$(BIN)/$(TARGET).map: $(BIN)/$(TARGET).elf
+	@echo "Building $(BIN)/$(TARGET).map ..."
+	@$(OBJDUMP) -t $^ > $(BIN)/$(TARGET).map
 
-$(TARGET).bin: $(TARGET).elf
-	@echo "Building $(TARGET).bin ..."
-	@$(OBJCOPY) -O binary $< $(TARGET).bin
+$(BIN)/$(TARGET).bin: $(BIN)/$(TARGET).elf
+	@echo "Building $(BIN)/$(TARGET).bin ..."
+	@$(OBJCOPY) -O binary $< $(BIN)/$(TARGET).bin
 
-$(TARGET).hex: $(TARGET).elf
-	@echo "Building $(TARGET).hex ..."
-	@$(OBJCOPY) -O ihex $< $(TARGET).hex
+$(BIN)/$(TARGET).hex: $(BIN)/$(TARGET).elf
+	@echo "Building $(BIN)/$(TARGET).hex ..."
+	@$(OBJCOPY) -O ihex $< $(BIN)/$(TARGET).hex
 
-$(TARGET).asm: $(TARGET).elf
-	@echo "Disassembling to $(TARGET).asm ..."
-	@$(OBJDUMP) -d $(TARGET).elf > $(TARGET).asm
+$(BIN)/$(TARGET).asm: $(BIN)/$(TARGET).elf
+	@echo "Disassembling to $(BIN)/$(TARGET).asm ..."
+	@$(OBJDUMP) -d $(BIN)/$(TARGET).elf > $(BIN)/$(TARGET).asm
 
-all:	$(TARGET).lst $(TARGET).map $(TARGET).bin $(TARGET).hex $(TARGET).asm size
+all:	$(BIN)/$(TARGET).lst $(BIN)/$(TARGET).map $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm size
 
-elf:	$(TARGET).elf removetemp size
+elf:	$(BIN)/$(TARGET).elf removetemp size
 
-bin:	$(TARGET).bin removetemp size removeelf
+bin:	$(BIN)/$(TARGET).bin removetemp size removeelf
 
-hex:	$(TARGET).hex removetemp size removeelf
+hex:	$(BIN)/$(TARGET).hex removetemp size removeelf
 
-asm:	$(TARGET).asm removetemp size removeelf
+asm:	$(BIN)/$(TARGET).asm removetemp size removeelf
 
-flash:	$(TARGET).bin size removeelf
+flash:	$(BIN)/$(TARGET).bin size removeelf
 	@echo "Uploading to $(DEVICE) ..."
-	@$(ISPTOOL) -d $(DEVICE) -t $(F_CPU) -f $(TARGET).bin -fs 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8)
+	@$(ISPTOOL) -d $(DEVICE) -t $(F_CPU) -f $(BIN)/$(TARGET).bin -fs 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8)
 
 fuses:
 	@echo "Writing fuses to $(DEVICE) ..."
@@ -94,12 +105,12 @@ fuses:
 clean:
 	@echo "Cleaning all up ..."
 	@$(CLEAN)
-	@rm -f $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).asm
+	@rm -f $(BIN)/$(TARGET).elf $(BIN)/$(TARGET).lst $(BIN)/$(TARGET).map $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm
 
 size:
 	@echo "------------------"
-	@echo "FLASH: $(shell $(OBJSIZE) -d $(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
-	@echo "SRAM:  $(shell $(OBJSIZE) -d $(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "FLASH: $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
+	@echo "SRAM:  $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
 	@echo "------------------"
 
 removetemp:
@@ -107,5 +118,5 @@ removetemp:
 	@$(CLEAN)
 
 removeelf:
-	@echo "Removing $(TARGET).elf ..."
-	@rm -f $(TARGET).elf
+	@echo "Removing $(BIN)/$(TARGET).elf ..."
+	@rm -f $(BIN)/$(TARGET).elf

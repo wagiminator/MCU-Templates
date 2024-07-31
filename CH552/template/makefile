@@ -8,10 +8,11 @@
 # ===================================================================================
 
 # Files and Folders
-MAINFILE   = example.c
-TARGET     = example
-INCLUDE    = include
-TOOLS      = tools
+TARGET    = firmware
+INCLUDE   = include
+SOURCE    = src
+BIN       = bin
+TOOLS     = tools
 
 # Microcontroller Settings
 FREQ_SYS   = 16000000
@@ -23,14 +24,14 @@ CODE_SIZE  = 0x3800
 CC         = sdcc
 OBJCOPY    = objcopy
 PACK_HEX   = packihx
-ISPTOOL   ?= python3 $(TOOLS)/chprog.py $(TARGET).bin
+ISPTOOL   ?= python3 $(TOOLS)/chprog.py $(BIN)/$(TARGET).bin
 
 # Compiler Flags
-CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I.
+CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I$(SOURCE) -I.
 CFLAGS += --xram-size $(XRAM_SIZE) --xram-loc $(XRAM_LOC) --code-size $(CODE_SIZE)
-CFILES  = $(MAINFILE) $(wildcard $(INCLUDE)/*.c)
+CFILES  = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c)
 RFILES  = $(CFILES:.c=.rel)
-CLEAN   = rm -f *.ihx *.lk *.map *.mem *.lst *.rel *.rst *.sym *.asm *.adb
+CLEAN   = rm -f *.ihx *.lk *.map *.mem *.lst *.rel *.rst *.sym *.asm *.adb $(BIN)/*.ihx $(BIN)/*.lk $(BIN)/*.map $(BIN)/*.mem
 
 # Symbolic Targets
 help:
@@ -45,37 +46,38 @@ help:
 	@echo "Compiling $< ..."
 	@$(CC) -c $(CFLAGS) $<
 
-$(TARGET).ihx: $(RFILES)
-	@echo "Building $(TARGET).ihx ..."
-	@$(CC) $(notdir $(RFILES)) $(CFLAGS) -o $(TARGET).ihx
+$(BIN)/$(TARGET).ihx: $(RFILES)
+	@echo "Building $(BIN)/$(TARGET).ihx ..."
+	@mkdir -p $(BIN)
+	@$(CC) $(notdir $(RFILES)) $(CFLAGS) -o $(BIN)/$(TARGET).ihx
 
-$(TARGET).hex: $(TARGET).ihx
-	@echo "Building $(TARGET).hex ..."
-	@$(PACK_HEX) $(TARGET).ihx > $(TARGET).hex
+$(BIN)/$(TARGET).hex: $(BIN)/$(TARGET).ihx
+	@echo "Building $(BIN)/$(TARGET).hex ..."
+	@$(PACK_HEX) $(BIN)/$(TARGET).ihx > $(BIN)/$(TARGET).hex
 
-$(TARGET).bin: $(TARGET).ihx
-	@echo "Building $(TARGET).bin ..."
-	@$(OBJCOPY) -I ihex -O binary $(TARGET).ihx $(TARGET).bin
+$(BIN)/$(TARGET).bin: $(BIN)/$(TARGET).ihx
+	@echo "Building $(BIN)/$(TARGET).bin ..."
+	@$(OBJCOPY) -I ihex -O binary $(BIN)/$(TARGET).ihx $(BIN)/$(TARGET).bin
 	
-flash: $(TARGET).bin size removetemp
+flash: $(BIN)/$(TARGET).bin size removetemp
 	@echo "Uploading to CH55x ..."
 	@$(ISPTOOL)
 
-all: $(TARGET).bin $(TARGET).hex size
+all: $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex size
 
-hex: $(TARGET).hex size removetemp
+hex: $(BIN)/$(TARGET).hex size removetemp
 
-bin: $(TARGET).bin size removetemp
+bin: $(BIN)/$(TARGET).bin size removetemp
 
-bin-hex: $(TARGET).bin $(TARGET).hex size removetemp
+bin-hex: $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex size removetemp
 
 install: flash
 
 size:
 	@echo "------------------"
-	@echo "FLASH: $(shell awk '$$1 == "ROM/EPROM/FLASH"      {print $$4}' $(TARGET).mem) bytes"
-	@echo "IRAM:  $(shell awk '$$1 == "Stack"           {print 248-$$10}' $(TARGET).mem) bytes"
-	@echo "XRAM:  $(shell awk '$$1 == "EXTERNAL" {print $(XRAM_LOC)+$$5}' $(TARGET).mem) bytes"
+	@echo "FLASH: $(shell awk '$$1 == "ROM/EPROM/FLASH"      {print $$4}' $(BIN)/$(TARGET).mem) bytes"
+	@echo "IRAM:  $(shell awk '$$1 == "Stack"           {print 248-$$10}' $(BIN)/$(TARGET).mem) bytes"
+	@echo "XRAM:  $(shell awk '$$1 == "EXTERNAL" {print $(XRAM_LOC)+$$5}' $(BIN)/$(TARGET).mem) bytes"
 	@echo "------------------"
 
 removetemp:
@@ -85,4 +87,4 @@ removetemp:
 clean:
 	@echo "Cleaning all up ..."
 	@$(CLEAN)
-	@rm -f $(TARGET).hex $(TARGET).bin
+	@rm -f $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).bin
