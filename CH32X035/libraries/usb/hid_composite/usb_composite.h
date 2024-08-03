@@ -56,7 +56,7 @@ void MOUSE_wheel(int8_t rel);               // move mouse wheel (relative)
 #define MOUSE_wheel_down()      MOUSE_wheel(-1)
 
 // Keyboard LED states
-#define KBD_getState()          (HID_IN_buffer[0]) 
+#define KBD_getState()          (HID_status) 
 #define KBD_NUM_LOCK_state      (KBD_getState() & 1)
 #define KBD_CAPS_LOCK_state     ((KBD_getState() >> 1) & 1)
 #define KBD_SCROLL_LOCK_state   ((KBD_getState() >> 2) & 1)

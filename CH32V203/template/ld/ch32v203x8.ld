@@ -20,8 +20,9 @@ SECTIONS
 
   .vector :
   {
+    . = ALIGN(4);
     *(.vector);
-    . = ALIGN(64);
+    . = ALIGN(4);
   } >FLASH AT>FLASH
 
   .text :

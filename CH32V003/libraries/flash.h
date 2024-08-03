@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic FLASH Functions for CH32V003                                         * v1.1 *
+// Basic FLASH Functions for CH32V003                                         * v1.2 *
 // ===================================================================================
 //
 // Functions available:
@@ -72,8 +72,6 @@ void FLASH_OB_erase(void);
 void FLASH_OB_USER_write(uint8_t flags);
 void FLASH_OB_DATA_write(uint16_t data);
 
-#define FLASH_KEY1              0x45670123
-#define FLASH_KEY2              0xCDEF89AB
 #define FLASH_RDPRT             0x00A5
 #define FLASH_BOOT_BASE         0x1FFFF000
 #define FLASH_CODE_BASE         FLASH_BASE
