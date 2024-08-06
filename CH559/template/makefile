@@ -1,30 +1,41 @@
 # ===================================================================================
+# Project Makefile
+# ===================================================================================
 # Project:  Example for CH559
 # Author:   Stefan Wagner
 # Year:     2022
 # URL:      https://github.com/wagiminator
 # ===================================================================================         
-# Type "make help" in the command line.
+# Install toolchain:
+#   sudo apt install build-essential sdcc
+#   sudo apt install python3 python3-pip
+#   python3 -m pip install pyusb
+#
+# Provide access permission to USB bootloader:
+#   echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="666"' | sudo tee /etc/udev/rules.d/99-ch55x.rules
+#   sudo udevadm control --reload-rules
+#
+# Type "make flash" in the command line.
 # ===================================================================================
 
 # Files and Folders
-TARGET   = firmware
-INCLUDE  = include
-SOURCE   = src
-BIN      = bin
-TOOLS    = tools
+TARGET    = firmware
+INCLUDE   = include
+SOURCE    = src
+BIN       = bin
+TOOLS     = tools
 
 # Microcontroller Settings
-FREQ_SYS   = 56000000
-XRAM_LOC   = 0x0100
-XRAM_SIZE  = 0x1700
-CODE_SIZE  = 0xF000
+FREQ_SYS  = 56000000
+XRAM_LOC  = 0x0100
+XRAM_SIZE = 0x1700
+CODE_SIZE = 0xF000
 
 # Toolchain
-CC         = sdcc
-OBJCOPY    = objcopy
-PACK_HEX   = packihx
-ISPTOOL   ?= python3 $(TOOLS)/chprog.py $(BIN)/$(TARGET).bin
+CC        = sdcc
+OBJCOPY   = objcopy
+PACK_HEX  = packihx
+ISPTOOL  ?= python3 $(TOOLS)/chprog.py $(BIN)/$(TARGET).bin
 
 # Compiler Flags
 CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I$(SOURCE) -I.

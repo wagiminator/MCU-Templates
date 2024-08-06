@@ -1,7 +1,7 @@
 # MCU Template for the tinyAVR 0-series and 1-series Microcontrollers
 The tinyAVR 0-series and 1-series microcontrollers belong to Atmel/Microchip's AVR family of 8-bit microcontrollers, designed for low-power and cost-effective applications. The 0-series offers basic features and is suitable for power-constrained projects, while the 1-series provides expanded capabilities, larger memory options, and improved performance for more complex applications. Both series include features such as timers, USART, SPI, and I2C. The following microcontrollers are supported: ATtiny202, 204, 212, 214, 402, 404, 406, 412, 414, 416, 804, 806, 814, 816, 1604, 1606, 1614, 1616, and 3216. 
 
-The *template* directory includes a makefile, a PlatformIO.ini file, an Arduino IDE wrapper file, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
+The *template* directory includes a makefile, a PlatformIO.ini file, an Arduino IDE wrapper file, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
@@ -13,10 +13,10 @@ To make use of the Makefile, it's necessary to install some extra software compo
 sudo apt install build-essential gcc-avr avr-libc
 ```
 
-## Install Python3 and PySerial for the programming tool
+## Install Python3 and programming tool
 ```
 sudo apt install python3 python3-pip
-python3 -m pip install pyserial
+pip install tinyupdi
 ```
 
 ## Compiling/Uploading

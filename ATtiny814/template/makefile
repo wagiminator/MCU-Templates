@@ -9,7 +9,7 @@
 # Install toolchain:
 #   sudo apt install build-essential gcc-avr avr-libc
 #   sudo apt install python3 python3-pip
-#   python3 -m pip install pyserial
+#   pip install tinyupdi
 #
 # Type "make flash" in the command line.
 # ===================================================================================
@@ -19,7 +19,6 @@ TARGET   = firmware
 INCLUDE  = include
 SOURCE   = src
 BIN      = bin
-TOOLS    = tools
 AVRDEV   = avr
 
 # Microcontroller Settings
@@ -39,7 +38,7 @@ CC       = $(PREFIX)-gcc
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
-ISPTOOL  = python3 $(TOOLS)/tinyupdi.py
+ISPTOOL  = tinyupdi
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags

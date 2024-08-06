@@ -1,30 +1,28 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for CH32X033/034/035           * v1.1 *
+// Basic NeoPixel Functions using Software Bit-banging for CH32X035/X034/X033 * v1.0 *
 // ===================================================================================
+//
+// Basic control functions for 800kHz addressable LEDs (NeoPixel). A simplified 
+// protocol is used which should work with most LEDs.
 //
 // Functions available:
 // --------------------
-// NEO_init()               init hardware-SPI for NeoPixels on MOSI-pin
+// NEO_init()               init NeoPixels
 // NEO_clearAll()           clear all pixels and update
 // NEO_clearPixel(p)        clear pixel p
 // NEO_writeColor(p,r,g,b)  write RGB color to pixel p
 // NEO_writeHue(p,h,b)      write hue (h=0..191) and brightness (b=0..2) to pixel p
 // NEO_update()             update pixels string (write buffer to pixels)
 //
-// NEO_sendByte(d)          send one data byte via hardware-SPI to pixels string
+// NEO_sendByte(d)          send one data byte to pixels string
 // NEO_latch()              latch the data sent
-//
-// SPI MOSI pin mapping (set below in NeoPixel parameters):
-// --------------------------------------------------------
-// NEO_MAP    0     1     2     3
-// MOSI-pin  PA7   PA9   PA10  PC7
 //
 // Notes:
 // ------
-// - Connect MOSI-pin (define below) to DIN of the pixels string.
 // - Works with most 800kHz addressable LEDs (NeoPixels).
-// - Set number of pixels and pixel type in the parameters below!
-// - System clock frequency must be 48MHz, 24MHz, or 12MHz.
+// - Set pin, number of pixels, and pixel type in the parameters below!
+// - Pin numbers must be [0..15].
+// - System clock frequency must be 48MHz, 24MHz, 16MHz, or 12MHz.
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -34,13 +32,13 @@
 extern "C" {
 #endif
 
-#include "system.h"
+#include "gpio.h"
 
 // ===================================================================================
 // NeoPixel Definitions
 // ===================================================================================
-#ifndef NEO_MAP
-  #define NEO_MAP       0     // MOSI pin mapping (see above)
+#ifndef PIN_NEO
+  #define PIN_NEO       PC1   // define NeoPixel pin (PC0 - PC4 recommended)
 #endif
 
 #ifndef NEO_COUNT

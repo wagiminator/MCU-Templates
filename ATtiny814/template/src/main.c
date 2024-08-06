@@ -14,8 +14,8 @@
 //
 // Compilation Instructions:
 // -------------------------
-// - Make sure GCC toolchain (gcc-avr, avr-libc) and Python3 with PySerial is
-//   installed. If necessary, a driver for the USB-to-serial converter used by the
+// - Make sure GCC toolchain (gcc-avr, avr-libc) and Python3 with tinyupdi (via pip)
+//   are installed. If necessary, a driver for the USB-to-serial converter used by the
 //   SerialUPDI programmer must be installed.
 // - Connect the SerialUPDI programmer to the UPDI pin of the MCU.
 // - Run 'make flash'.

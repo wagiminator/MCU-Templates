@@ -1,7 +1,7 @@
 # MCU Template for CH32V203 Microcontrollers
 The CH32V203 is an industrial-grade microcontroller (MCU) designed for general-purpose use, with low power consumption and enhanced performance. It is based on a 32-bit RISC-V core, supports the RV32IMAC instruction set, and can operate at clock frequencies of up to 144MHz. The MCU's power consumption is highly efficient, reaching as low as 45uA per MHz. Additionally, the CH32V203 integrates a USB interface with two channels, enabling both USB Host and USB Device functionalities. It also provides a CAN interface (2.0B active) with one channel, up to two OPA channels, four UARTs, two I²Cs, a 12-bit ADC, a 10-channel TouchKey, and various other peripheral resources.
 
-The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
+The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
@@ -13,10 +13,10 @@ To make use of the Makefile, it's necessary to install some extra software compo
 sudo apt install build-essential libnewlib-dev gcc-riscv64-unknown-elf
 ```
 
-## Install Python3 and PyUSB for the programming tool
+## Install Python3 and programming tools
 ```
 sudo apt install python3 python3-pip
-python3 -m pip install pyusb
+pip install chprog rvprog
 ```
 
 ## Give access permission to the factory built-in bootloader

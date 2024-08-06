@@ -1,7 +1,7 @@
 # MCU Template for CH32V003 Microcontrollers
 The CH32V003 series is a collection of industrial-grade general-purpose microcontrollers that utilize the QingKe RISC-V2A core design supporting the RV32EC instruction set. These microcontrollers are equipped with various features such as a 48MHz system main frequency, 16KB flash, 2KB SRAM, wide voltage support, a single-wire serial debug interface, low power consumption, and an ultra-small package. Additionally, the CH32V003 series includes a built-in set of components including a DMA controller, a 10-bit ADC, op-amp comparators, multiple timers, and standard communication interfaces such as USART, I2C, and SPI.
 
-The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
+The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
@@ -13,10 +13,10 @@ To make use of the Makefile, it's necessary to install some extra software compo
 sudo apt install build-essential libnewlib-dev gcc-riscv64-unknown-elf
 ```
 
-## Install Python3 and PyUSB for the programming tool
+## Install Python3 and programming tool
 ```
 sudo apt install python3 python3-pip
-python3 -m pip install pyusb
+pip install rvprog
 ```
 
 ## Give access permission to the WCH-LinkE programmer

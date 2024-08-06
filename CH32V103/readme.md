@@ -1,7 +1,7 @@
 # MCU Template for CH32V103 Microcontrollers
 The CH32V103 is a general purpose microcontroller based on the 32-bit RISC processor RISC-V3A. The CH32V103 provides clock security system, multi-level power management, and general DMA controller. The CH32V103 is also equipped with abundant peripheral resources, such as single USB2.0 host/device interface, multi-channel 12-bit ADC module, multi-channel TouchKey, several timers, and multi-channel IIC/USART/SPI interfaces, etc.
 
-The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, fundamental libraries, and a programming tool. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
+The *template* directory includes a makefile, a PlatformIO.ini file, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
@@ -13,10 +13,10 @@ To make use of the Makefile, it's necessary to install some extra software compo
 sudo apt install build-essential libnewlib-dev gcc-riscv64-unknown-elf
 ```
 
-## Install Python3 and PyUSB for the programming tool
+## Install Python3 and programming tools
 ```
 sudo apt install python3 python3-pip
-python3 -m pip install pyusb
+pip install chprog rvprog
 ```
 
 ## Give access permission to the factory built-in bootloader
