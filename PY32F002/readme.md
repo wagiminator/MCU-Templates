@@ -12,7 +12,7 @@ To make use of the template, it's necessary to install some extra software compo
 sudo apt install build-essential gcc-arm-none-eabi
 ```
 
-## Install Python3 and puyaisp for the programming tool
+## Install Python3 and puyaisp programming tool
 ```
 sudo apt install python3 python3-pip
 pip install puyaisp
@@ -28,6 +28,31 @@ make asm       compile and disassemble to <firmware>.asm
 make bin       compile and build <firmware>.bin
 make flash     compile and upload to MCU
 make clean     remove all build files
+```
+
+## Factory built-in UART Bootlader
+The MCU has an embedded bootloader with UART interface, which can be used to upload firmware using a simple USB-to-serial adapter. The open-source platform-independent Python tool [puyaisp](https://pypi.org/project/puyaisp/) can be used for this purpose.
+
+Connect your USB-to-serial converter to your PY32F0xx MCU as follows:
+
+```
+USB2SERIAL            PY32F0xx
++--------+      +-------------------+
+|     RXD| <--- |PA2 or PA9  or PA14|
+|     TXD| ---> |PA3 or PA10 or PA15|
+|     VDD| ---> |VDD                |
+|     GND| ---> |GND                |
++--------+      +-------------------+
+```
+
+Set your MCU to bootloader mode by using ONE of the following methods:
+- Disconnect your USB-to-serial converter, pull BOOT0 pin (PF4) to VCC (or press and hold the BOOT button, if your board has one), then connect the converter to your USB port. BOOT0 pin (or BOOT button) can be released now.
+- Connect your USB-to-serial converter to your USB port. Pull BOOT0 pin (PF4) to VCC, then pull nRST (PF2) shortly to GND (or press and hold the BOOT button, then press and release the RESET button and then release the BOOT button, if your board has them).
+
+Then run the following command to upload your firmware (example):
+
+```
+puyaisp -f firmware.bin
 ```
 
 # Serial Wire Debug Interface (SWD)
@@ -49,7 +74,7 @@ In order to list all supported MCUs of the PY32F0xx series, run:
 pyocd pack find py32f0
 ```
 
-Upload firmware with the following command (example):
+Connect an SWD debug probe (e.g. [ST-Link V2](https://aliexpress.com/w/wholesale-st%2525252dlink-v2.html)) to your board. Upload firmware with the following command (example):
 
 ```
 pyocd load firmware.bin -t py32f002ax5
