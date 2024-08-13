@@ -14,7 +14,7 @@
 //
 // Compilation Instructions:
 // -------------------------
-// - Make sure GCC toolchain (gcc-arm-none-eabi) and Python3 with PySerial is
+// - Make sure GCC toolchain (gcc-arm-none-eabi) and Python3 with puyaisp is
 //   installed. If necessary, a driver for the USB-to-serial converter used must
 //   be installed.
 // - Connect the USB-to-serial converter to the MCU board.
