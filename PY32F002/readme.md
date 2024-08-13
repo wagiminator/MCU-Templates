@@ -30,7 +30,7 @@ make flash     compile and upload to MCU
 make clean     remove all build files
 ```
 
-## Factory built-in UART Bootlader
+# Factory built-in UART Bootlader
 The MCU has an embedded bootloader with UART interface, which can be used to upload firmware using a simple USB-to-serial adapter. The open-source platform-independent Python tool [puyaisp](https://pypi.org/project/puyaisp/) can be used for this purpose.
 
 Connect your USB-to-serial converter to your PY32F0xx MCU as follows:
