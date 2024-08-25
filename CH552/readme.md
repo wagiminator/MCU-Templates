@@ -5,7 +5,8 @@ The 'template' directory includes a makefile, an illustrative program, a linker 
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
 
-To make use of the template, it's necessary to install some extra software components to fully set up the toolchain:
+# Using the Makefile
+To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
 
 ## Install SDCC toolchain for compiling
 ```
@@ -24,8 +25,8 @@ echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="6
 sudo udevadm control --reload-rules
 ```
 
-# Using the Template
-Use one of the following commands inside the 'template' folder to compile/upload:
+## Compiling/Uploading
+Edit the *makefile* according to the needs of the project. Use one of the following commands inside the *template* folder to compile/upload:
 
 ```
 make all       compile, build and keep all files

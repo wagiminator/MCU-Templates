@@ -5,27 +5,28 @@ The 'template' directory includes a makefile, an illustrative program, a linker 
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
 
-To make use of the template, it's necessary to install some extra software components to fully set up the toolchain:
+# Using the Makefile
+To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
 
-## Install SDCC toolchain for compiling
+## Install SDCC Ttoolchain for Compiling
 ```
 sudo apt install build-essential sdcc
 ```
 
-## Install Python3 and stc8usb programming tool
+## Install Python3 and Programming Tool
 ```
 sudo apt install python3 python3-pip
 pip install stc8usb
 ```
 
-## Give access permission to the factory built-in bootloader
+## Give Access Permission to the Factory built-in Bootloader
 ```
 echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="34bf", ATTR{idProduct}=="1001", MODE="666"' | sudo tee /etc/udev/rules.d/99-STC-ISP.rules
 sudo udevadm control --reload-rules
 ```
 
-# Using the Template
-Use one of the following commands inside the *template* folder to compile/upload:
+## Compiling/Uploading
+Edit the *makefile* according to the needs of the project. Use one of the following commands inside the *template* folder to compile/upload:
 
 ```
 make all       compile, build and keep all files

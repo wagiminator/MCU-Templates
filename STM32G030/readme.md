@@ -5,21 +5,22 @@ The *template* directory includes a makefile, an illustrative program, a linker 
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
-To make use of the template, it's necessary to install some extra software components to fully set up the toolchain:
+# Compiling Firmware Using the Makefile
+To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
 
-## Install GCC toolchain for compiling
+## Install GCC Toolchain for Compiling
 ```
 sudo apt install build-essential gcc-arm-none-eabi
 ```
 
-## Install Python3 and stm32isp programming tool
+## Install Python3 and Programming Tool
 ```
 sudo apt install python3 python3-pip
 pip install stm32isp
 ```
 
-# Using the Template
-Use one of the following commands inside the *template* folder to compile/upload:
+## Compiling/Uploading
+Edit the *makefile* according to the needs of the project. Use one of the following commands inside the *template* folder to compile/upload:
 
 ```
 make all       compile and build <firmware>.elf/.bin/.hex/.asm
@@ -30,7 +31,8 @@ make flash     compile and upload to MCU
 make clean     remove all build files
 ```
 
-# Factory built-in UART Bootlader
+# Uploading Firmware
+## Via Factory built-in UART Bootlader
 The MCU has an embedded bootloader with UART interface, which can be used to upload firmware using a simple USB-to-serial adapter. The open-source platform-independent Python tool [stm32isp](https://pypi.org/project/stm32isp/) can be used for this purpose.
 
 Connect your USB-to-serial converter to your STM32G0xx MCU as follows:
@@ -57,7 +59,7 @@ stm32isp -f firmware.bin
 
 On STM32G03x/04x microcontrollers, the BOOT0 pin is initially disabled. When the chip is brand new or the main flash memory is erased, this isn't an issue as the embedded bootloader automatically kicks in. By using the stm32isp tool, the BOOT0 pin will be activated for subsequent use. However, if the chip has been previously programmed using a different software tool, the bootloader might not be accessible through the BOOT0 pin anymore. In such cases, the nBOOT_SEL bit in the User Option Bytes must be cleared (set to 0) using an SWD programmer like ST-Link and the appropriate software.
 
-# Serial Wire Debug Interface (SWD)
+## Via Serial Wire Debug Interface (SWD)
 You can use [PyOCD](https://pyocd.io/) for uploading and debugging. Install it via
 
 ```

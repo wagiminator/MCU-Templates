@@ -5,21 +5,22 @@ The *template* directory includes a makefile, a PlatformIO.ini file, an Arduino 
 
 Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
 
-# Using the Makefile
-To make use of the Makefile, it's necessary to install some extra software components to fully set up the toolchain:
+# Compiling Firmware
+## Using the Makefile
+To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
 
-## Install GCC toolchain for compiling
+### Install GCC Toolchain for Compiling
 ```
 sudo apt install build-essential gcc-avr avr-libc
 ```
 
-## Install Python3 and programming tool
+### Install Python3 and Programming Tool
 ```
 sudo apt install python3 python3-pip
 pip install tinyupdi
 ```
 
-## Compiling/Uploading
+### Compiling/Uploading
 Edit the *makefile* according to the needs of the project. Use one of the following commands inside the *template* folder to compile/upload:
 
 ```
@@ -32,13 +33,13 @@ make fuses     burn fuses of MCU
 make clean     remove all build files
 ```
 
-# Using PlatformIO
+## Using PlatformIO
 - Install [PlatformIO](https://platformio.org). Linux/Mac users may also need to install [pyenv](https://realpython.com/intro-to-pyenv).
 - Click on "Open Project" and select the *template* folder with the *platformio.ini* file.
 - Edit the *platformio.ini* according to the needs of the project and your programmmer.
 - Connect your programmer to the target board, then click "Upload".
 
-# Using Arduino IDE
+## Using Arduino IDE
 - Install [Arduino IDE](https://www.arduino.cc/en/software).
 - Install [megaTinyCore](https://github.com/SpenceKonde/megaTinyCore) for the Arduino IDE.
 - Open the *template.ino* file in the Arduino IDE.
