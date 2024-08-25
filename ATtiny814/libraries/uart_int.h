@@ -76,8 +76,8 @@ extern "C" {
 #define UART_setNoParity()    USART0.CTRLC &= ~USART_PMODE_gm
 
 // UART variables
-volatile uint8_t UART_rptr;           // UART RX buffer read pointer
-volatile uint8_t UART_wptr;           // UART RX buffer write pointer
+extern volatile uint8_t UART_rptr;    // UART RX buffer read pointer
+extern volatile uint8_t UART_wptr;    // UART RX buffer write pointer
 
 // UART functions
 void UART_init(void);                 // init UART with default BAUD rate

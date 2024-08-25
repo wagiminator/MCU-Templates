@@ -1,15 +1,19 @@
 // ===================================================================================
-// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v0.1 *
+// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.0 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_slave.h"
 
 // I2C slave registers
-uint8_t I2C_REG[I2C_REG_SIZE];                    // register array
 uint8_t I2C_REG_ptr;                              // register pointer
+volatile uint8_t I2C_REG[I2C_REG_SIZE];           // register array
 volatile uint8_t I2C_FLAG_changed = 0;            // register change flag
 volatile uint8_t I2C_FLAG_busy = 0;               // I2C busy flag
+
+#if I2C_REG_SLCT > 0
+uint8_t I2C_FLAG_reg;
+#endif
 
 // I2C slave command macros
 #define I2C_complete() TWI0.SCTRLB = TWI_SCMD_COMPTRANS_gc
@@ -53,6 +57,9 @@ ISR(TWI0_TWIS_vect) {
     I2C_sendACK();                                // send ACK to master
     I2C_REG_ptr = 0;                              // reset register pointer
     I2C_FLAG_busy = 1;                            // set I2C busy flag
+    #if I2C_REG_SLCT > 0
+    I2C_FLAG_reg  = 1;                            // first byte will be reg ptr
+    #endif
     return;                                       // quit ISR
   }
   
@@ -61,10 +68,20 @@ ISR(TWI0_TWIS_vect) {
     if(I2C_isOut()) {                             // slave writing to master?
       I2C_put(I2C_REG[I2C_REG_ptr]);              // send register value to master
       I2C_response();                             // no ACK needed here
-    } else {                                      // slave reading from master?
-      I2C_REG[I2C_REG_ptr] = I2C_get();           // read register value from master
+    }
+    else {                                        // slave reading from master?
+      #if I2C_REG_SLCT > 0
+      if(I2C_FLAG_reg) {
+        I2C_REG_ptr = I2C_get();;                 // read register address (pointer)
+        I2C_FLAG_reg = 0;                         // next bytes will be data
+      }
+      else
+      #endif
+      {
+        I2C_REG[I2C_REG_ptr] = I2C_get();         // read register value from master
+        I2C_FLAG_changed = 1;                     // set register changed flag
+      }
       I2C_sendACK();                              // send ACK to master
-      I2C_FLAG_changed = 1;                       // set register changed flag
     }
     if(++I2C_REG_ptr >= I2C_REG_SIZE)             // increase pointer...
       I2C_REG_ptr = 0;                            // ...or wrap around

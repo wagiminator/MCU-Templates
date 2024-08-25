@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v0.1 *
+// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -28,17 +28,19 @@ extern "C" {
 #include "system.h"
 
 // I2C Slave Parameters
-#define I2C_MAP         0           // I2C pin mapping (see above)
-#define I2C_ADDR        0x36        // I2C address of the device
-#define I2C_REG_SIZE    10          // number of 8-bit registers
+#define I2C_MAP         0                 // I2C pin mapping (see above)
+#define I2C_ADDR        0x36              // I2C address of the device
+#define I2C_REG_SIZE    10                // number of 8-bit registers
+#define I2C_REG_SLCT    0                 // 0: transmission will always start with register 0
+                                          // 1: first byte written is register address (pointer)
 
 // I2C Slave Registers
-uint8_t I2C_REG[];                  // slave register array
-volatile uint8_t I2C_FLAG_changed;  // slave register change flag
-volatile uint8_t I2C_FLAG_busy;     // I2C busy flag
+extern volatile uint8_t I2C_REG[];        // slave register array
+extern volatile uint8_t I2C_FLAG_changed; // slave register change flag
+extern volatile uint8_t I2C_FLAG_busy;    // I2C busy flag
 
 // I2C Slave Functions and Macros
-void I2C_init(void);                // I2C slave init function
+void I2C_init(void);                      // I2C slave init function
 
 #define I2C_busy()      (I2C_FLAG_busy)
 #define I2C_changed()   (I2C_FLAG_changed)
