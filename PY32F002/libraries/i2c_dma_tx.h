@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for PY32F0xx (DMA, TX only)                     * v1.0 *
+// Basic I2C Master Functions for PY32F0xx (DMA, TX only)                     * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -8,7 +8,10 @@
 // I2C_start(addr)          I2C start transmission, addr must contain R/W bit
 // I2C_write(b)             I2C transmit one data byte via I2C
 // I2C_stop()               I2C stop transmission
-// I2C_writeBuffer(buf,len) Send buffer (*buf) with length (len) via I2C and stop
+// I2C_busy()               Check if I2C bus is busy transmitting
+//
+// I2C_sendBuffer(addr,buf,len) Send buffer (*buf) with length (len) to device (addr)
+// I2C_writeBuffer(buf,len)     Write buffer (*buf) with length (len) via I2C and stop
 //
 // I2C pin mapping (set below in I2C parameters):
 // ----------------------------------------------
@@ -45,7 +48,8 @@ void I2C_stop(void);              // I2C stop transmission
 
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 
-#define I2C_busy()                (I2C1->SR2 & I2C_SR2_BUSY)
+#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
+#define I2C_busy()                    (I2C1->SR2 & I2C_SR2_BUSY)
 
 // DMA channel defines
 #if   I2C_DMA_CHANNEL == 1

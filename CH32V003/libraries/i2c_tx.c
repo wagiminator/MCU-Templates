@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for CH32V003                       * v1.3 *
+// Basic I2C Master Functions (write only) for CH32V003                       * v1.4 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

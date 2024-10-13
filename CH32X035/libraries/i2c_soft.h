@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions for CH32X035/X034/X033                       * v1.1 *
+// Software I2C Master Functions for CH32X035/X034/X033                       * v1.2 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -14,8 +14,10 @@
 // I2C_write(data)          I2C transmit one data byte to the slave
 // I2C_read(ack)            I2C receive one data byte (set ack=0 for last byte)
 //
-// I2C_writeBuffer(buf,len) Send buffer (*buf) with length (len) via I2C and stop
-// I2C_readBuffer(buf,len)  Read buffer (*buf) with length (len) via I2C and stop
+// I2C_sendBuffer(addr,buf,len) Send buffer (*buf) with length (len) to device (addr)
+// I2C_getBuffer(addr,buf,len)  Receive buffer (*buf) with length (len) to device (addr)
+// I2C_writeBuffer(buf,len)     Write buffer (*buf) with length (len) via I2C and stop
+// I2C_readBuffer(buf,len)      Read buffer (*buf) with length (len) via I2C and stop
 //
 // Define SDA/SCL pin and clock rate below!
 //
@@ -28,6 +30,7 @@
 extern "C" {
 #endif
 
+#include "config.h"
 #include "system.h"
 #include "gpio.h"
 
@@ -48,6 +51,9 @@ uint8_t I2C_read(uint8_t ack);    // I2C receive one data byte from the slave
 
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 void I2C_readBuffer(uint8_t* buf, uint16_t len);
+
+#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
+#define I2C_getBuffer(addr,buf,len)   {I2C_start(addr); I2C_readBuffer(buf,len);}
 
 #ifdef __cplusplus
 };

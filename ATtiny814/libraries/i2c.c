@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
+// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.2 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for STM32G0xx (write only)                      * v0.1 *
+// Basic I2C Master Functions for STM32G0xx (write only)                      * v1.0 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -73,4 +73,10 @@ void I2C_write(uint8_t data) {
 void I2C_stop(void) {
   while(!(I2C1->ISR & I2C_ISR_TXE));
   I2C1->CR2 |= I2C_CR2_STOP;
+}
+
+// Write data buffer via I2C bus and stop
+void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) I2C_write(*buf++);           // write buffer
+  I2C_stop();                               // stop transmission
 }

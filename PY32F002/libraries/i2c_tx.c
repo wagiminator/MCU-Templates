@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for PY32F0xx (write only)                       * v1.1 *
+// Basic I2C Master Functions for PY32F0xx (write only)                       * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

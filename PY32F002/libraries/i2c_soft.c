@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions                                              * v1.2 *
+// Software I2C Master Functions                                              * v1.3 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -103,7 +103,6 @@ uint8_t I2C_read(uint8_t ack) {
   I2C_CLOCKOUT();                           // clock out -> slave reads ACK bit
   return data;                              // return the received byte
 }
-
 
 // Send data buffer via I2C bus and stop
 void I2C_writeBuffer(uint8_t* buf, uint16_t len) {

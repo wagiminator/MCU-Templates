@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
+// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.2 *
 // ===================================================================================
 //
 // Functions available:
@@ -11,8 +11,10 @@
 // I2C_read(ack)            I2C receive one data byte from slave, ack=0: last byte
 // I2C_stop()               I2C stop transmission
 //
-// I2C_writeBuffer(buf,len) Send buffer (*buf) with length (len) via I2C and stop
-// I2C_readBuffer(buf,len)  Read buffer (*buf) with length (len) via I2C and stop
+// I2C_sendBuffer(addr,buf,len) Send buffer (*buf) with length (len) to device (addr)
+// I2C_getBuffer(addr,buf,len)  Receive buffer (*buf) with length (len) from (addr)
+// I2C_writeBuffer(buf,len)     Write buffer (*buf) with length (len) via I2C and stop
+// I2C_readBuffer(buf,len)      Read buffer (*buf) with length (len) via I2C and stop
 //
 // I2C pin mapping (set below in I2C parameters):
 // ----------------------------------------------
@@ -45,6 +47,9 @@ void I2C_stop(void);            // I2C stop transmission
 
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 void I2C_readBuffer(uint8_t* buf, uint16_t len);
+
+#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
+#define I2C_getBuffer(addr,buf,len)   {I2C_start(addr); I2C_readBuffer(buf,len);}
 
 #ifdef __cplusplus
 };

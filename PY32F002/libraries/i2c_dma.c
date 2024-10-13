@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions with DMA for PY32F0xx                           * v1.1 *
+// Basic I2C Master Functions with DMA for PY32F0xx                           * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
