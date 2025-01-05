@@ -7,10 +7,10 @@
 //
 // PIN functions available:
 // ------------------------
-// PIN_input(PIN)           Set PIN as INPUT (floating, no pullup/pulldown)
+// PIN_input(PIN)           Set PIN as INPUT (floating, no pullup/pulldown) (*)
 // PIN_input_PU(PIN)        Set PIN as INPUT with internal PULLUP resistor
 // PIN_input_PD(PIN)        Set PIN as INPUT with internal PULLDOWN resistor
-// PIN_input_AN(PIN)        Set PIN as INPUT for analog peripherals (e.g. ADC) (*)
+// PIN_input_AN(PIN)        Set PIN as INPUT for analog peripherals (e.g. ADC)
 // PIN_output(PIN)          Set PIN as OUTPUT (push-pull)
 // PIN_output_OD(PIN)       Set PIN as OUTPUT (open-drain)
 // PIN_alternate(PIN)       Set PIN as alternate output (push-pull)

@@ -13,7 +13,8 @@
 // ===================================================================================
 // Compilation Instructions for the Arduino IDE:
 // ---------------------------------------------
-// - Make sure you have installed ch55xduino: https://github.com/DeqingSun/ch55xduino
+// - Make sure you have installed ch55xduino v0.0.16 (!!!):
+//   https://github.com/DeqingSun/ch55xduino
 // - Copy the .ino and .c files as well as the /src folder together into one folder
 //   and name it like the .ino file. Open the .ino file in the Arduino IDE. Go to 
 //   "Tools -> Board -> CH55x Boards -> CH559 Board". Under "Tools" select the 

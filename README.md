@@ -8,6 +8,7 @@ Discover a set of templates designed to simplify the initial stages of bare-meta
 - [CH32V103](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V103)
 - [CH32V203](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V203)
 - [CH32X035, CH32X034, CH32X033](https://github.com/wagiminator/MCU-Templates/tree/main/CH32X035)
+- [CH32V002, V004, V005, V006, V007, M007](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V002)
 - [PY32F002, PY32F003, PY32F030](https://github.com/wagiminator/MCU-Templates/tree/main/PY32F002)
 - [STC8H1K08, STC8H1K17](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H1K08)
 - [STC8H8K64U, STC8H8K32U](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H8K64U)

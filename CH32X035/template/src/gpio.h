@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for CH32X035/X034/X033                                * v0.4 *
+// Basic GPIO Functions for CH32X035/X034/X033                                * v0.5 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PB0, PB1, .. - e.g.:
@@ -7,10 +7,10 @@
 //
 // PIN functions available:
 // ------------------------
-// PIN_input(PIN)           set PIN as INPUT (floating, no pullup/pulldown)
+// PIN_input(PIN)           set PIN as INPUT (floating, no pullup/pulldown) (*)
 // PIN_input_PU(PIN)        set PIN as INPUT with internal PULLUP resistor
 // PIN_input_PD(PIN)        set PIN as INPUT with internal PULLDOWN resistor
-// PIN_input_AN(PIN)        set PIN as INPUT for analog peripherals (e.g. ADC) (*)
+// PIN_input_AN(PIN)        set PIN as INPUT for analog peripherals (e.g. ADC)
 // PIN_output(PIN)          set PIN as OUTPUT (push-pull)
 // PIN_alternate(PIN)       set PIN as alternate output mode
 //
@@ -498,7 +498,7 @@ enum{PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH};
 #define ADC_enable()        ADC1->CTLR2  |=  ADC_ADON
 #define ADC_disable()       ADC1->CTLR2  &= ~ADC_ADON
 
-#define ADC_fast()          { ADC1->CTLR3   = 0b00000000000000000000000000000101; \
+#define ADC_fast()          { ADC1->CTLR3   = 0b00000000000000000000000000000001; \
                               ADC1->SAMPTR1 = 0b00000000000000000000000000000000; \
                               ADC1->SAMPTR2 = 0b00000000000000000000000000000000; }
 #define ADC_slow()          { ADC1->CTLR3   = 0b00000000000000000000000000001011; \
@@ -524,7 +524,6 @@ static inline void ADC_init(void) {
 }
 
 static inline uint16_t ADC_read(void) {
-  ADC_enable();                                 // make sure ADC is enabled
   ADC1->CTLR2 |= ADC_SWSTART;                   // start conversion
   while(!(ADC1->STATR & ADC_EOC));              // wait until finished
   return ADC1->RDATAR;                          // return result
@@ -591,17 +590,10 @@ static inline void TK_init(void) {
 }
 
 static inline uint8_t TK_read(void) {
-  uint8_t  result;
-  uint16_t value;
-  ADC_enable();                     // (re-)enable ADC
-  ADC1->RDATAR = 0x08;              // (TKEY1->ACT_DCG) set discharge time and start
+  ADC1->RDATAR = 0x08;              // (TKEY1->ACT_DCG) set discharge time
+  ADC1->CTLR2 |= ADC_SWSTART;       // start conversion
   while(!(ADC1->STATR & ADC_EOC));  // wait until sampling completed
-  value = ADC1->RDATAR;             // read sampling value
-  result = (value == 2047);         // 2047 if pressed
-  ADC1->RDATAR = 0x08;              // second sampling (blind)
-  while(!(ADC1->STATR & ADC_EOC));
-  value = ADC1->RDATAR;
-  return result;
+  return(ADC1->RDATAR < 4088);      // return TRUE if pressed
 }
 
 #ifdef __cplusplus
