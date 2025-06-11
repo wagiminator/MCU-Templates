@@ -1,10 +1,12 @@
+# NOTE: For C++, set SYS_SUPPORT_CPP to 1 in system.h and rename main.c to main.cpp
+
 # ===================================================================================
 # Project Makefile
 # ===================================================================================
-# Project:  PY32F002 Example
+# Project:  PY32F002A Example
 # Author:   Stefan Wagner
 # Year:     2023
-# URL:      https://github.com/wagiminator    
+# URL:      https://github.com/wagiminator
 # ===================================================================================
 # Install toolchain:
 #   sudo apt install build-essential gcc-arm-none-eabi
@@ -15,96 +17,112 @@
 # ===================================================================================
 
 # Files and Folders
-TARGET   = firmware
-INCLUDE  = include
+PROJECT  = template_app
 SOURCE   = src
-BIN      = bin
+OUTPUT   = bin
 
 # Microcontroller Settings
+TARGET   = py32f002ax5
 F_CPU    = 24000000
-LDSCRIPT = ld/py32f002ax5.ld
+LDSCRIPT = ld/$(TARGET).ld
 CPUARCH  = -mcpu=cortex-m0plus -mthumb
 
 # Toolchain
 PREFIX   = arm-none-eabi
 CC       = $(PREFIX)-gcc
+CXX      = $(PREFIX)-g++
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
-OBJSIZE  = $(PREFIX)-size
-ISPTOOL  = puyaisp -f $(BIN)/$(TARGET).bin
+#ISPTOOL  = puyaisp -f $(OUTPUT)/$(PROJECT).bin
+ISPTOOL  = pyocd load $(OUTPUT)/$(PROJECT).bin -t $(TARGET)
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = -g -Os -flto $(CPUARCH) -DF_CPU=$(F_CPU) -I$(INCLUDE) -I$(SOURCE) -I.
-CFLAGS  += -fdata-sections -ffunction-sections -fno-builtin -fno-common -Wall
-LDFLAGS  = -T$(LDSCRIPT) #-static -lc -lm -nostartfiles -nostdlib -lgcc
-LDFLAGS += -Wl,--gc-sections,--build-id=none --specs=nano.specs --specs=nosys.specs
-CFILES   = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c) $(wildcard $(SOURCE)/*.S)
+FLAGS    = -Os -flto -Wall -I$(SOURCE) $(CPUARCH) -DF_CPU=$(F_CPU) -fdata-sections -ffunction-sections -fno-builtin -fno-common
+CFLAGS   = $(FLAGS) -std=gnu23
+CPPFLAGS = $(FLAGS) -std=gnu++26 -fno-exceptions -fno-rtti -Wno-register
+LDFLAGS  = -Wl,--gc-sections,--build-id=none,--no-warn-rwx-segments,--print-memory-usage
+LDFLAGS += -T$(LDSCRIPT) --specs=nano.specs --specs=nosys.specs -nostartfiles #-nostdlib
+
+ASM_SRCS := $(wildcard $(SOURCE)/*.S)  	$(wildcard $(SOURCE)/*/*.S)
+C_SRCS   := $(wildcard $(SOURCE)/*.c) 	$(wildcard $(SOURCE)/*/*.c)
+CPP_SRCS := $(wildcard $(SOURCE)/*.cpp) $(wildcard $(SOURCE)/*/*.cpp)
+
+ASM_OBJS := $(patsubst $(SOURCE)/%.S,   $(OUTPUT)/obj/%.o, $(ASM_SRCS))
+C_OBJS   := $(patsubst $(SOURCE)/%.c,   $(OUTPUT)/obj/%.o, $(C_SRCS))
+CPP_OBJS := $(patsubst $(SOURCE)/%.cpp, $(OUTPUT)/obj/%.o, $(CPP_SRCS))
+OBJS     := $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 # Symbolic Targets
 help:
 	@echo "Use the following commands:"
-	@echo "make all       compile and build $(TARGET).elf/.bin/.hex/.asm"
-	@echo "make hex       compile and build $(TARGET).hex"
-	@echo "make asm       compile and disassemble to $(TARGET).asm"
-	@echo "make bin       compile and build $(TARGET).bin"
+	@echo "make all       compile and build $(PROJECT).elf/.bin/.hex/.asm"
+	@echo "make hex       compile and build $(PROJECT).hex"
+	@echo "make asm       compile and disassemble to $(PROJECT).asm"
+	@echo "make bin       compile and build $(PROJECT).bin"
 	@echo "make flash     compile and upload to MCU"
 	@echo "make clean     remove all build files"
 
-$(BIN)/$(TARGET).elf: $(CFILES)
-	@echo "Building $(BIN)/$(TARGET).elf ..."
-	@mkdir -p $(BIN)
-	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+$(OUTPUT)/obj/%.o: $(SOURCE)/%.S
+	@mkdir -p $(@D)
+	@$(CC) -o $@ -c $< $(CFLAGS)
 
-$(BIN)/$(TARGET).lst: $(BIN)/$(TARGET).elf
-	@echo "Building $(BIN)/$(TARGET).lst ..."
-	@$(OBJDUMP) -S $^ > $(BIN)/$(TARGET).lst
+$(OUTPUT)/obj/%.o: $(SOURCE)/%.c
+	@mkdir -p $(@D)
+	@$(CC) -o $@ -c $< $(CFLAGS)
 
-$(BIN)/$(TARGET).map: $(BIN)/$(TARGET).elf
-	@echo "Building $(BIN)/$(TARGET).map ..."
-	@$(OBJDUMP) -t $^ > $(BIN)/$(TARGET).map
+$(OUTPUT)/obj/%.o: $(SOURCE)/%.cpp
+	@mkdir -p $(@D)
+	@$(CXX) -o $@ -c $< $(CPPFLAGS)
 
-$(BIN)/$(TARGET).bin: $(BIN)/$(TARGET).elf
-	@echo "Building $(BIN)/$(TARGET).bin ..."
-	@$(OBJCOPY) -O binary $< $(BIN)/$(TARGET).bin
+$(OUTPUT)/$(PROJECT).elf: $(OBJS)
+	@echo "Building $(OUTPUT)/$(PROJECT).elf ..."
+	@mkdir -p $(@D)
+	@$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
-$(BIN)/$(TARGET).hex: $(BIN)/$(TARGET).elf
-	@echo "Building $(BIN)/$(TARGET).hex ..."
-	@$(OBJCOPY) -O ihex $< $(BIN)/$(TARGET).hex
+$(OUTPUT)/$(PROJECT).lst: $(OUTPUT)/$(PROJECT).elf
+	@echo "Building $(OUTPUT)/$(PROJECT).lst ..."
+	@$(OBJDUMP) -S $^ > $(OUTPUT)/$(PROJECT).lst
 
-$(BIN)/$(TARGET).asm: $(BIN)/$(TARGET).elf
-	@echo "Disassembling to $(BIN)/$(TARGET).asm ..."
-	@$(OBJDUMP) -d $(BIN)/$(TARGET).elf > $(BIN)/$(TARGET).asm
+$(OUTPUT)/$(PROJECT).map: $(OUTPUT)/$(PROJECT).elf
+	@echo "Building $(OUTPUT)/$(PROJECT).map ..."
+	@$(OBJDUMP) -t $^ > $(OUTPUT)/$(PROJECT).map
 
-all:	$(BIN)/$(TARGET).lst $(BIN)/$(TARGET).map $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm size
+$(OUTPUT)/$(PROJECT).bin: $(OUTPUT)/$(PROJECT).elf
+	@echo "Building $(OUTPUT)/$(PROJECT).bin ..."
+	@$(OBJCOPY) -O binary $< $(OUTPUT)/$(PROJECT).bin
 
-elf:	$(BIN)/$(TARGET).elf removetemp size
+$(OUTPUT)/$(PROJECT).hex: $(OUTPUT)/$(PROJECT).elf
+	@echo "Building $(OUTPUT)/$(PROJECT).hex ..."
+	@$(OBJCOPY) -O ihex $< $(OUTPUT)/$(PROJECT).hex
 
-bin:	$(BIN)/$(TARGET).bin removetemp size removeelf
+$(OUTPUT)/$(PROJECT).asm: $(OUTPUT)/$(PROJECT).elf
+	@echo "Disassembling to $(OUTPUT)/$(PROJECT).asm ..."
+	@$(OBJDUMP) -d $(OUTPUT)/$(PROJECT).elf > $(OUTPUT)/$(PROJECT).asm
 
-hex:	$(BIN)/$(TARGET).hex removetemp size removeelf
+all:	$(OUTPUT)/$(PROJECT).lst $(OUTPUT)/$(PROJECT).map $(OUTPUT)/$(PROJECT).bin $(OUTPUT)/$(PROJECT).hex $(OUTPUT)/$(PROJECT).asm
 
-asm:	$(BIN)/$(TARGET).asm removetemp size removeelf
+elf:	$(OUTPUT)/$(PROJECT).elf removetemp
 
-flash:	$(BIN)/$(TARGET).bin size removeelf
+bin:	$(OUTPUT)/$(PROJECT).bin removetemp removeelf
+
+hex:	$(OUTPUT)/$(PROJECT).hex removetemp removeelf
+
+asm:	$(OUTPUT)/$(PROJECT).asm removetemp removeelf
+
+flash:	$(OUTPUT)/$(PROJECT).bin removeelf
 	@echo "Uploading to MCU ..."
 	@$(ISPTOOL)
 
 clean:
 	@echo "Cleaning all up ..."
 	@$(CLEAN)
-	@rm -f $(BIN)/$(TARGET).elf $(BIN)/$(TARGET).lst $(BIN)/$(TARGET).map $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm
-
-size:
-	@echo "------------------"
-	@echo "FLASH: $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
-	@echo "SRAM:  $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
-	@echo "------------------"
+	@rm -rf $(OUTPUT)
 
 removetemp:
 	@echo "Removing temporary files ..."
 	@$(CLEAN)
 
 removeelf:
-	@echo "Removing $(BIN)/$(TARGET).elf ..."
-	@rm -f $(BIN)/$(TARGET).elf
+	@echo "Removing $(OUTPUT)/$(PROJECT).elf ..."
+	@rm -f $(OUTPUT)/$(PROJECT).elf
