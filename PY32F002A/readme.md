@@ -1,4 +1,4 @@
-# MCU Template for PY32F002, PY32F003, and PY32F030 Microcontrollers
+# MCU Template for PY32F002A, PY32F003, and PY32F030 Microcontrollers
 The PY32F0xx series microcontrollers are cost-effective MCUs with a high performance 32-bit ARM® Cortex®-M0+ core. They feature a wide voltage operating range (1.7V - 5.5V), up to 64 Kbytes flash, up to 8 Kbytes SRAM memory, and an operating frequency of up to 48 MHz. These chips integrate multi-channel I2C, SPI, USART, and other communication peripherals, one channel 12-bit ADC, up to five 16-bit timers, and two-channel comparators.
 
 The *template* directory includes a makefile, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
