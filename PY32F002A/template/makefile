@@ -4,9 +4,9 @@
 # Project Makefile
 # ===================================================================================
 # Project:  PY32F002A Example
-# Author:   Stefan Wagner
-# Year:     2023
-# URL:      https://github.com/wagiminator
+# Authors:  Stefan Wagner, frak0d
+# Year:     2025
+# URL:      https://github.com/wagiminator/MCU-Templates
 # ===================================================================================
 # Install toolchain:
 #   sudo apt install build-essential gcc-arm-none-eabi
@@ -25,7 +25,7 @@ OUTPUT   = bin
 TARGET   = py32f002ax5
 F_CPU    = 24000000
 LDSCRIPT = ld/$(TARGET).ld
-CPUARCH  = -mcpu=cortex-m0plus -mthumb
+CPUARCH  = -mcpu=cortex-m0plus #-mthumb
 
 # Toolchain
 PREFIX   = arm-none-eabi
@@ -40,7 +40,7 @@ CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 # Compiler Flags
 FLAGS    = -Os -flto -Wall -I$(SOURCE) $(CPUARCH) -DF_CPU=$(F_CPU) -fdata-sections -ffunction-sections -fno-builtin -fno-common
 CFLAGS   = $(FLAGS) -std=gnu23
-CPPFLAGS = $(FLAGS) -std=gnu++26 -fno-exceptions -fno-rtti -Wno-register
+CPPFLAGS = $(FLAGS) -std=gnu++26 -fno-exceptions -fno-rtti -Wno-register -Wno-volatile
 LDFLAGS  = -Wl,--gc-sections,--build-id=none,--no-warn-rwx-segments,--print-memory-usage
 LDFLAGS += -T$(LDSCRIPT) --specs=nano.specs --specs=nosys.specs -nostartfiles #-nostdlib
 
