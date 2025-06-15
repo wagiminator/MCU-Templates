@@ -37,7 +37,7 @@ void SYS_init(void) {
 // Init internal oscillator (non PLL) as system clock source
 void CLK_init_HSI(void) {
   #if CLK_DIV > 0
-  RCC->CR = CLK_DIV | RCC_RC_HSION;                       // set HSI divisor
+  RCC->CR = CLK_DIV | RCC_CR_HSION;                       // set HSI divisor
   #endif
   RCC->ICSCR = (RCC->ICSCR & 0xFFFF0000) | CLK_MASK;      // set HSI freq and calibration
 }
@@ -278,7 +278,7 @@ void BOOT_now(void) {
 // ===================================================================================
 // C++ Support
 // ===================================================================================
-#ifdef __cplusplus
+#if SYS_SUPPORT_CPP == 1
 extern void __cxa_pure_virtual() { while (1); }
 extern void (*__preinit_array_start[]) (void) __attribute__((weak));
 extern void (*__preinit_array_end[]) (void) __attribute__((weak));
@@ -438,7 +438,7 @@ void Reset_Handler(void) {
   SYS_init();
 
   // C++ Support
-  #ifdef __cplusplus
+  #if SYS_SUPPORT_CPP == 1
   __libc_init_array();
   #endif
 
