@@ -1,5 +1,3 @@
-# NOTE: For C++, set SYS_SUPPORT_CPP to 1 in system.h and rename main.c to main.cpp
-
 # ===================================================================================
 # Project Makefile
 # ===================================================================================
@@ -14,44 +12,43 @@
 #   pip install puyaisp
 #
 # Type "make flash" in the command line.
+#
+# For C++ see the commented CC and CFLAGS lines below
 # ===================================================================================
 
 # Files and Folders
 PROJECT  = template_app
 SOURCE   = src
 OUTPUT   = bin
+INCLUDE  = -I$(SOURCE)
 
 # Microcontroller Settings
 TARGET   = py32f002ax5
 F_CPU    = 24000000
 LDSCRIPT = ld/$(TARGET).ld
-CPUARCH  = -mcpu=cortex-m0plus #-mthumb
+CPUARCH  = -mcpu=cortex-m0plus -mthumb
 
 # Toolchain
 PREFIX   = arm-none-eabi
 CC       = $(PREFIX)-gcc
-CXX      = $(PREFIX)-g++
+# CC       = $(PREFIX)-g++
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
-#ISPTOOL  = puyaisp -f $(OUTPUT)/$(PROJECT).bin
-ISPTOOL  = pyocd load $(OUTPUT)/$(PROJECT).bin -t $(TARGET)
-CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
+OBJSIZE  = $(PREFIX)-size
+ISPTOOL  = puyaisp -f $(OUTPUT)/$(PROJECT).bin
+# ISPTOOL  = pyocd load $(OUTPUT)/$(PROJECT).bin -t $(TARGET)
+
+# NOTE: do not use -flto and -nostartfiles together for C++ project
+# should be fine for C projects tho, saves about 100 bytes of flash
 
 # Compiler Flags
-FLAGS    = -Os -flto -Wall -I$(SOURCE) $(CPUARCH) -DF_CPU=$(F_CPU) -fdata-sections -ffunction-sections -fno-builtin -fno-common
-CFLAGS   = $(FLAGS) -std=gnu23
-CPPFLAGS = $(FLAGS) -std=gnu++26 -fno-exceptions -fno-rtti -Wno-register -Wno-volatile
-LDFLAGS  = -Wl,--gc-sections,--build-id=none,--no-warn-rwx-segments,--print-memory-usage
-LDFLAGS += -T$(LDSCRIPT) --specs=nano.specs --specs=nosys.specs -nostartfiles #-nostdlib
-
-ASM_SRCS := $(wildcard $(SOURCE)/*.S)  	$(wildcard $(SOURCE)/*/*.S)
-C_SRCS   := $(wildcard $(SOURCE)/*.c) 	$(wildcard $(SOURCE)/*/*.c)
-CPP_SRCS := $(wildcard $(SOURCE)/*.cpp) $(wildcard $(SOURCE)/*/*.cpp)
-
-ASM_OBJS := $(patsubst $(SOURCE)/%.S,   $(OUTPUT)/obj/%.o, $(ASM_SRCS))
-C_OBJS   := $(patsubst $(SOURCE)/%.c,   $(OUTPUT)/obj/%.o, $(C_SRCS))
-CPP_OBJS := $(patsubst $(SOURCE)/%.cpp, $(OUTPUT)/obj/%.o, $(CPP_SRCS))
-OBJS     := $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+CFLAGS   = -Os -flto -std=gnu23 -Wall
+# CFLAGS   = -Os -flto -std=c++26 -fno-exceptions -fno-rtti -Wall -Wno-volatile -Wno-register -fpermissive
+CFLAGS  += $(INCLUDE) $(CPUARCH) -DF_CPU=$(F_CPU) -fdata-sections -ffunction-sections -fno-builtin -fno-common
+LDFLAGS  = -T$(LDSCRIPT) --specs=nano.specs --specs=nosys.specs #-nostartfiles #-nostdlib
+LDFLAGS += -Wl,--gc-sections,--build-id=none,--no-warn-rwx-segments,--print-memory-usage
+CFILES   = $(wildcard $(SOURCE)/*.c) $(wildcard $(SOURCE)/*.cpp) $(wildcard $(SOURCE)/*.S)
+CFILES  += $(wildcard $(SOURCE)/*/*.c) $(wildcard $(SOURCE)/*/*.cpp) $(wildcard $(SOURCE)/*/*.S)
 
 # Symbolic Targets
 help:
@@ -63,22 +60,10 @@ help:
 	@echo "make flash     compile and upload to MCU"
 	@echo "make clean     remove all build files"
 
-$(OUTPUT)/obj/%.o: $(SOURCE)/%.S
-	@mkdir -p $(@D)
-	@$(CC) -o $@ -c $< $(CFLAGS)
-
-$(OUTPUT)/obj/%.o: $(SOURCE)/%.c
-	@mkdir -p $(@D)
-	@$(CC) -o $@ -c $< $(CFLAGS)
-
-$(OUTPUT)/obj/%.o: $(SOURCE)/%.cpp
-	@mkdir -p $(@D)
-	@$(CXX) -o $@ -c $< $(CPPFLAGS)
-
-$(OUTPUT)/$(PROJECT).elf: $(OBJS)
+$(OUTPUT)/$(PROJECT).elf: $(CFILES)
 	@echo "Building $(OUTPUT)/$(PROJECT).elf ..."
-	@mkdir -p $(@D)
-	@$(CXX) -o $@ $(OBJS) $(LDFLAGS)
+	@mkdir -p $(OUTPUT)
+	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 $(OUTPUT)/$(PROJECT).lst: $(OUTPUT)/$(PROJECT).elf
 	@echo "Building $(OUTPUT)/$(PROJECT).lst ..."
@@ -100,15 +85,15 @@ $(OUTPUT)/$(PROJECT).asm: $(OUTPUT)/$(PROJECT).elf
 	@echo "Disassembling to $(OUTPUT)/$(PROJECT).asm ..."
 	@$(OBJDUMP) -d $(OUTPUT)/$(PROJECT).elf > $(OUTPUT)/$(PROJECT).asm
 
-all:	$(OUTPUT)/$(PROJECT).lst $(OUTPUT)/$(PROJECT).map $(OUTPUT)/$(PROJECT).bin $(OUTPUT)/$(PROJECT).hex $(OUTPUT)/$(PROJECT).asm
+all:	$(OUTPUT)/$(PROJECT).lst $(OUTPUT)/$(PROJECT).map $(OUTPUT)/$(PROJECT).bin $(OUTPUT)/$(PROJECT).hex $(OUTPUT)/$(PROJECT).asm size
 
-elf:	$(OUTPUT)/$(PROJECT).elf removetemp
+elf:	$(OUTPUT)/$(PROJECT).elf
 
-bin:	$(OUTPUT)/$(PROJECT).bin removetemp removeelf
+bin:	$(OUTPUT)/$(PROJECT).bin removeelf
 
-hex:	$(OUTPUT)/$(PROJECT).hex removetemp removeelf
+hex:	$(OUTPUT)/$(PROJECT).hex removeelf
 
-asm:	$(OUTPUT)/$(PROJECT).asm removetemp removeelf
+asm:	$(OUTPUT)/$(PROJECT).asm removeelf
 
 flash:	$(OUTPUT)/$(PROJECT).bin removeelf
 	@echo "Uploading to MCU ..."
@@ -116,12 +101,7 @@ flash:	$(OUTPUT)/$(PROJECT).bin removeelf
 
 clean:
 	@echo "Cleaning all up ..."
-	@$(CLEAN)
-	@rm -rf $(OUTPUT)
-
-removetemp:
-	@echo "Removing temporary files ..."
-	@$(CLEAN)
+	@rm -r $(OUTPUT)
 
 removeelf:
 	@echo "Removing $(OUTPUT)/$(PROJECT).elf ..."
