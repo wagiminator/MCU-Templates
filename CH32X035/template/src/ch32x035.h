@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32X035/X034/X033                                         * v0.6 *
+// Header file for CH32X035/X034/X033                                         * v0.7 *
 // ===================================================================================
 // This contains a copy of ch32x035.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -2243,31 +2243,31 @@ typedef struct
 #define AFIO_PCFR1_USART3_REMAP_0               ((uint32_t)0x00000400) /* Bit 0 */
 #define AFIO_PCFR1_USART3_REMAP_1               ((uint32_t)0x00000800) /* Bit 1 */
 
-#define AFIO_PCFR1_USART4_REMAP                 ((uint32_t)0x00000700) /* USART4_REMAP[14:12] bits (USART4 remapping) */
-#define AFIO_PCFR1_USART4_REMAP_0               ((uint32_t)0x00000100) /* Bit 0 */
-#define AFIO_PCFR1_USART4_REMAP_1               ((uint32_t)0x00000200) /* Bit 1 */
-#define AFIO_PCFR1_USART4_REMAP_2               ((uint32_t)0x00000400) /* Bit 2 */
+#define AFIO_PCFR1_USART4_REMAP                 ((uint32_t)0x00007000) /* USART4_REMAP[14:12] bits (USART4 remapping) */
+#define AFIO_PCFR1_USART4_REMAP_0               ((uint32_t)0x00001000) /* Bit 0 */
+#define AFIO_PCFR1_USART4_REMAP_1               ((uint32_t)0x00002000) /* Bit 1 */
+#define AFIO_PCFR1_USART4_REMAP_2               ((uint32_t)0x00004000) /* Bit 2 */
 
-#define AFIO_PCFR1_TIM1_REMAP                   ((uint32_t)0x00003800) /* TIM1_REMAP[17:15] bits (TIM1 remapping) */
-#define AFIO_PCFR1_TIM1_REMAP_0                 ((uint32_t)0x00000800) /* Bit 0 */
-#define AFIO_PCFR1_TIM1_REMAP_1                 ((uint32_t)0x00001000) /* Bit 1 */
-#define AFIO_PCFR1_TIM1_REMAP_2                 ((uint32_t)0x00002000) /* Bit 2 */
+#define AFIO_PCFR1_TIM1_REMAP                   ((uint32_t)0x00038000) /* TIM1_REMAP[17:15] bits (TIM1 remapping) */
+#define AFIO_PCFR1_TIM1_REMAP_0                 ((uint32_t)0x00008000) /* Bit 0 */
+#define AFIO_PCFR1_TIM1_REMAP_1                 ((uint32_t)0x00010000) /* Bit 1 */
+#define AFIO_PCFR1_TIM1_REMAP_2                 ((uint32_t)0x00020000) /* Bit 2 */
 
-#define AFIO_PCFR1_TIM2_REMAP                   ((uint32_t)0x0001C000) /* TIM2_REMAP[20:18] bits (TIM2 remapping) */
-#define AFIO_PCFR1_TIM2_REMAP_0                 ((uint32_t)0x00004000) /* Bit 0 */
-#define AFIO_PCFR1_TIM2_REMAP_1                 ((uint32_t)0x00008000) /* Bit 1 */
-#define AFIO_PCFR1_TIM2_REMAP_2                 ((uint32_t)0x00010000) /* Bit 2 */
+#define AFIO_PCFR1_TIM2_REMAP                   ((uint32_t)0x001C0000) /* TIM2_REMAP[20:18] bits (TIM2 remapping) */
+#define AFIO_PCFR1_TIM2_REMAP_0                 ((uint32_t)0x00040000) /* Bit 0 */
+#define AFIO_PCFR1_TIM2_REMAP_1                 ((uint32_t)0x00080000) /* Bit 1 */
+#define AFIO_PCFR1_TIM2_REMAP_2                 ((uint32_t)0x00100000) /* Bit 2 */
 
-#define AFIO_PCFR1_TIM3_REMAP                   ((uint32_t)0x00060000) /* TIM3_REMAP[22:21] bits (TIM3 remapping) */
-#define AFIO_PCFR1_TIM3_REMAP_0                 ((uint32_t)0x00020000) /* Bit 0 */
-#define AFIO_PCFR1_TIM3_REMAP_1                 ((uint32_t)0x00040000) /* Bit 1 */
+#define AFIO_PCFR1_TIM3_REMAP                   ((uint32_t)0x00600000) /* TIM3_REMAP[22:21] bits (TIM3 remapping) */
+#define AFIO_PCFR1_TIM3_REMAP_0                 ((uint32_t)0x00200000) /* Bit 0 */
+#define AFIO_PCFR1_TIM3_REMAP_1                 ((uint32_t)0x00400000) /* Bit 1 */
 
-#define AFIO_PCFR1_PIOC_REMAP                   ((uint32_t)0x00080000) /* PIOC[23] bits (PIOC remapping) */
+#define AFIO_PCFR1_PIOC_REMAP                   ((uint32_t)0x00800000) /* PIOC[23] bits (PIOC remapping) */
 
-#define AFIO_PCFR1_SWJ_CFG                      ((uint32_t)0x00700000) /* SWJ_CFG[2:0] bits (Serial Wire JTAG configuration) */
-#define AFIO_PCFR1_SWJ_CFG_0                    ((uint32_t)0x00100000) /* Bit 0 */
-#define AFIO_PCFR1_SWJ_CFG_1                    ((uint32_t)0x00200000) /* Bit 1 */
-#define AFIO_PCFR1_SWJ_CFG_2                    ((uint32_t)0x00400000) /* Bit 2 */
+#define AFIO_PCFR1_SWJ_CFG                      ((uint32_t)0x07000000) /* SWJ_CFG[26:24] bits (Serial Wire JTAG configuration) */
+#define AFIO_PCFR1_SWJ_CFG_0                    ((uint32_t)0x01000000) /* Bit 0 */
+#define AFIO_PCFR1_SWJ_CFG_1                    ((uint32_t)0x02000000) /* Bit 1 */
+#define AFIO_PCFR1_SWJ_CFG_2                    ((uint32_t)0x04000000) /* Bit 2 */
 
 /*****************  Bit definition for AFIO_EXTICR1 register  *****************/
 #define AFIO_EXTICR1_EXTI0                      ((uint32_t)0x00000003) /* EXTI 0 configuration */
