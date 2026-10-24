@@ -21,7 +21,11 @@ void SYS_init(void) {
   // Init system clock
   #if SYS_CLK_INIT > 0
   #if F_CPU > 24000000
-  FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;                     // 1 cycle latency
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;                     // 2 wait states (24 < f <= 48 MHz)
+  #elif F_CPU > 15000000
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;                     // 1 wait state (15 < f <= 24 MHz)
+  #else
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;                     // no wait state (f <= 15 MHz)
   #endif
   CLK_init();                                               // init system clock
   #endif
@@ -84,11 +88,11 @@ void CLK_reset(void) {
   RCC->CFGR0 = 0x00000000;                                      // select HSI as system clock source
   while(RCC->CFGR0 & RCC_SWS);                                  // wait until HSI is selected
   RCC->CTLR  = RCC_HSION | ((HSITRIM) << 3);                    // use HSI only
-  RCC->INTR  = 0x009F0000;                                      // disable interrupts and clear flags
-  FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;                         // no flash wait states
+  RCC->INTR  = 0x009D0000;                                      // disable interrupts and clear flags (bit 17 is reserved)
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;                         // 1 wait state (HSI = 24MHz)
 }
 
-// Setup pin PC4 for MCO (output, push-pull, 50MHz, auxiliary)
+// Setup pin PC4 for MCO (output, push-pull, 30MHz, auxiliary)
 void MCO_init(void) {
   RCC->PB2PCENR |= RCC_AFIOEN | RCC_IOPCEN;
   GPIOC->CFGLR   = (GPIOC->CFGLR & ~((uint32_t)0b1111<<(4<<2))) | ((uint32_t)0b1001<<(4<<2));

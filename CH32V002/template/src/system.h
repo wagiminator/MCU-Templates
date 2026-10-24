@@ -13,7 +13,7 @@
 // CLK_init_HSE_PLL()       init external crystal (PLL) as system clock source
 // CLK_reset()              reset system clock to default state
 //
-// HSI_enable()             enable internal 8MHz high-speed clock (HSI)
+// HSI_enable()             enable internal 24MHz high-speed clock (HSI)
 // HSI_disable()            disable HSI
 // HSI_ready()              check if HSI is stable
 //
@@ -30,8 +30,8 @@
 // PLL_enable()             enable phase-locked loop (PLL)
 // PLL_disable()            disable PLL
 // PLL_ready()              check if PLL is stable
-// PLL_setHSI()             set HSI as PLL input (PLL muste be disabled)
-// PLL_setHSE()             set HSE as PLL input (PLL muste be disabled)
+// PLL_setHSI()             set HSI as PLL input (PLL must be disabled)
+// PLL_setHSE()             set HSE as PLL input (PLL must be disabled)
 //
 // MCO_init()               init clock output to pin PC4
 // MCO_setSYS()             output SYS_CLK on pin PC4
@@ -50,7 +50,6 @@
 // BOOT_now()               conduct software reset and jump to bootloader
 // RST_now()                conduct software reset
 // RST_clearFlags()         clear all reset flags
-// RST_wasLowPower()        check if last reset was caused by low power
 // RST_wasWWDG()            check if last reset was caused by window watchdog
 // RST_wasIWDG()            check if last reset was caused by independent watchdog
 // RST_wasSoftware()        check if last reset was caused by software
@@ -131,7 +130,7 @@ extern "C" {
 #define SYS_USE_HSE       0         // 1: use external crystal
 
 // ===================================================================================
-// Sytem Clock Defines
+// System Clock Defines
 // ===================================================================================
 // Set system clock frequency
 #ifndef F_CPU
@@ -198,7 +197,7 @@ void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock
 void CLK_init_HSE_PLL(void);  // init external crystal (PLL) as system clock source
 void CLK_reset(void);         // reset system clock to default state
 
-// Internal 8MHz high-speed clock (HSI) functions
+// Internal 24MHz high-speed clock (HSI) functions
 #define HSI_enable()      RCC->CTLR |= RCC_HSION        // enable HSI
 #define HSI_disable()     RCC->CTLR &= ~RCC_HSION       // disable HSI
 #define HSI_ready()       (RCC->CTLR & RCC_HSIRDY)      // check if HSI is stable
@@ -245,7 +244,6 @@ void DLY_ticks(uint32_t n);                                   // delay n system 
 // ===================================================================================
 #define RST_now()         PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3
 #define RST_clearFlags()  RCC->RSTSCKR |= RCC_RMVF
-#define RST_wasLowPower() (RCC->RSTSCKR & RCC_LPWRRSTF)
 #define RST_wasWWDG()     (RCC->RSTSCKR & RCC_WWDGRSTF)
 #define RST_wasIWDG()     (RCC->RSTSCKR & RCC_IWDGRSTF)
 #define RST_wasSoftware() (RCC->RSTSCKR & RCC_SFTRSTF)
@@ -274,8 +272,8 @@ void AWU_init(void);        // init automatic wake-up timer
 void AWU_stop(void);        // stop automatic wake-up timer
 
 // AWU macros
-#define AWU_start(n)          {AWU_init(); AWU_set(n);}
-#define AWU_enable()          PWR->AWUCSR = PWR_AWUCSR_AWUEN
+#define AWU_start(n)          do{AWU_init(); AWU_set(n);}while(0)
+#define AWU_enable()          PWR->AWUCSR = PWR_AWUEN
 #define AWU_disable()         PWR->AWUCSR = 0x00
 #define AWU_RT_enable()       EXTI->RTENR  |=  ((uint32_t)1 << 9)
 #define AWU_RT_disable()      EXTI->RTENR  &= ~((uint32_t)1 << 9)
@@ -284,20 +282,22 @@ void AWU_stop(void);        // stop automatic wake-up timer
 #define AWU_INT_enable()      EXTI->INTENR |=  ((uint32_t)1 << 9)
 #define AWU_INT_disable()     EXTI->INTENR &= ~((uint32_t)1 << 9)
 
-#define AWU_sleep(ms)         {AWU_set(ms); SLEEP_WFE_now();}
-#define AWU_stdby(ms)         {AWU_set(ms); STDBY_WFE_now();}
+#define AWU_sleep(ms)         do{AWU_set(ms); SLEEP_WFE_now();}while(0)
+#define AWU_stdby(ms)         do{AWU_set(ms); STDBY_WFE_now();}while(0)
 
-// Set automatic wake-up timer in milliseconds
-#define AWU_set(ms) \
-  (ms <    64 ? ({PWR->AWUPSC = 0b1000; PWR->AWUWR = (ms);    }) : \
-  (ms <   128 ? ({PWR->AWUPSC = 0b1001; PWR->AWUWR = (ms)>>1; }) : \
-  (ms <   256 ? ({PWR->AWUPSC = 0b1010; PWR->AWUWR = (ms)>>2; }) : \
-  (ms <   512 ? ({PWR->AWUPSC = 0b1011; PWR->AWUWR = (ms)>>3; }) : \
-  (ms <  1024 ? ({PWR->AWUPSC = 0b1100; PWR->AWUWR = (ms)>>4; }) : \
-  (ms <  2048 ? ({PWR->AWUPSC = 0b1101; PWR->AWUWR = (ms)>>5; }) : \
-  (ms <  5120 ? ({PWR->AWUPSC = 0b1110; PWR->AWUWR = (ms)/80; }) : \
-  (ms < 30720 ? ({PWR->AWUPSC = 0b1111; PWR->AWUWR = (ms)/480;}) : \
-  (0)))))))))
+// Set automatic wake-up timer in milliseconds (LSI = 128kHz, window = AWUWR + 1)
+#define AWU_WR(t) ((t) > 0 ? (t) - 1 : 0)
+#define AWU_set(ms) do{ \
+  uint32_t _ms = (ms); \
+  if     (_ms <    64) {PWR->AWUPSC = 0b1000; PWR->AWUWR = AWU_WR(_ms);      } \
+  else if(_ms <   128) {PWR->AWUPSC = 0b1001; PWR->AWUWR = AWU_WR(_ms>>1);   } \
+  else if(_ms <   256) {PWR->AWUPSC = 0b1010; PWR->AWUWR = AWU_WR(_ms>>2);   } \
+  else if(_ms <   512) {PWR->AWUPSC = 0b1011; PWR->AWUWR = AWU_WR(_ms>>3);   } \
+  else if(_ms <  1024) {PWR->AWUPSC = 0b1100; PWR->AWUWR = AWU_WR(_ms>>4);   } \
+  else if(_ms <  2048) {PWR->AWUPSC = 0b1101; PWR->AWUWR = AWU_WR(_ms>>5);   } \
+  else if(_ms <  5120) {PWR->AWUPSC = 0b1110; PWR->AWUWR = AWU_WR(_ms/80);   } \
+  else if(_ms < 30720) {PWR->AWUPSC = 0b1111; PWR->AWUWR = AWU_WR(_ms/480);  } \
+}while(0)
 
 // ===================================================================================
 // Sleep Functions
@@ -307,13 +307,13 @@ void SLEEP_WFE_now(void);   // put device into sleep, wake up by event
 void STDBY_WFI_now(void);   // put device into standby (deep sleep), wake up interrupt
 void STDBY_WFE_now(void);   // put device into standby (deep sleep), wake up event
 
-#define SLEEP_ms(n)           {AWU_start(n); SLEEP_WFE_now(); AWU_stop();}
-#define STDBY_ms(n)           {AWU_start(n); STDBY_WFE_now(); AWU_stop();}
+#define SLEEP_ms(n)           do{AWU_start(n); SLEEP_WFE_now(); AWU_stop();}while(0)
+#define STDBY_ms(n)           do{AWU_start(n); STDBY_WFE_now(); AWU_stop();}while(0)
 
 // ===================================================================================
 // Programmable Voltage Detector (PVD) Functions
 // ===================================================================================
-#define PVD_enable()          {RCC->PB1PCENR |= RCC_PWREN; PWR->CTLR |= PWR_CTLR_PVDE;}
+#define PVD_enable()          do{RCC->PB1PCENR |= RCC_PWREN; PWR->CTLR |= PWR_CTLR_PVDE;}while(0)
 #define PVD_set_1V85()        PWR->CTLR &= ~PWR_CTLR_PLS
 #define PVD_set_2V21()        PWR->CTLR  = (PWR->CTLR & ~PWR_CTLR_PLS) | (0b01 << 5)
 #define PVD_set_2V41()        PWR->CTLR  = (PWR->CTLR & ~PWR_CTLR_PLS) | (0b10 << 5)
@@ -550,7 +550,7 @@ static inline void __set_MTVEC(uint32_t value) {
   );
 }
 
-// Return the Machine Seratch Register
+// Return the Machine Scratch Register
 static inline uint32_t __get_MSCRATCH(void) {
   uint32_t result;
   __ASM volatile(
@@ -562,7 +562,7 @@ static inline uint32_t __get_MSCRATCH(void) {
   return (result);
 }
 
-// Set the Machine Seratch Register
+// Set the Machine Scratch Register
 static inline void __set_MSCRATCH(uint32_t value) {
   __ASM volatile(
     #if __GNUC__ > 10

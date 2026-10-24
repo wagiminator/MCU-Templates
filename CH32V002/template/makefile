@@ -25,9 +25,11 @@ INCLUDE  = include
 SOURCE   = src
 BIN      = bin
 
-# Microcontroller Settings
-F_CPU    = 48000000
-LDSCRIPT = ld/ch32v002.ld
+# Microcontroller Settings (can be overridden on the command line, e.g. "make F_CPU=24000000")
+# MCU: ch32v002, ch32v004, ch32v005, ch32v006, ch32v007, ch32m007 (see folder ld)
+MCU     ?= ch32v002
+F_CPU   ?= 48000000
+LDSCRIPT = ld/$(MCU).ld
 CPUARCH  = -march=rv32emc -mno-div -mabi=ilp32e
 
 # Toolchain
@@ -36,38 +38,40 @@ CC       = $(PREFIX)-gcc
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
-NEWLIB   = /usr/include/newlib
-ISPTOOL  = rvprog -f $(BIN)/$(TARGET).bin
+NEWLIB  ?= /usr/include/newlib
+ISPTOOL ?= rvprog -f $(BIN)/$(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
 CFLAGS   = -g -Os -flto -ffunction-sections -fdata-sections -fno-builtin -nostdlib
+CFLAGS  += -fno-unwind-tables -fno-asynchronous-unwind-tables
 CFLAGS  += $(CPUARCH) -DF_CPU=$(F_CPU) -I$(NEWLIB) -I$(INCLUDE) -I$(SOURCE) -I. -Wall
 LDFLAGS  = -T$(LDSCRIPT) -lgcc -Wl,--gc-sections,--build-id=none
 CFILES   = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c) $(wildcard $(SOURCE)/*.S)
+HFILES   = $(wildcard ./*.h) $(wildcard $(SOURCE)/*.h) $(wildcard $(INCLUDE)/*.h)
+
+# Targets are run in the order listed, so parallel builds (-j) are disabled
+.NOTPARALLEL:
+.PHONY: help all elf bin hex asm flash clean size removetemp removeelf
 
 # Symbolic Targets
 help:
 	@echo "Use the following commands:"
-	@echo "make all       compile and build $(TARGET).elf/.bin/.hex/.asm"
+	@echo "make all       compile and build $(TARGET).elf/.map/.lst/.bin/.hex/.asm"
 	@echo "make hex       compile and build $(TARGET).hex"
 	@echo "make asm       compile and disassemble to $(TARGET).asm"
 	@echo "make bin       compile and build $(TARGET).bin"
 	@echo "make flash     compile and upload to MCU"
 	@echo "make clean     remove all build files"
 
-$(BIN)/$(TARGET).elf: $(CFILES)
+$(BIN)/$(TARGET).elf: $(CFILES) $(HFILES) $(LDSCRIPT) makefile
 	@echo "Building $(BIN)/$(TARGET).elf ..."
 	@mkdir -p $(BIN)
-	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	@$(CC) -o $@ $(CFILES) $(CFLAGS) $(LDFLAGS) -Wl,-Map=$(BIN)/$(TARGET).map
 
 $(BIN)/$(TARGET).lst: $(BIN)/$(TARGET).elf
 	@echo "Building $(BIN)/$(TARGET).lst ..."
 	@$(OBJDUMP) -S $^ > $(BIN)/$(TARGET).lst
-
-$(BIN)/$(TARGET).map: $(BIN)/$(TARGET).elf
-	@echo "Building $(BIN)/$(TARGET).map ..."
-	@$(OBJDUMP) -t $^ > $(BIN)/$(TARGET).map
 
 $(BIN)/$(TARGET).bin: $(BIN)/$(TARGET).elf
 	@echo "Building $(BIN)/$(TARGET).bin ..."
@@ -81,7 +85,7 @@ $(BIN)/$(TARGET).asm: $(BIN)/$(TARGET).elf
 	@echo "Disassembling to $(BIN)/$(TARGET).asm ..."
 	@$(OBJDUMP) -d $(BIN)/$(TARGET).elf > $(BIN)/$(TARGET).asm
 
-all:	$(BIN)/$(TARGET).lst $(BIN)/$(TARGET).map $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm size
+all:	$(BIN)/$(TARGET).lst $(BIN)/$(TARGET).bin $(BIN)/$(TARGET).hex $(BIN)/$(TARGET).asm size
 
 elf:	$(BIN)/$(TARGET).elf removetemp size
 
@@ -102,8 +106,8 @@ clean:
 
 size:
 	@echo "------------------"
-	@echo "FLASH: $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
-	@echo "SRAM:  $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "FLASH: $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk 'NR==2 {print $$1 + $$2}') bytes"
+	@echo "SRAM:  $(shell $(OBJSIZE) -d $(BIN)/$(TARGET).elf | awk 'NR==2 {print $$2 + $$3}') bytes"
 	@echo "------------------"
 
 removetemp:
@@ -112,4 +116,4 @@ removetemp:
 
 removeelf:
 	@echo "Removing $(BIN)/$(TARGET).elf ..."
-	@rm -f $(BIN)/$(TARGET).elf
+	@rm -f $(BIN)/$(TARGET).elf $(BIN)/$(TARGET).map
