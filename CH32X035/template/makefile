@@ -33,10 +33,9 @@ BIN      = bin
 # Microcontroller Settings
 F_CPU    = 48000000
 LDSCRIPT = ld/ch32x035.ld
-CPUARCH  = -march=rv32imac -mabi=ilp32
 
-# Toolchain
-PREFIX   = riscv64-unknown-elf
+# Toolchain (riscv64-unknown-elf or xPack riscv-none-elf)
+PREFIX  ?= $(if $(shell which riscv64-unknown-elf-gcc 2>/dev/null),riscv64-unknown-elf,riscv-none-elf)
 CC       = $(PREFIX)-gcc
 OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
@@ -44,6 +43,10 @@ OBJSIZE  = $(PREFIX)-size
 NEWLIB   = /usr/include/newlib
 ISPTOOL  = chprog $(BIN)/$(TARGET).bin
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
+
+# GCC >= 12 needs the Zicsr extension named explicitly
+ZICSR   := $(shell echo 'int x;' | $(CC) -march=rv32imac_zicsr -mabi=ilp32 -c -x c -o /dev/null - 2>/dev/null && echo _zicsr)
+CPUARCH  = -march=rv32imac$(ZICSR) -mabi=ilp32
 
 # Compiler Flags
 CFLAGS   = -g -Os -flto -ffunction-sections -fdata-sections -fno-builtin -nostdlib

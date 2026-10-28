@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32X035/X034/X033                              * v1.2 *
+// Basic System Functions for CH32X035/X034/X033                              * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -118,6 +118,15 @@ extern "C" {
   #define F_CPU           8000000   // 8 Mhz if not otherwise defined
 #endif
 
+// Calculate flash wait states
+#if   F_CPU <=  12000000
+  #define SYS_FLASH_WAIT  FLASH_ACTLR_LATENCY_0
+#elif F_CPU <=  24000000
+  #define SYS_FLASH_WAIT  FLASH_ACTLR_LATENCY_1
+#else
+  #define SYS_FLASH_WAIT  FLASH_ACTLR_LATENCY_2
+#endif
+
 // Calculate system clock settings
 #if   F_CPU ==  48000000
   #define SYS_CLK_DIV     RCC_HPRE_DIV1
@@ -157,12 +166,14 @@ void CLK_reset(void);     // reset system clock to default state
 void MCO_init(void);      // init clock output to pin PB9
 
 // Internal 48MHz high-speed clock (HSI) functions
-#define CLK_init()        RCC->CFGR0 = SYS_CLK_DIV      // init system clock
+#define CLK_init()        ( FLASH->ACTLR = FLASH_ACTLR_LATENCY_2, /* max wait states (safe) */ \
+                            RCC->CFGR0   = SYS_CLK_DIV,           /* set clock divider      */ \
+                            FLASH->ACTLR = SYS_FLASH_WAIT )       /* set fitting wait states*/
 #define HSI_enable()      RCC->CTLR |=  RCC_HSION       // enable HSI
 #define HSI_disable()     RCC->CTLR &= ~RCC_HSION       // disable HSI
 #define HSI_ready()       (RCC->CTLR &  RCC_HSIRDY)     // check if HSI is stable
 
-// Clock output functions (pin PA8)
+// Clock output functions (pin PB9)
 #define MCO_setSYS()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_SYSCLK
 #define MCO_setHSI()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSI
 #define MCO_stop()        RCC->CFGR0 &= ~RCC_CFGR0_MCO  // stop clock output to pin PB9
@@ -175,7 +186,11 @@ void DLY_ticks(uint32_t n);                                   // delay n system 
 #define STK_init()        STK->CTLR = STK_CTLR_STE | STK_CTLR_STCLK // init SYSTICK @ F_CPU
 #define DLY_US_TIME       (F_CPU / 1000000)                   // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 1000)                      // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n) * DLY_MS_TIME / 1000) // delay n microseconds
+#if F_CPU % 1000000 == 0
+  #define DLY_us(n)       DLY_ticks((n) * DLY_US_TIME)        // delay n microseconds
+#else
+  #define DLY_us(n)       DLY_ticks((n) * DLY_MS_TIME / 1000) // delay n microseconds
+#endif
 #define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)        // delay n milliseconds
 #define DLY_cycles        DLY_ticks                           // alias
 
@@ -214,7 +229,7 @@ void IWDG_reload_t(uint16_t ticks);                       // reload IWDG with n 
 void AWU_init(void);
 void AWU_stop(void);
 
-#define AWU_start(n)          {AWU_init(); AWU_set(n);}
+#define AWU_start(n)          {AWU_init(); AWU_set((n));}
 #define AWU_enable()          AWU->CSR = 0x02
 #define AWU_disable()         AWU->CSR = 0x00
 #define AWU_RT_enable()       EXTI->RTENR  |=  ((uint32_t)1 << 27)
@@ -228,16 +243,16 @@ void AWU_stop(void);
 #define AWU_LIMIT(n)          (63*(n)*1024/(HSI_VALUE/1000))
 
 #define AWU_set(n) \
-  (n <= AWU_LIMIT(   32) ? ({AWU->PSC = 0b0110; AWU->WR = AWU_WRVAL(n) /    32;}) : \
-  (n <= AWU_LIMIT(   64) ? ({AWU->PSC = 0b0111; AWU->WR = AWU_WRVAL(n) /    64;}) : \
-  (n <= AWU_LIMIT(  128) ? ({AWU->PSC = 0b1000; AWU->WR = AWU_WRVAL(n) /   128;}) : \
-  (n <= AWU_LIMIT(  256) ? ({AWU->PSC = 0b1001; AWU->WR = AWU_WRVAL(n) /   256;}) : \
-  (n <= AWU_LIMIT(  512) ? ({AWU->PSC = 0b1010; AWU->WR = AWU_WRVAL(n) /   512;}) : \
-  (n <= AWU_LIMIT( 1024) ? ({AWU->PSC = 0b1011; AWU->WR = AWU_WRVAL(n) /  1024;}) : \
-  (n <= AWU_LIMIT( 2048) ? ({AWU->PSC = 0b1100; AWU->WR = AWU_WRVAL(n) /  2048;}) : \
-  (n <= AWU_LIMIT( 4096) ? ({AWU->PSC = 0b1101; AWU->WR = AWU_WRVAL(n) /  4096;}) : \
-  (n <= AWU_LIMIT(10240) ? ({AWU->PSC = 0b1110; AWU->WR = AWU_WRVAL(n) / 10240;}) : \
-  (n <= AWU_LIMIT(61440) ? ({AWU->PSC = 0b1111; AWU->WR = AWU_WRVAL(n) / 61440;}) : \
+  ((n) <= AWU_LIMIT(   32) ? ({AWU->PSC = 0b0110; AWU->WR = AWU_WRVAL(n) /    32;}) : \
+  ((n) <= AWU_LIMIT(   64) ? ({AWU->PSC = 0b0111; AWU->WR = AWU_WRVAL(n) /    64;}) : \
+  ((n) <= AWU_LIMIT(  128) ? ({AWU->PSC = 0b1000; AWU->WR = AWU_WRVAL(n) /   128;}) : \
+  ((n) <= AWU_LIMIT(  256) ? ({AWU->PSC = 0b1001; AWU->WR = AWU_WRVAL(n) /   256;}) : \
+  ((n) <= AWU_LIMIT(  512) ? ({AWU->PSC = 0b1010; AWU->WR = AWU_WRVAL(n) /   512;}) : \
+  ((n) <= AWU_LIMIT( 1024) ? ({AWU->PSC = 0b1011; AWU->WR = AWU_WRVAL(n) /  1024;}) : \
+  ((n) <= AWU_LIMIT( 2048) ? ({AWU->PSC = 0b1100; AWU->WR = AWU_WRVAL(n) /  2048;}) : \
+  ((n) <= AWU_LIMIT( 4096) ? ({AWU->PSC = 0b1101; AWU->WR = AWU_WRVAL(n) /  4096;}) : \
+  ((n) <= AWU_LIMIT(10240) ? ({AWU->PSC = 0b1110; AWU->WR = AWU_WRVAL(n) / 10240;}) : \
+  ((n) <= AWU_LIMIT(61440) ? ({AWU->PSC = 0b1111; AWU->WR = AWU_WRVAL(n) / 61440;}) : \
   (0)))))))))))
 
 #define AWU_SLEEP(n)          {AWU_set(n); SLEEP_WFE_now();}

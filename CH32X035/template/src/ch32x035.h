@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32X035/X034/X033                                         * v0.7 *
+// Header file for CH32X035/X034/X033                                         * v1.0 *
 // ===================================================================================
 // This contains a copy of ch32x035.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -1179,17 +1179,36 @@ typedef struct
 #define ADC_RDATAR_DATA                         ((uint32_t)0x0000FFFF) /* Regular data */
 
 /********************  Bit definition for ADC_CTLR3 register  ********************/
-#define ADC_CTLR3_CLK_DIV                   ((uint32_t)0x0000000F) /* CLK_DIVL[3:0] bits */
+#define ADC_CTLR3_CLK_DIV                   ((uint32_t)0x000001FF) /* CLK_DIV[8:0] bits */
 #define ADC_CTLR3_CLK_DIV_0                 ((uint32_t)0x00000001) /* Bit 0 */
 #define ADC_CTLR3_CLK_DIV_1                 ((uint32_t)0x00000002) /* Bit 1 */
 #define ADC_CTLR3_CLK_DIV_2                 ((uint32_t)0x00000004) /* Bit 2 */
 #define ADC_CTLR3_CLK_DIV_3                 ((uint32_t)0x00000008) /* Bit 3 */
+
+#define ADC_CLK_DIV2                        ((uint32_t)0x00000001) /* ADCCLK = HCLK /  2 */
+#define ADC_CLK_DIV4                        ((uint32_t)0x00000013) /* ADCCLK = HCLK /  4 */
+#define ADC_CLK_DIV5                        ((uint32_t)0x00000014) /* ADCCLK = HCLK /  5 */
+#define ADC_CLK_DIV6                        ((uint32_t)0x00000025) /* ADCCLK = HCLK /  6 */
+#define ADC_CLK_DIV7                        ((uint32_t)0x00000026) /* ADCCLK = HCLK /  7 */
+#define ADC_CLK_DIV8                        ((uint32_t)0x00000037) /* ADCCLK = HCLK /  8 */
+#define ADC_CLK_DIV9                        ((uint32_t)0x00000038) /* ADCCLK = HCLK /  9 */
+#define ADC_CLK_DIV10                       ((uint32_t)0x00000049) /* ADCCLK = HCLK / 10 */
+#define ADC_CLK_DIV11                       ((uint32_t)0x0000004A) /* ADCCLK = HCLK / 11 */
+#define ADC_CLK_DIV12                       ((uint32_t)0x0000005B) /* ADCCLK = HCLK / 12 */
+#define ADC_CLK_DIV13                       ((uint32_t)0x0000005C) /* ADCCLK = HCLK / 13 */
+#define ADC_CLK_DIV14                       ((uint32_t)0x0000006D) /* ADCCLK = HCLK / 14 */
+#define ADC_CLK_DIV15                       ((uint32_t)0x0000006E) /* ADCCLK = HCLK / 15 */
+#define ADC_CLK_DIV16                       ((uint32_t)0x0000007F) /* ADCCLK = HCLK / 16 */
 
 #define ADC_CTLR3_AWD_SCAN                  ((uint32_t)0x00000200) /* Analog watchdog Scan enable */
 #define ADC_CTLR3_AWD0_RST_EN               ((uint32_t)0x00001000) /* Watchdog0 Reset Enable */
 #define ADC_CTLR3_AWD1_RST_EN               ((uint32_t)0x00002000) /* Watchdog1 Reset Enable */
 #define ADC_CTLR3_AWD2_RST_EN               ((uint32_t)0x00004000) /* Watchdog2 Reset Enable */
 #define ADC_CTLR3_AWD3_RST_EN               ((uint32_t)0x00008000) /* Watchdog3 Reset Enable */
+#define ADC_CTLR3_AWD0_RES                  ((uint32_t)0x00010000) /* Watchdog0 comparison result */
+#define ADC_CTLR3_AWD1_RES                  ((uint32_t)0x00020000) /* Watchdog1 comparison result */
+#define ADC_CTLR3_AWD2_RES                  ((uint32_t)0x00040000) /* Watchdog2 comparison result */
+#define ADC_CTLR3_AWD3_RES                  ((uint32_t)0x00080000) /* Watchdog3 comparison result */
 
 /********************  Bit definition for ADC_WDTR1 register  ********************/
 #define ADC_WDTR1_LTR1                      ((uint32_t)0x00000FFF) /* Analog watchdog1 low threshold */
@@ -1740,10 +1759,10 @@ typedef struct
 /******************************************************************************/
 
 /*******************  Bit definition for FLASH_ACTLR register  ******************/
-#define FLASH_ACTLR_LATENCY                     ((uint8_t)0x03) /* LATENCY[2:0] bits (Latency) */
-#define FLASH_ACTLR_LATENCY_0                   ((uint8_t)0x00) /* Bit 0 */
-#define FLASH_ACTLR_LATENCY_1                   ((uint8_t)0x01) /* Bit 0 */
-#define FLASH_ACTLR_LATENCY_2                   ((uint8_t)0x02) /* Bit 1 */
+#define FLASH_ACTLR_LATENCY                     ((uint8_t)0x03) /* LATENCY[1:0] bits (Latency) */
+#define FLASH_ACTLR_LATENCY_0                   ((uint8_t)0x00) /* 0 wait states (HCLK <= 12MHz) */
+#define FLASH_ACTLR_LATENCY_1                   ((uint8_t)0x01) /* 1 wait state  (12MHz < HCLK <= 24MHz) */
+#define FLASH_ACTLR_LATENCY_2                   ((uint8_t)0x02) /* 3 wait states (24MHz < HCLK <= 48MHz) */
 
 /******************  Bit definition for FLASH_KEYR register  ******************/
 #define FLASH_KEYR_FKEYR                        ((uint32_t)0xFFFFFFFF) /* FPEC Key */
@@ -1758,10 +1777,10 @@ typedef struct
 #define FLASH_STATR_EOP                         ((uint8_t)0x20) /* End of operation */
 #define FLASH_STATR_FWAKE_FLAG                  ((uint8_t)0x40) /* Flag of wake */
 #define FLASH_STATR_TURBO                       ((uint8_t)0x80) /* The state of TURBO Enable */
-#define FLASH_STATR_BOOT_AVA                    ((uint16_t)0x100) /* The state of Init Config */
-#define FLASH_STATR_BOOT_STATUS                 ((uint16_t)0x200) /* The source of Execute Program */
-#define FLASH_STATR_BOOT_MODE                   ((uint16_t)0x400) /* The switch of user section or boot section*/
-#define FLASH_STATR_BOOT_LOCK                   ((uint16_t)0x800) /* Lock boot area*/
+#define FLASH_STATR_BOOT_AVA                    ((uint16_t)0x1000) /* The state of Init Config */
+#define FLASH_STATR_BOOT_STATUS                 ((uint16_t)0x2000) /* The source of Execute Program */
+#define FLASH_STATR_BOOT_MODE                   ((uint16_t)0x4000) /* The switch of user section or boot section*/
+#define FLASH_STATR_BOOT_LOCK                   ((uint16_t)0x8000) /* Lock boot area*/
 
 /*******************  Bit definition for FLASH_CTLR register  *******************/
 #define FLASH_CTLR_PG                           ((uint32_t)0x00000001) /* Programming */
@@ -2605,9 +2624,9 @@ typedef struct
 #define OPA_CTLR2_NSEL1                         ((uint32_t)0x00000004) /* CMP1 negative input channel selection */
 #define OPA_CTLR2_NSEL1_PC3                     ((uint32_t)0x00000000) /* CMP1 negative input is PC3 */
 #define OPA_CTLR2_NSEL1_PA23                    ((uint32_t)0x00000004) /* CMP1 negative input is PA23 */
-#define OPA_CTLR2_PSEL1                         ((uint32_t)0x00000008) /* CMP1 negative input channel selection */
-#define OPA_CTLR2_PSEL1_PC19                    ((uint32_t)0x00000000) /* CMP1 negative input is PC3 */
-#define OPA_CTLR2_PSEL1_PA0                     ((uint32_t)0x00000008) /* CMP1 negative input is PA23 */
+#define OPA_CTLR2_PSEL1                         ((uint32_t)0x00000008) /* CMP1 positive input channel selection */
+#define OPA_CTLR2_PSEL1_PC19                    ((uint32_t)0x00000000) /* CMP1 positive input is PC19 */
+#define OPA_CTLR2_PSEL1_PA0                     ((uint32_t)0x00000008) /* CMP1 positive input is PA0 */
 #define OPA_CTLR2_HYEN1                         ((uint32_t)0x00000010) /* CMP1 comparator hysteresis enable */
 
 #define OPA_CTLR2_EN2                           ((uint32_t)0x00000020) /* CMP2 enable */
@@ -2617,9 +2636,9 @@ typedef struct
 #define OPA_CTLR2_NSEL2                         ((uint32_t)0x00000080) /* CMP2 negative input channel selection */
 #define OPA_CTLR2_NSEL2_PA22                    ((uint32_t)0x00000000) /* CMP2 negative input is PA22 */
 #define OPA_CTLR2_NSEL2_PC3                     ((uint32_t)0x00000080) /* CMP2 negative input is PC3 */
-#define OPA_CTLR2_PSEL2                         ((uint32_t)0x00000100) /* CMP2 negative input channel selection */
-#define OPA_CTLR2_PSEL2_PA12                    ((uint32_t)0x00000000) /* CMP2 negative input is PA12 */
-#define OPA_CTLR2_PSEL2_PA11                    ((uint32_t)0x00000100) /* CMP2 negative input is PA11 */
+#define OPA_CTLR2_PSEL2                         ((uint32_t)0x00000100) /* CMP2 positive input channel selection */
+#define OPA_CTLR2_PSEL2_PA12                    ((uint32_t)0x00000000) /* CMP2 positive input is PA12 */
+#define OPA_CTLR2_PSEL2_PA11                    ((uint32_t)0x00000100) /* CMP2 positive input is PA11 */
 #define OPA_CTLR2_HYEN2                         ((uint32_t)0x00000200) /* CMP2 comparator hysteresis enable */
 
 #define OPA_CTLR2_EN3                           ((uint32_t)0x00000400) /* CMP3 enable */
@@ -2629,9 +2648,9 @@ typedef struct
 #define OPA_CTLR2_NSEL3                         ((uint32_t)0x00001000) /* CMP3 negative input channel selection */
 #define OPA_CTLR2_NSEL3_PA2                     ((uint32_t)0x00000000) /* CMP3 negative input is PA2 */
 #define OPA_CTLR2_NSEL3_PC3                     ((uint32_t)0x00001000) /* CMP3 negative input is PC3 */
-#define OPA_CTLR2_PSEL3                         ((uint32_t)0x00002000) /* CMP3 negative input channel selection */
-#define OPA_CTLR2_PSEL3_PA13                    ((uint32_t)0x00000000) /* CMP3 negative input is PA13 */
-#define OPA_CTLR2_PSEL3_PA14                    ((uint32_t)0x00002000) /* CMP3 negative input is PA14 */
+#define OPA_CTLR2_PSEL3                         ((uint32_t)0x00002000) /* CMP3 positive input channel selection */
+#define OPA_CTLR2_PSEL3_PA13                    ((uint32_t)0x00000000) /* CMP3 positive input is PA13 */
+#define OPA_CTLR2_PSEL3_PA14                    ((uint32_t)0x00002000) /* CMP3 positive input is PA14 */
 #define OPA_CTLR2_HYEN3                         ((uint32_t)0x00004000) /* CMP3 comparator hysteresis enable */
 
 #define OPA_CTLR2_CMP_LOCK                      ((uint32_t)0x80000000) /* CMP lock */
@@ -3583,7 +3602,8 @@ typedef struct
 #define USBPD_TX_SEL3_RST1                      ((uint8_t)0x20)        // RST1
 #define USBPD_TX_SEL4_SYNC2                     ((uint8_t)0x00)        // SYNC2
 #define USBPD_TX_SEL4_SYNC3                     ((uint8_t)0x40)        // SYNC3
-#define USBPD_TX_SEL4_RST1                      ((uint8_t)0x80)        // RST2
+#define USBPD_TX_SEL4_RST2                      ((uint8_t)0x80)        // RST2
+#define USBPD_TX_SEL4_RST1                      USBPD_TX_SEL4_RST2     // legacy name, kept for compatibility
 
 #define USBPD_TX_SOP0         (USBPD_TX_SEL1_SYNC1 | USBPD_TX_SEL2_SYNC1 | USBPD_TX_SEL3_SYNC1 | USBPD_TX_SEL4_SYNC2) // Start of Packet Sequence
 #define USBPD_TX_SOP1         (USBPD_TX_SEL1_SYNC1 | USBPD_TX_SEL2_SYNC1 | USBPD_TX_SEL3_SYNC3 | USBPD_TX_SEL4_SYNC3) // Start of Packet Sequence Prime

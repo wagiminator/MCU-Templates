@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32X035/X034/X033                              * v1.2 *
+// Basic System Functions for CH32X035/X034/X033                              * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -19,14 +19,7 @@ void SYS_init(void) {
 
   // Init system clock
   #if SYS_CLK_INIT > 0
-    #if F_CPU <= 12000000
-      //FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;
-    #elif F_CPU <= 24000000
-      FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;
-    #else
-      FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;
-    #endif
-    RCC->CFGR0 = SYS_CLK_DIV;
+    CLK_init();
   #endif
 
   // Init SYSTICK
@@ -36,7 +29,7 @@ void SYS_init(void) {
 
   // Enable GPIO
   #if SYS_GPIO_EN > 0
-    RCC->APB2PCENR = RCC_IOPAEN | RCC_IOPBEN | RCC_IOPCEN;
+    RCC->APB2PCENR |= RCC_IOPAEN | RCC_IOPBEN | RCC_IOPCEN;
   #endif
 }
 
@@ -44,11 +37,11 @@ void SYS_init(void) {
 // System Clock Functions
 // ===================================================================================
 
-// Reset system clock to default state
+// Reset system clock to default state (HSI/6 = 8MHz, no flash wait states)
 void CLK_reset(void) {
-  RCC->CTLR   |= (uint32_t)0x00000001;
-  RCC->CFGR0   = (uint32_t)0x00000050;
-  FLASH->ACTLR = (uint32_t)0x00000000;
+  RCC->CTLR   |= RCC_HSION;               // make sure HSI is on
+  RCC->CFGR0   = RCC_HPRE_DIV6;           // first lower the clock ...
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;   // ... then remove the wait states
 }
 
 // Setup pin PB9 for MCO (output, push-pull, alternate)
@@ -75,13 +68,13 @@ void DLY_ticks(uint32_t n) {
 // Perform software reset and jump to bootloader
 void BOOT_now(void) {
   FLASH->KEYR = FLASH_KEY1;
-  FLASH->KEYR = FLASH_KEY2;
+  FLASH->KEYR = FLASH_KEY2;               // unlock flash
   FLASH->BOOT_MODEKEYR = FLASH_KEY1;
-  FLASH->BOOT_MODEKEYR = FLASH_KEY2;      // unlock flash
-  FLASH->STATR = FLASH_STATR_BOOT_MODE;   // start bootloader after software reset
-  FLASH->CTLR  = FLASH_CTLR_LOCK;         // lock flash
-  RCC->RSTSCKR = RCC_RMVF;                // clear reset flags
-  PFIC->SCTLR  = PFIC_SYSRESET;           // perform software reset
+  FLASH->BOOT_MODEKEYR = FLASH_KEY2;      // unlock boot mode selection
+  FLASH->STATR |= FLASH_STATR_BOOT_MODE;  // start bootloader after software reset
+  FLASH->CTLR  |= FLASH_CTLR_LOCK;        // lock flash
+  RCC->RSTSCKR |= RCC_RMVF;               // clear reset flags
+  PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3; // perform software reset
 }
 
 // ===================================================================================
