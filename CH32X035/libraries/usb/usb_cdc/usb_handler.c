@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB Handler for CH32X035/X034/X033                                         * v1.1 *
+// USB Handler for CH32X035/X034/X033                                         * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -48,14 +48,19 @@ void USB_init(void) {
                  | AFIO_CTLR_USB_PHY_V33 | AFIO_CTLR_UDP_PUE_1K5 | AFIO_CTLR_USB_IOEN;
     #endif
   #else
+    // Detect supply voltage with PVD (4.0V level), as in WCH SDK
+    uint32_t pls;
     RCC->APB1PCENR |= RCC_PWREN;
-    PWR->CTLR |= PWR_CTLR_PLS;
+    pls = PWR->CTLR & PWR_CTLR_PLS;           // save current PVD level
+    PWR->CTLR |= PWR_CTLR_PLS;                // set PVD level to 4.0V
+    DLY_us(10);                               // wait for PVD to settle
     if(PWR->CSR & PWR_CSR_PVDO)
       AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE )) 
                  | AFIO_CTLR_USB_PHY_V33 | AFIO_CTLR_UDP_PUE_1K5 | AFIO_CTLR_USB_IOEN;
     else
       AFIO->CTLR = (AFIO->CTLR & ~(AFIO_CTLR_UDP_PUE | AFIO_CTLR_UDM_PUE | AFIO_CTLR_USB_PHY_V33)) 
                  | AFIO_CTLR_UDP_PUE_10K | AFIO_CTLR_USB_IOEN;
+    PWR->CTLR = (PWR->CTLR & ~PWR_CTLR_PLS) | pls;  // restore PVD level
   #endif
 
   USBFSD->BASE_CTRL = 0x00;
@@ -173,6 +178,9 @@ void USB_EP0_SETUP(void) {
         break;
 
       case USB_GET_INTERFACE:
+        EP0_buffer[0] = 0x00;                 // only alternate setting 0
+        if(USB_SetupLen > 1) USB_SetupLen = 1;
+        len = USB_SetupLen;
         break;
 
       case USB_SET_INTERFACE:

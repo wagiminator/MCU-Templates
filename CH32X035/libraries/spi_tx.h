@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions (TX only) for CH32X033/034/035                  * v1.0 *
+// Basic SPI Master Functions (TX only) for CH32X033/034/035                  * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -7,7 +7,7 @@
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_write(d)             Transmit one data byte
 //
-// SPI_busy()               Check if SPI bus is busy
+// SPI_busy()               Check if SPI bus is busy (wait for !SPI_busy() before NSS high)
 // SPI_ready()              Check if SPI is ready to write
 // SPI_enable()             Enable SPI module
 // SPI_disable()            Disable SPI module
@@ -36,7 +36,7 @@ extern "C" {
 // SPI Parameters
 #define SPI_PRESC           6     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)
 
-// I2C Functions and Macros
+// SPI Functions and Macros
 #define SPI_busy()          (SPI1->STATR & SPI_STATR_BSY)
 #define SPI_ready()         (SPI1->STATR & SPI_STATR_TXE)
 

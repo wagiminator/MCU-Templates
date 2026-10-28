@@ -63,6 +63,7 @@ extern const uint8_t ReportDescr[];
 extern const uint8_t ReportDescrLen;
 
 #define USB_REPORT_DESCR      ReportDescr
+#define HID_LED_REPORT_ID     1     // report ID of keyboard LED output report
 #define USB_REPORT_DESCR_LEN  ReportDescrLen
 
 // ===================================================================================

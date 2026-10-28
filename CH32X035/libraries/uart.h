@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.0 *
+// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -44,7 +44,7 @@
 //         0      PB10   PB11      PA2    PA3       PB3    PB4       PB0    PB1
 //         1      PA10   PA11      PA20   PA19      PC18   PC19      PA5    PA9
 //         2      PB10   PB11      PA15   PA16      PA18   PB14      PC16   PC17
-//         3      PA7    PB2       PC0    PC1                        PB9    PA10
+//         3      PA7    PB2       PC0    PC1       PB16   PB17      PB9    PA10
 //         4                       PA15   PA16                       PB13   PC19
 //         5                                                         PC17   PC16
 //
@@ -69,8 +69,8 @@ extern "C" {
 #define UART2_BAUD        115200          // default UART2 baud rate
 #define UART2_REMAP       0               // UART2 pin remapping (see above)
 
-#define UART3_BAUD        115200          // default UART4 baud rate
-#define UART3_REMAP       0               // UART4 pin remapping (see above)
+#define UART3_BAUD        115200          // default UART3 baud rate
+#define UART3_REMAP       0               // UART3 pin remapping (see above)
 
 #define UART4_BAUD        115200          // default UART4 baud rate
 #define UART4_REMAP       0               // UART4 pin remapping (see above)
@@ -89,9 +89,9 @@ extern "C" {
 #define UART1_RX_enable()     USART1->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART1_RX_disable()    USART1->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART1_setBAUD(n)      USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART1_setDataBits(n)  (n==9 ? (USART1->CTLR1 |= USART_CTLR1_M)      : (USART1->CTLR1 &= ~USART_CTLR1_M))
-#define UART1_setStopBits(n)  (n==2 ? (USART1->CTLR2 |= USART_CTLR2_STOP_1) : (USART1->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART1_setBAUD(n)      USART1->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART1_setDataBits(n)  ((n)==9 ? (USART1->CTLR1 |= USART_CTLR1_M)      : (USART1->CTLR1 &= ~USART_CTLR1_M))
+#define UART1_setStopBits(n)  ((n)==2 ? (USART1->CTLR2 |= USART_CTLR2_STOP_1) : (USART1->CTLR2 &= ~USART_CTLR2_STOP_1))
 #define UART1_setEvenParity() {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART1_setOddParity()  {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 |=  USART_CTLR1_PS;}
 #define UART1_setNoParity()   USART1->CTLR1 &= ~USART_CTLR1_PCE
@@ -107,9 +107,9 @@ extern "C" {
 #define UART2_RX_enable()     USART2->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART2_RX_disable()    USART2->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART2_setDataBits(n)  (n==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
-#define UART2_setStopBits(n)  (n==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART2_setDataBits(n)  ((n)==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
+#define UART2_setStopBits(n)  ((n)==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
 #define UART2_setEvenParity() {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART2_setOddParity()  {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 |=  USART_CTLR1_PS;}
 #define UART2_setNoParity()   USART2->CTLR1 &= ~USART_CTLR1_PCE
@@ -125,9 +125,9 @@ extern "C" {
 #define UART3_RX_enable()     USART3->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART3_RX_disable()    USART3->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART3_setBAUD(n)      USART3->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART3_setDataBits(n)  (n==9 ? (USART3->CTLR1 |= USART_CTLR1_M)      : (USART3->CTLR1 &= ~USART_CTLR1_M))
-#define UART3_setStopBits(n)  (n==2 ? (USART3->CTLR2 |= USART_CTLR2_STOP_1) : (USART3->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART3_setBAUD(n)      USART3->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART3_setDataBits(n)  ((n)==9 ? (USART3->CTLR1 |= USART_CTLR1_M)      : (USART3->CTLR1 &= ~USART_CTLR1_M))
+#define UART3_setStopBits(n)  ((n)==2 ? (USART3->CTLR2 |= USART_CTLR2_STOP_1) : (USART3->CTLR2 &= ~USART_CTLR2_STOP_1))
 #define UART3_setEvenParity() {USART3->CTLR1 |= USART_CTLR1_PCE; USART3->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART3_setOddParity()  {USART3->CTLR1 |= USART_CTLR1_PCE; USART3->CTLR1 |=  USART_CTLR1_PS;}
 #define UART3_setNoParity()   USART3->CTLR1 &= ~USART_CTLR1_PCE
@@ -143,9 +143,9 @@ extern "C" {
 #define UART4_RX_enable()     USART4->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART4_RX_disable()    USART4->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART4_setBAUD(n)      USART4->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART4_setDataBits(n)  (n==9 ? (USART4->CTLR1 |= USART_CTLR1_M)      : (USART4->CTLR1 &= ~USART_CTLR1_M))
-#define UART4_setStopBits(n)  (n==2 ? (USART4->CTLR2 |= USART_CTLR2_STOP_1) : (USART4->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART4_setBAUD(n)      USART4->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART4_setDataBits(n)  ((n)==9 ? (USART4->CTLR1 |= USART_CTLR1_M)      : (USART4->CTLR1 &= ~USART_CTLR1_M))
+#define UART4_setStopBits(n)  ((n)==2 ? (USART4->CTLR2 |= USART_CTLR2_STOP_1) : (USART4->CTLR2 &= ~USART_CTLR2_STOP_1))
 #define UART4_setEvenParity() {USART4->CTLR1 |= USART_CTLR1_PCE; USART4->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART4_setOddParity()  {USART4->CTLR1 |= USART_CTLR1_PCE; USART4->CTLR1 |=  USART_CTLR1_PS;}
 #define UART4_setNoParity()   USART4->CTLR1 &= ~USART_CTLR1_PCE

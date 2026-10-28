@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions for CH32X035/X034/X033                       * v1.2 *
+// Software I2C Master Functions for CH32X035/X034/X033                       * v1.3 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -74,6 +74,7 @@ void I2C_restart(uint8_t addr) {
   I2C_SDA_HIGH();                           // prepare SDA for HIGH to LOW transition
   I2C_DELAY_H();                            // delay
   I2C_SCL_HIGH();                           // restart condition: clock HIGH
+  I2C_DELAY_H();                            // setup time for repeated start
   I2C_start(addr);                          // start again
 }
 

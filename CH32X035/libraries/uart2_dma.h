@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART2 with DMA RX Buffer for CH32X035/X034/X033                           * v1.0 *
+// USART2 with DMA RX Buffer for CH32X035/X034/X033                           * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -78,9 +78,9 @@ extern "C" {
 #define UART2_RX_enable()     USART2->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART2_RX_disable()    USART2->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART2_setDataBits(n)  (n==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
-#define UART2_setStopBits(n)  (n==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART2_setDataBits(n)  ((n)==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
+#define UART2_setStopBits(n)  ((n)==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
 #define UART2_setEvenParity() {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART2_setOddParity()  {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 |=  USART_CTLR1_PS;}
 #define UART2_setNoParity()   USART2->CTLR1 &= ~USART_CTLR1_PCE

@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Consumer Media Keyboard Device Functions for CH32X035/X034/X033    * v1.0 *
+// USB HID Consumer Media Keyboard Device Functions for CH32X035/X034/X033    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -23,9 +23,9 @@ extern "C" {
 
 // Functions
 #define CON_init HID_init                   // init HID consumer device
-void CON_press(uint8_t key);                // press a consumer key on keyboard
+void CON_press(uint16_t key);                // press a consumer key on keyboard
 void CON_release(void);                     // release consumer key on keyboard
-void CON_type(uint8_t key);                 // press and release a consumer key
+void CON_type(uint16_t key);                // press and release a consumer key
 
 // Consumer Keyboard Keycodes
 #define CON_SYS_POWER           0x30

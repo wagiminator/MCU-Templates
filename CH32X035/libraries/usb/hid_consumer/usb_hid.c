@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Functions for CH32X035/X034/X033                                   * v1.0 *
+// USB HID Functions for CH32X035/X034/X033                                   * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -59,6 +59,12 @@ void HID_EP1_IN(void) {
 // Endpoint 2 OUT handler (HID status transfer from host completed)
 #ifdef EP2_SIZE
 void HID_EP2_OUT(void) {
-  HID_status = EP2_buffer[0];                     // save status byte
+  if(!(USBFSD->INT_ST & USBFS_UIS_TOG_OK)) return; // ignore out-of-sync packets
+  #ifdef HID_LED_REPORT_ID
+  if((USBFSD->RX_LEN >= 2) && (EP2_buffer[0] == HID_LED_REPORT_ID))
+    HID_status = EP2_buffer[1];                   // save status byte (with report ID)
+  #else
+  if(USBFSD->RX_LEN) HID_status = EP2_buffer[0];  // save status byte
+  #endif
 }
 #endif

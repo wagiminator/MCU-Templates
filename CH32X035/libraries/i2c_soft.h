@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions for CH32X035/X034/X033                       * v1.2 *
+// Software I2C Master Functions for CH32X035/X034/X033                       * v1.3 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -30,7 +30,11 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#if defined(__has_include)
+  #if __has_include("config.h")
+    #include "config.h"           // may define PIN_SDA/PIN_SCL
+  #endif
+#endif
 #include "system.h"
 #include "gpio.h"
 

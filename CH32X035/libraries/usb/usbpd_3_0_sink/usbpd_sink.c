@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB PD SINK Handler for CH32X035                                           * v1.5 *
+// USB PD SINK Handler for CH32X035                                           * v1.6 *
 // ===================================================================================
 //
 // Reference:               https://github.com/openwch/ch32x035
@@ -14,8 +14,8 @@ static pd_control_t PD_control = {
   .CC2_ConnectTimes = 0,
 };
 
-FixedSourceCap_t PD_SC_fixed[5];
-PPSSourceCap_t   PD_SC_PPS[2];
+FixedSourceCap_t PD_SC_fixed[7];                        // a source can send up to 7 PDOs
+PPSSourceCap_t   PD_SC_PPS[7];
 
 // Buffers
 __attribute__ ((aligned(4))) uint8_t PD_TR_buffer[34];  // PD transmit/receive buffer 
@@ -134,7 +134,7 @@ uint16_t PD_getCurrent(void) {
 uint8_t PD_connect(void) {
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPCEN;
   RCC->AHBPCENR  |= RCC_USBPD;
-  GPIOB->CFGHR    = (GPIOB->CFGHR & ~( (uint32_t)0b1111<<(((14)&7)<<2) | (uint32_t)0b1111<<(((15)&7)<<2)))
+  GPIOC->CFGHR    = (GPIOC->CFGHR & ~( (uint32_t)0b1111<<(((14)&7)<<2) | (uint32_t)0b1111<<(((15)&7)<<2)))
                                   |  ( (uint32_t)0b0100<<(((14)&7)<<2) | (uint32_t)0b0100<<(((15)&7)<<2));
   #ifdef USB_VDD
     #if USB_VDD > 0
@@ -143,10 +143,14 @@ uint8_t PD_connect(void) {
       AFIO->CTLR |= USBPD_IN_HVT | USBPD_PHY_V33;
     #endif
   #else
+    uint32_t pls;
     RCC->APB1PCENR |= RCC_PWREN;
-    PWR->CTLR |= PWR_CTLR_PLS;
+    pls = PWR->CTLR & PWR_CTLR_PLS;                     // save current PVD level
+    PWR->CTLR |= PWR_CTLR_PLS;                          // set PVD level to 4.0V
+    DLY_us(10);                                         // wait for PVD to settle
     if(PWR->CSR & PWR_CSR_PVDO) AFIO->CTLR |= USBPD_IN_HVT | USBPD_PHY_V33;
     else                        AFIO->CTLR |= USBPD_IN_HVT;
+    PWR->CTLR = (PWR->CTLR & ~PWR_CTLR_PLS) | pls;      // restore PVD level
   #endif
 
   USBPD->DMA      = (uint32_t)PD_TR_buffer;
@@ -226,6 +230,7 @@ void PD_PDO_analyze(void) {
   USBPD_PDO_t test;
   PD_control.SourcePPSNum = 0;
 
+  if(PD_control.SourcePDONum > 7) PD_control.SourcePDONum = 7;
   for(uint8_t i=0; i<PD_control.SourcePDONum; i++) { 
     test.d32 = *(uint32_t*)(&PD_SC_buffer[i*4]);
     if((test.SourcePPSPDO.AugmentedPowerDataObject==3u) && 

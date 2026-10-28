@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Keyboard Functions for CH32X035/X034/X033                          * v1.0 *
+// USB HID Keyboard Functions for CH32X035/X034/X033                          * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -48,9 +48,13 @@ void KBD_press(uint8_t key) {
     }
   }
 
-  // Check if key is already present in report
+  // Modifier only or key already present in report: just transmit report
   for(i=2; i<8; i++) {
-    if(KBD_report[i] == key) return;              // return if already in report
+    if(KBD_report[i] == key) break;
+  }
+  if(!key || (i < 8)) {
+    KBD_sendReport();                             // send report
+    return;
   }
 
   // Find an empty slot, insert key and transmit report

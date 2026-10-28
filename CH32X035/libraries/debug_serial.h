@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for CH32X035/X034/X033                        * v1.0 *
+// Basic Serial Debug Functions for CH32X035/X034/X033                        * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -35,7 +35,7 @@ extern "C" {
 #define DEBUG_BAUD        115200            // default UART baud rate
 
 // DEBUG functions and macros
-#define DEBUG_setBAUD(n)  USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+#define DEBUG_setBAUD(n)  USART2->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
 #define DEBUG_out         DEBUG_println     // default DEBUG function
 #define DEBUG_newline()   DEBUG_write('\n') // send newline
 #define DEBUG_printS      DEBUG_print       // alias for print

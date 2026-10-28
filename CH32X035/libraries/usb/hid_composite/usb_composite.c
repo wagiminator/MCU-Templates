@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Composite Device Functions for CH32X035/X034/X033                  * v1.0 *
+// USB HID Composite Device Functions for CH32X035/X034/X033                  * v1.1 *
 // ===================================================================================
 
 #include "usb_composite.h"
@@ -54,17 +54,21 @@ void KBD_press(uint8_t key) {
     }
   }
 
-  // Check if key is already present in report
+  // Modifier only or key already present in report: just transmit report
   for(i=3; i<8; i++) {
-    if(KBD_report[i] == key) return;            // return if already in report
+    if(KBD_report[i] == key) break;
+  }
+  if(!key || (i < 8)) {
+    KBD_sendReport();                             // send report
+    return;
   }
 
   // Find an empty slot, insert key and transmit report
   for(i=3; i<8; i++) {
-    if(KBD_report[i] == 0) {                    // empty slot?
-      KBD_report[i] = key;                      // insert key
-      KBD_sendReport();                         // send report
-      return;                                   // and return
+    if(KBD_report[i] == 0) {                      // empty slot?
+      KBD_report[i] = key;                        // insert key
+      KBD_sendReport();                           // send report
+      return;                                     // and return
     }
   }
 }
@@ -118,19 +122,21 @@ void KBD_print(char* str) {
 // ===================================================================================
 
 // Press a consumer key on keyboard
-void CON_press(uint8_t key) {
-  CON_report[1] = key;
+void CON_press(uint16_t key) {
+  CON_report[1] = key & 0xff;
+  CON_report[2] = key >> 8;
   CON_sendReport();                             // send report
 }
 
 // Release a consumer key on keyboard
 void CON_release(void) {
   CON_report[1] = 0;
+  CON_report[2] = 0;
   CON_sendReport();
 }
 
 // Press and release a consumer key on keyboard
-void CON_type(uint8_t key) {
+void CON_type(uint16_t key) {
   CON_press(key);
   CON_release();
 }

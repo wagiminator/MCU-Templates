@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Consumer Media Keyboard Device Functions for CH32X035/X034/X033    * v1.0 *
+// USB HID Consumer Media Keyboard Device Functions for CH32X035/X034/X033    * v1.1 *
 // ===================================================================================
 
 #include "usb_consumer.h"
@@ -16,19 +16,21 @@ uint8_t CON_report[3] = {1, 0, 0};
 // ===================================================================================
 
 // Press a consumer key on keyboard
-void CON_press(uint8_t key) {
-  CON_report[1] = key;
+void CON_press(uint16_t key) {
+  CON_report[1] = key & 0xff;
+  CON_report[2] = key >> 8;
   CON_sendReport();                             // send report
 }
 
 // Release a consumer key on keyboard
 void CON_release(void) {
   CON_report[1] = 0;
+  CON_report[2] = 0;
   CON_sendReport();
 }
 
 // Press and release a consumer key on keyboard
-void CON_type(uint8_t key) {
+void CON_type(uint16_t key) {
   CON_press(key);
   CON_release();
 }

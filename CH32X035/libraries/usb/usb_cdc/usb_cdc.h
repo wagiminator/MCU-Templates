@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USB CDC Functions for CH32X035/X034/X033                             * v1.0 *
+// Basic USB CDC Functions for CH32X035/X034/X033                             * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -74,7 +74,7 @@ extern volatile uint8_t CDC_controlLineState;               // control line stat
 // ===================================================================================
 // CDC Line Coding
 // ===================================================================================
-typedef struct {
+typedef struct __attribute__((packed)) {
   uint32_t baudrate;              // baud rate
   uint8_t  stopbits;              // number of stopbits (0:1bit,1:1.5bits,2:2bits)
   uint8_t  parity;                // parity (0:none,1:odd,2:even,3:mark,4:space)

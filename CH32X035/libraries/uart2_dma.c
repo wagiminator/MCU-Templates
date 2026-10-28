@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART2 with DMA RX Buffer for CH32X035/X034/X033                           * v1.0 *
+// USART2 with DMA RX Buffer for CH32X035/X034/X033                           * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,8 +7,8 @@
 
 // Circular RX buffer
 char UART2_RX_buffer[UART2_RX_BUF_SIZE];
-uint8_t UART2_RX_tptr = 0;
-#define UART2_RX_hptr (UART2_RX_BUF_SIZE - DMA1_Channel6->CNTR)
+uint16_t UART2_RX_tptr = 0;
+#define UART2_RX_hptr ((uint16_t)((UART2_RX_BUF_SIZE - DMA1_Channel6->CNTR) % UART2_RX_BUF_SIZE))
 
 // ===================================================================================
 // UART2
@@ -35,8 +35,8 @@ void UART2_init(void) {
   // Set pin PA15 (TX) to output, push-pull, alternate
   // Set pin PA16 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN;
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2)));
-  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2)));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2));
+  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2));
   GPIOA->BSXR     = (uint32_t)1<<0;
   AFIO->PCFR1    |= (uint32_t)0b010<<7;
 #elif UART2_REMAP == 3
@@ -51,8 +51,8 @@ void UART2_init(void) {
   // Set pin PA15 (TX) to output, push-pull, alternate
   // Set pin PA16 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN;
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2)));
-  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2)));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2));
+  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2));
   GPIOA->BSXR     = (uint32_t)1<<0;
   AFIO->PCFR1    |= (uint32_t)0b100<<7;
 #else

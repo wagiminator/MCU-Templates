@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.0 *
+// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -96,8 +96,8 @@ void UART2_init(void) {
   // Set pin PA15 (TX) to output, push-pull, alternate
   // Set pin PA16 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN;
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2)));
-  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2)));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2));
+  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2));
   GPIOA->BSXR     = (uint32_t)1<<0;
   AFIO->PCFR1    |= (uint32_t)0b010<<7;
 #elif UART2_REMAP == 3
@@ -112,8 +112,8 @@ void UART2_init(void) {
   // Set pin PA15 (TX) to output, push-pull, alternate
   // Set pin PA16 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN;
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2)));
-  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2)));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(7<<2))) | ((uint32_t)0b1011<<(7<<2));
+  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(0<<2))) | ((uint32_t)0b1000<<(0<<2));
   GPIOA->BSXR     = (uint32_t)1<<0;
   AFIO->PCFR1    |= (uint32_t)0b100<<7;
 #else
@@ -163,10 +163,18 @@ void UART3_init(void) {
   // Set pin PA18 (TX) to output, push-pull, alternate
   // Set pin PB14 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN | RCC_IOPBEN;
-  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(2<<2))) | ((uint32_t)0b1011<<(2<<2)));
-  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(6<<2))) | ((uint32_t)0b1000<<(6<<2)));
+  GPIOA->CFGXR    = (GPIOA->CFGXR & ~((uint32_t)0b1111<<(2<<2))) | ((uint32_t)0b1011<<(2<<2));
+  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(6<<2))) | ((uint32_t)0b1000<<(6<<2));
   GPIOB->BSHR     = (uint32_t)1<<14;
   AFIO->PCFR1    |= (uint32_t)0b10<<10;
+#elif UART3_REMAP == 3
+  // Set pin PB16 (TX) to output, push-pull, alternate
+  // Set pin PB17 (RX) to input, pullup
+  RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPBEN;
+  GPIOB->CFGXR    = (GPIOB->CFGXR & ~(((uint32_t)0b1111<<(0<<2)) | ((uint32_t)0b1111<<(1<<2))))
+                                  |  (((uint32_t)0b1011<<(0<<2)) | ((uint32_t)0b1000<<(1<<2)));
+  GPIOB->BSXR     = (uint32_t)1<<1;
+  AFIO->PCFR1    |= (uint32_t)0b11<<10;
 #else
   #warning No USART3 REMAP
 #endif
@@ -206,8 +214,8 @@ void UART4_init(void) {
   // Set pin PA5 (TX) to output, push-pull, alternate
   // Set pin PA9 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN;
-  GPIOA->CFGLR    = (GPIOA->CFGLR & ~((uint32_t)0b1111<<(5<<2))) | ((uint32_t)0b1011<<(5<<2)));
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1000<<(1<<2)));
+  GPIOA->CFGLR    = (GPIOA->CFGLR & ~((uint32_t)0b1111<<(5<<2))) | ((uint32_t)0b1011<<(5<<2));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1000<<(1<<2));
   GPIOA->BSHR     = (uint32_t)1<<9;
   AFIO->PCFR1    |= (uint32_t)0b001<<12;
 #elif UART4_REMAP == 2 
@@ -222,16 +230,16 @@ void UART4_init(void) {
   // Set pin PB9  (TX) to output, push-pull, alternate
   // Set pin PA10 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN | RCC_IOPBEN;
-  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1011<<(1<<2)));
-  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(2<<2))) | ((uint32_t)0b1000<<(2<<2)));
+  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(1<<2))) | ((uint32_t)0b1011<<(1<<2));
+  GPIOA->CFGHR    = (GPIOA->CFGHR & ~((uint32_t)0b1111<<(2<<2))) | ((uint32_t)0b1000<<(2<<2));
   GPIOA->BSHR     = (uint32_t)1<<10;
   AFIO->PCFR1    |= (uint32_t)0b011<<12;
 #elif UART4_REMAP == 4 
   // Set pin PB13 (TX) to output, push-pull, alternate
   // Set pin PC19 (RX) to input, pullup
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPBEN | RCC_IOPCEN;
-  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(5<<2))) | ((uint32_t)0b1011<<(5<<2)));
-  GPIOC->CFGXR    = (GPIOC->CFGXR & ~((uint32_t)0b1111<<(3<<2))) | ((uint32_t)0b1000<<(3<<2)));
+  GPIOB->CFGHR    = (GPIOB->CFGHR & ~((uint32_t)0b1111<<(5<<2))) | ((uint32_t)0b1011<<(5<<2));
+  GPIOC->CFGXR    = (GPIOC->CFGXR & ~((uint32_t)0b1111<<(3<<2))) | ((uint32_t)0b1000<<(3<<2));
   GPIOC->BSXR     = (uint32_t)1<<3;
   AFIO->PCFR1    |= (uint32_t)0b100<<12;
 #elif UART4_REMAP == 5 

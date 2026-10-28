@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Software Bit-banging for CH32X035/X034/X033 * v1.0 *
+// Basic NeoPixel Functions using Software Bit-banging for CH32X035/X034/X033 * v1.1 *
 // ===================================================================================
 //
 // Basic control functions for 800kHz addressable LEDs (NeoPixel). A simplified 
@@ -47,6 +47,7 @@
 #define NEO_GPIO_BSHR   0x10
 #define NEO_GPIO_BCR    0x14
 #define NEO_PIN_BM      (1<<((PIN_NEO)&15))
+_Static_assert(NEO_GPIO_BASE != 0, "PIN_NEO must be Px0..Px15!");
 
 // NeoPixel buffer
 uint8_t NEO_buffer[3 * NEO_COUNT];          // pixel buffer
@@ -99,7 +100,7 @@ void NEO_sendByte(uint8_t data) {
 // Write Buffer to Pixels
 // ===================================================================================
 void NEO_update(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) NEO_sendByte(*ptr++);
@@ -110,7 +111,7 @@ void NEO_update(void) {
 // Clear all Pixels
 // ===================================================================================
 void NEO_clearAll(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0;
