@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for CH32V203                                  * v1.0 *
+// Basic Serial Debug Functions for CH32V203                                  * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -28,20 +28,18 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
 #include "system.h"
 
 // DEBUG parameters
 #define DEBUG_ENABLE      1                 // enable serial DEBUG (0:no, 1:yes)
 #define DEBUG_BAUD        115200            // default UART baud rate
 
-// DEBUG macros
-#define DEBUG_setBAUD(n)  USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+// DEBUG functions and macros
+#define DEBUG_setBAUD(n)  USART2->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
 #define DEBUG_out         DEBUG_println     // default DEBUG function
 #define DEBUG_newline()   DEBUG_write('\n') // send newline
 #define DEBUG_printS      DEBUG_print       // alias for print
 
-// DEBUG functions
 #if DEBUG_ENABLE > 0
   void DEBUG_init(void);                  // init UART with default BAUD rate
   void DEBUG_write(const char c);         // send character via UART

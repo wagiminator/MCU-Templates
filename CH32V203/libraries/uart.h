@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.0 *
+// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -39,13 +39,15 @@
 //
 // UARTx remap settings (set below in UART parameters):
 // ----------------------------------------------------
-//               --- UART1 ---    --- UART2 ---
-// UARTx_REMAP   TX-pin RX-pin    TX-pin RX-pin
-//         0      PA9    PA10      PA2    PA3
-//         1      PB6    PB7       PD5    PD6 *
-//         2      PB15   PA8 *
-//         3      PA6    PA7 *
-// * not available on most CH32V203
+//               --- UART1 ---    --- UART2 ---    --- UART3 ---
+// UARTx_REMAP   TX-pin RX-pin    TX-pin RX-pin    TX-pin RX-pin
+//         0      PA9    PA10      PA2    PA3       PB10   PB11
+//         1      PB6    PB7       PD5    PD6 *     PC10   PC11 *
+//         2      PB15   PA8 **
+//         3      PA6    PA7 **
+// *  pins not available on CH32V203 (D6) packages with less than 64 pins
+// ** not supported by CH32V203 (D6): F6/F8/G6/G8/K6/K8/C6/C8 (RM V1.7)
+// UART3 is only available on CH32V203C8 (and RB), UART2 not on CH32V203F6.
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -68,6 +70,9 @@ extern "C" {
 #define UART2_BAUD        115200          // default UART2 baud rate
 #define UART2_REMAP       0               // UART2 pin remapping (see above)
 
+#define UART3_BAUD        115200          // default UART3 baud rate
+#define UART3_REMAP       0               // UART3 pin remapping (see above)
+
 // ===================================================================================
 // UART Macros
 // ===================================================================================
@@ -82,11 +87,11 @@ extern "C" {
 #define UART1_RX_enable()     USART1->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART1_RX_disable()    USART1->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART1_setBAUD(n)      USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART1_setDataBits(n)  (n==9 ? (USART1->CTLR1 |= USART_CTLR1_M)      : (USART1->CTLR1 &= ~USART_CTLR1_M))
-#define UART1_setStopBits(n)  (n==2 ? (USART1->CTLR2 |= USART_CTLR2_STOP_1) : (USART1->CTLR2 &= ~USART_CTLR2_STOP_1))
-#define UART1_setEvenParity() {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 &= ~USART_CTLR1_PS;}
-#define UART1_setOddParity()  {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 |=  USART_CTLR1_PS;}
+#define UART1_setBAUD(n)      USART1->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART1_setDataBits(n)  ((n)==9 ? (USART1->CTLR1 |= USART_CTLR1_M)      : (USART1->CTLR1 &= ~USART_CTLR1_M))
+#define UART1_setStopBits(n)  ((n)==2 ? (USART1->CTLR2 |= USART_CTLR2_STOP_1) : (USART1->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART1_setEvenParity() (USART1->CTLR1 = (USART1->CTLR1 & ~USART_CTLR1_PS) | USART_CTLR1_PCE)
+#define UART1_setOddParity()  (USART1->CTLR1 |= USART_CTLR1_PCE | USART_CTLR1_PS)
 #define UART1_setNoParity()   USART1->CTLR1 &= ~USART_CTLR1_PCE
 
 #define UART2_ready()         (USART2->STATR & USART_STATR_TXE)   // ready to write
@@ -100,12 +105,30 @@ extern "C" {
 #define UART2_RX_enable()     USART2->CTLR1 |=  USART_CTLR1_RE    // enable receiver
 #define UART2_RX_disable()    USART2->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART2_setDataBits(n)  (n==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
-#define UART2_setStopBits(n)  (n==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
-#define UART2_setEvenParity() {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 &= ~USART_CTLR1_PS;}
-#define UART2_setOddParity()  {USART2->CTLR1 |= USART_CTLR1_PCE; USART2->CTLR1 |=  USART_CTLR1_PS;}
+#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART2_setDataBits(n)  ((n)==9 ? (USART2->CTLR1 |= USART_CTLR1_M)      : (USART2->CTLR1 &= ~USART_CTLR1_M))
+#define UART2_setStopBits(n)  ((n)==2 ? (USART2->CTLR2 |= USART_CTLR2_STOP_1) : (USART2->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART2_setEvenParity() (USART2->CTLR1 = (USART2->CTLR1 & ~USART_CTLR1_PS) | USART_CTLR1_PCE)
+#define UART2_setOddParity()  (USART2->CTLR1 |= USART_CTLR1_PCE | USART_CTLR1_PS)
 #define UART2_setNoParity()   USART2->CTLR1 &= ~USART_CTLR1_PCE
+
+#define UART3_ready()         (USART3->STATR & USART_STATR_TXE)   // ready to write
+#define UART3_available()     (USART3->STATR & USART_STATR_RXNE)  // ready to read
+#define UART3_completed()     (USART3->STATR & USART_STATR_TC)    // transmission completed
+
+#define UART3_enable()        USART3->CTLR1 |=  USART_CTLR1_UE    // enable USART
+#define UART3_disable()       USART3->CTLR1 &= ~USART_CTLR1_UE    // disable USART
+#define UART3_TX_enable()     USART3->CTLR1 |=  USART_CTLR1_TE    // enable transmitter
+#define UART3_TX_disable()    USART3->CTLR1 &= ~USART_CTLR1_TE    // disable transmitter
+#define UART3_RX_enable()     USART3->CTLR1 |=  USART_CTLR1_RE    // enable receiver
+#define UART3_RX_disable()    USART3->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
+
+#define UART3_setBAUD(n)      USART3->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART3_setDataBits(n)  ((n)==9 ? (USART3->CTLR1 |= USART_CTLR1_M)      : (USART3->CTLR1 &= ~USART_CTLR1_M))
+#define UART3_setStopBits(n)  ((n)==2 ? (USART3->CTLR2 |= USART_CTLR2_STOP_1) : (USART3->CTLR2 &= ~USART_CTLR2_STOP_1))
+#define UART3_setEvenParity() (USART3->CTLR1 = (USART3->CTLR1 & ~USART_CTLR1_PS) | USART_CTLR1_PCE)
+#define UART3_setOddParity()  (USART3->CTLR1 |= USART_CTLR1_PCE | USART_CTLR1_PS)
+#define UART3_setNoParity()   USART3->CTLR1 &= ~USART_CTLR1_PCE
 
 // ===================================================================================
 // UART Functions
@@ -117,6 +140,10 @@ void UART1_write(const char c);           // send character via UART
 void UART2_init(void);                    // init UART with default BAUD rate
 char UART2_read(void);                    // read character via UART
 void UART2_write(const char c);           // send character via UART
+
+void UART3_init(void);                    // init UART with default BAUD rate
+char UART3_read(void);                    // read character via UART
+void UART3_write(const char c);           // send character via UART
 
 // ===================================================================================
 // Additional Print Functions (if activated, see above)
@@ -144,6 +171,16 @@ void UART2_write(const char c);           // send character via UART
 #define UART2_print           UART2_printS              // alias
 #define UART2_newline()       UART2_write('\n')         // send newline
 #define UART2_printf(f, ...)  printF(UART2_write, f, ##__VA_ARGS__)
+
+#define UART3_printD(n)       printD(UART3_write, n)    // print decimal as string
+#define UART3_printW(n)       printW(UART3_write, n)    // print word as string
+#define UART3_printH(n)       printH(UART3_write, n)    // print half-word as string
+#define UART3_printB(n)       printB(UART3_write, n)    // print byte as string
+#define UART3_printS(s)       printS(UART3_write, s)    // print string
+#define UART3_println(s)      println(UART3_write, s)   // print string with newline
+#define UART3_print           UART3_printS              // alias
+#define UART3_newline()       UART3_write('\n')         // send newline
+#define UART3_printf(f, ...)  printF(UART3_write, f, ##__VA_ARGS__)
 
 #endif // UART_PRINT = 1
 

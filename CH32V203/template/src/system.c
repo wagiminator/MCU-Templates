@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V203                                        * v1.1 *
+// Basic System Functions for CH32V203                                        * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -98,13 +98,16 @@ void CLK_init_HSE_PLL(void) {
 
 // Reset system clock to default state
 void CLK_reset(void) {
-  FLASH->CTLR &= ~FLASH_CTLR_SCKMOD;
-  RCC->INTR = 0x009F0000;
-  RCC->CTLR |= RCC_HSION;
-  while(!(RCC->CTLR & RCC_HSIRDY));
+  RCC->CTLR |= RCC_HSION;                                 // make sure HSI is running
+  while(!(RCC->CTLR & RCC_HSIRDY));                       // wait for HSI ready
   RCC->CFGR0 = RCC_HPRE_DIV1 | RCC_PPRE2_DIV1 | RCC_PPRE1_DIV1 | RCC_SW_HSI;
-  while((RCC->CFGR0 & RCC_SWS));
-  RCC->CFGR0 &= 0x0000FFFF;
+  while((RCC->CFGR0 & RCC_SWS));                          // wait for HSI as SYSCLK
+  FLASH->CTLR &= ~FLASH_CTLR_SCKMOD;                      // FLASH CLK = SYSCLK / 2
+  RCC->CTLR  &= ~(RCC_PLLON | RCC_HSEON | RCC_CSSON);     // switch off PLL and HSE
+  RCC->CTLR  &= ~RCC_HSEBYP;                              // (bypass only with HSE off)
+  RCC->CFGR0  = 0;                                        // reset PLL, USB, ADC, MCO
+  EXTEN->EXTEN_CTR &= ~EXTEN_PLL_HSI_PRE;                 // PLL input HSI/2 (default)
+  RCC->INTR   = 0x009F0000;                               // disable/clear interrupts
 }
 
 // Setup pin PA8 for MCO (output, push-pull, 50MHz, auxiliary)
@@ -117,61 +120,67 @@ void MCO_init(void) {
 // Real-Time Clock (RTC) Functions
 // ===================================================================================
 
-// Init RTC with internal low-speed clock
-void RTC_init_LSI(void) {
-  //PWR->CTLR |= PWR_CTLR_DBP;          // enable access to backup domain
-  //RCC->APB1PCENR |= RCC_BKPEN;        // enable backup domain interface
-  RCC->RSTSCKR |= RCC_LSION;            // enable LSI
-  while(!(RCC->RSTSCKR & RCC_LSIRDY));  // wait till LSI is ready
-  RCC->BDCTLR |= RCC_RTCSEL_LSI;        // select LSI as RTC clock source
-  RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
+// Wait for last RTC write operation to finish and RTC registers synchronized
+static void RTC_ready(void) {
   RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
   while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+}
+
+// Set RTC prescaler (period = val + 1 RTC clock cycles)
+static void RTC_setPrescaler(uint32_t val) {
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->PSCRL  = LSI_VALUE;              // set prescaler for 1 second ticks
-  RTC->PSCRH  = 0;
+  RTC->PSCRH  = val >> 16;              // set prescaler
+  RTC->PSCRL  = val;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
+}
+
+// Init RTC with internal low-speed clock
+void RTC_init_LSI(void) {
+  BKP_unlock();                         // enable access to backup domain
+  RCC->RSTSCKR |= RCC_LSION;            // enable LSI
+  while(!(RCC->RSTSCKR & RCC_LSIRDY));  // wait till LSI is ready
+  RCC->BDCTLR = (RCC->BDCTLR & ~RCC_RTCSEL) | RCC_RTCSEL_LSI; // LSI as RTC clock
+  RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
+  RTC_setPrescaler(LSI_VALUE - 1);      // set prescaler for 1 second ticks
 }
 
 // Init RTC with external low-speed clock
 void RTC_init_LSE(void) {
+  BKP_unlock();                         // enable access to backup domain
   RCC->BDCTLR |= RCC_LSEON;             // enable LSE
   while(!(RCC->BDCTLR & RCC_LSERDY));   // wait till LSE is ready
-  RCC->BDCTLR |= RCC_RTCSEL_LSE;        // select LSE as RTC clock source
+  RCC->BDCTLR = (RCC->BDCTLR & ~RCC_RTCSEL) | RCC_RTCSEL_LSE; // LSE as RTC clock
   RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
-  RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->PSCRL  = LSE_VALUE;              // set prescaler for 1 second ticks
-  RTC->PSCRH  = 0;
-  RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  RTC_setPrescaler(LSE_VALUE - 1);      // set prescaler for 1 second ticks
 }
 
 // Set RTC counter value
 void RTC_set(uint32_t n) {
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->CNTL   = n;                      // set counter value
-  RTC->CNTH   = n >> 16;
+  RTC->CNTH   = n >> 16;                // set counter value
+  RTC->CNTL   = n;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
 }
 
 // Set RTC ALARM value
 void RTC_ALARM_set(uint32_t n) {
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->ALRML  = n;                      // set ALARM value
-  RTC->ALRMH  = n >> 16;
+  RTC->ALRMH  = n >> 16;                // set ALARM value
+  RTC->ALRML  = n;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
 }
 
 // ===================================================================================
 // Delay Functions
 // ===================================================================================
 
-// Wait n counts of SysTick
+// Wait n counts of SysTick (SysTick must be running at F_CPU, n < 2^31)
 void DLY_ticks(uint32_t n) {
   uint32_t end = STK->CNTL + n;
   while(((int32_t)(STK->CNTL - end)) < 0 );
@@ -222,6 +231,7 @@ void SLEEP_WFE_now(void) {
 
 // Put device into stop, wake up interrupt
 void STOP_WFI_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   &= ~PWR_CTLR_PDDS;        // set power-down mode to STOP
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFI();                              // wait for interrupt
@@ -230,6 +240,7 @@ void STOP_WFI_now(void) {
 
 // Put device into stop, wake up event
 void STOP_WFE_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   &= ~PWR_CTLR_PDDS;        // set power-down mode to STOP
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFE();                              // wait for event
@@ -238,6 +249,7 @@ void STOP_WFE_now(void) {
 
 // Put device into standby (deep sleep), wake up interrupt
 void STDBY_WFI_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   |= PWR_CTLR_PDDS;         // set power-down mode to STANDBY
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFI();                              // wait for interrupt
@@ -246,6 +258,7 @@ void STDBY_WFI_now(void) {
 
 // Put device into standby (deep sleep), wake up event
 void STDBY_WFE_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   |= PWR_CTLR_PDDS;         // set power-down mode to STANDBY
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFE();                              // wait for event
@@ -344,8 +357,8 @@ DUMMY_HANDLER void USART3_IRQHandler(void);
 DUMMY_HANDLER void EXTI15_10_IRQHandler(void);
 DUMMY_HANDLER void RTCAlarm_IRQHandler(void);
 DUMMY_HANDLER void USBWakeUp_IRQHandler(void);
-DUMMY_HANDLER void USBHD_IRQHandler(void);
-DUMMY_HANDLER void USBHDWakeUp_IRQHandler(void);
+DUMMY_HANDLER void USBFS_IRQHandler(void);
+DUMMY_HANDLER void USBFSWakeUp_IRQHandler(void);
 DUMMY_HANDLER void UART4_IRQHandler(void);
 DUMMY_HANDLER void DMA1_Channel8_IRQHandler(void);
 #endif  // SYS_USE_VECTORS > 0
@@ -419,15 +432,15 @@ void (* const vectors[])(void) = {
   I2C2_EV_IRQHandler,               // 49 - I2C2 Event
   I2C2_ER_IRQHandler,               // 50 - I2C2 Error
   SPI1_IRQHandler,                  // 51 - SPI1
-  SPI1_IRQHandler,                  // 52 - SPI2
+  SPI2_IRQHandler,                  // 52 - SPI2
   USART1_IRQHandler,                // 53 - USART1
   USART2_IRQHandler,                // 54 - USART2
   USART3_IRQHandler,                // 55 - USART3
   EXTI15_10_IRQHandler,             // 56 - EXTI Line 15..10
   RTCAlarm_IRQHandler,              // 57 - RTC Alarm through EXTI Line
   USBWakeUp_IRQHandler,             // 58 - USB Wake up from suspend
-  USBHD_IRQHandler,                 // 59 - USBHD Break
-  USBHDWakeUp_IRQHandler,           // 60 - USBHD Wake up from suspend
+  USBFS_IRQHandler,                 // 59 - USBFS (USBHD) global interrupt
+  USBFSWakeUp_IRQHandler,           // 60 - USBFS (USBHD) wake up from suspend
   UART4_IRQHandler,                 // 61 - UART4
   DMA1_Channel8_IRQHandler          // 62 - DMA1 Channel8
   #endif  // SYS_USE_VECTORS > 0

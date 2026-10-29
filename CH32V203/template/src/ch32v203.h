@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for CH32V203                                                   * v1.0 *
+// Header file for CH32V203                                                   * v1.1 *
 // ===================================================================================
 // This contains a copy of ch32v20x.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -1046,6 +1046,10 @@ typedef struct
 
 #define ADC_JAWDEN                              ((uint32_t)0x00400000) /* Analog watchdog enable on injected channels */
 #define ADC_AWDEN                               ((uint32_t)0x00800000) /* Analog watchdog enable on regular channels */
+#define ADC_TKENABLE                            ((uint32_t)0x01000000) /* TKEY module enable */
+#define ADC_TKITUNE                             ((uint32_t)0x02000000) /* TKEY charging current half */
+#define ADC_BUFEN                               ((uint32_t)0x04000000) /* ADC input buffer enable */
+#define ADC_PGA                                 ((uint32_t)0x18000000) /* PGA[1:0] ADC input gain */
 
 /*******************  Bit definition for ADC_CTLR2 register  ********************/
 #define ADC_ADON                                ((uint32_t)0x00000001) /* A/D Converter ON / OFF */
@@ -3955,6 +3959,15 @@ typedef struct
 #define PWR_CTLR_PLS_2V7                        ((uint16_t)0x00A0) /* PVD level 2.7V */
 #define PWR_CTLR_PLS_2V8                        ((uint16_t)0x00C0) /* PVD level 2.8V */
 #define PWR_CTLR_PLS_2V9                        ((uint16_t)0x00E0) /* PVD level 2.9V */
+/* PVD levels according to datasheet V2.7 (falling/rising edge), the names above are legacy */
+#define PWR_CTLR_PLS_MODE0                      ((uint16_t)0x0000) /* PVD level 2.31/2.39V */
+#define PWR_CTLR_PLS_MODE1                      ((uint16_t)0x0020) /* PVD level 2.48/2.56V */
+#define PWR_CTLR_PLS_MODE2                      ((uint16_t)0x0040) /* PVD level 2.57/2.65V */
+#define PWR_CTLR_PLS_MODE3                      ((uint16_t)0x0060) /* PVD level 2.69/2.78V */
+#define PWR_CTLR_PLS_MODE4                      ((uint16_t)0x0080) /* PVD level 2.81/2.89V */
+#define PWR_CTLR_PLS_MODE5                      ((uint16_t)0x00A0) /* PVD level 2.96/3.05V */
+#define PWR_CTLR_PLS_MODE6                      ((uint16_t)0x00C0) /* PVD level 3.08/3.17V */
+#define PWR_CTLR_PLS_MODE7                      ((uint16_t)0x00E0) /* PVD level 3.21/3.31V */
 
 #define PWR_CTLR_DBP                            ((uint16_t)0x0100) /* Disable Backup Domain write protection */
 
@@ -4172,6 +4185,11 @@ typedef struct
 #define RCC_WWDGEN                              ((uint32_t)0x00000800) /* Window Watchdog clock enable */
 #define RCC_USART2EN                            ((uint32_t)0x00020000) /* USART 2 clock enable */
 #define RCC_I2C1EN                              ((uint32_t)0x00200000) /* I2C 1 clock enable */
+#define RCC_TIM4EN                              ((uint32_t)0x00000004) /* Timer 4 clock enable */
+#define RCC_SPI2EN                              ((uint32_t)0x00004000) /* SPI 2 clock enable */
+#define RCC_USART3EN                            ((uint32_t)0x00040000) /* USART 3 clock enable */
+#define RCC_I2C2EN                              ((uint32_t)0x00400000) /* I2C 2 clock enable */
+#define RCC_CAN1EN                              ((uint32_t)0x02000000) /* CAN1 clock enable */
 
 #define RCC_BKPEN                               ((uint32_t)0x08000000) /* Backup interface clock enable */
 #define RCC_PWREN                               ((uint32_t)0x10000000) /* Power interface clock enable */
@@ -5049,6 +5067,185 @@ with 00h to 64 bytes, otherwise the short packet is filled with 60 bytes of 0, a
 #define USBD_EPRX_DTOG1                         ((uint16_t)0x1000) /* EndPoint RX Data TOGgle bit1 */
 #define USBD_EPRX_DTOG2                         ((uint16_t)0x2000) /* EndPoint RX Data TOGgle bit1 */
 #define USBD_EPRX_DTOGMASK                      (USBD_EPRX_STAT|USBD_EPREG_MASK)
+
+/******************************************************************************/
+/*                    USB Full-Speed Host/Device (USBFS/USBHD)                */
+/******************************************************************************/
+/* Register bit definitions taken from WCH ch32v20x_usb.h (V1.0.0, 2024/01/30) */
+
+/* R8_USB_CTRL */
+#define USBFS_UC_HOST_MODE                       0x80
+#define USBFS_UC_LOW_SPEED                       0x40
+#define USBFS_UC_DEV_PU_EN                       0x20
+#define USBFS_UC_SYS_CTRL_MASK                   0x30
+#define USBFS_UC_SYS_CTRL0                       0x00
+#define USBFS_UC_SYS_CTRL1                       0x10
+#define USBFS_UC_SYS_CTRL2                       0x20
+#define USBFS_UC_SYS_CTRL3                       0x30
+#define USBFS_UC_INT_BUSY                        0x08
+#define USBFS_UC_RESET_SIE                       0x04
+#define USBFS_UC_CLR_ALL                         0x02
+#define USBFS_UC_DMA_EN                          0x01
+
+/* R8_USB_INT_EN */
+#define USBFS_UIE_DEV_NAK                        0x40
+#define USBFS_UIE_FIFO_OV                        0x10
+#define USBFS_UIE_HST_SOF                        0x08
+#define USBFS_UIE_SUSPEND                        0x04
+#define USBFS_UIE_TRANSFER                       0x02
+#define USBFS_UIE_DETECT                         0x01
+#define USBFS_UIE_BUS_RST                        0x01
+
+/* R8_USB_DEV_AD */
+#define USBFS_UDA_GP_BIT                         0x80
+#define USBFS_USB_ADDR_MASK                      0x7F
+
+/* R8_USB_MIS_ST */
+#define USBFS_UMS_SOF_PRES                       0x80
+#define USBFS_UMS_SOF_ACT                        0x40
+#define USBFS_UMS_SIE_FREE                       0x20
+#define USBFS_UMS_R_FIFO_RDY                     0x10
+#define USBFS_UMS_BUS_RESET                      0x08
+#define USBFS_UMS_SUSPEND                        0x04
+#define USBFS_UMS_DM_LEVEL                       0x02
+#define USBFS_UMS_DEV_ATTACH                     0x01
+
+/* R8_USB_INT_FG */
+#define USBFS_U_IS_NAK                           0x80
+#define USBFS_U_TOG_OK                           0x40
+#define USBFS_U_SIE_FREE                         0x20
+#define USBFS_UIF_FIFO_OV                        0x10
+#define USBFS_UIF_HST_SOF                        0x08
+#define USBFS_UIF_SUSPEND                        0x04
+#define USBFS_UIF_TRANSFER                       0x02
+#define USBFS_UIF_DETECT                         0x01
+#define USBFS_UIF_BUS_RST                        0x01
+
+/* R8_USB_INT_ST */
+#define USBFS_UIS_IS_NAK                         0x80
+#define USBFS_UIS_TOG_OK                         0x40
+#define USBFS_UIS_TOKEN_MASK                     0x30
+#define USBFS_UIS_TOKEN_OUT                      0x00
+#define USBFS_UIS_TOKEN_IN                       0x20
+#define USBFS_UIS_TOKEN_SETUP                    0x30
+#define USBFS_UIS_ENDP_MASK                      0x0F
+#define USBFS_UIS_H_RES_MASK                     0x0F
+
+/* R32_USB_OTG_CR */
+#define USBFS_CR_SESS_VTH                        0x20
+#define USBFS_CR_VBUS_VTH                        0x10
+#define USBFS_CR_OTG_EN                          0x08
+#define USBFS_CR_IDPU                            0x04
+#define USBFS_CR_CHARGE_VBUS                     0x02
+#define USBFS_CR_DISCHAR_VBUS                    0x01
+
+/* R32_USB_OTG_SR */
+#define USBFS_SR_ID_DIG                          0x08
+#define USBFS_SR_SESS_END                        0x04
+#define USBFS_SR_SESS_VLD                        0x02
+#define USBFS_SR_VBUS_VLD                        0x01
+
+/* R8_UDEV_CTRL */
+#define USBFS_UD_PD_DIS                          0x80
+#define USBFS_UD_DP_PIN                          0x20
+#define USBFS_UD_DM_PIN                          0x10
+#define USBFS_UD_LOW_SPEED                       0x04
+#define USBFS_UD_GP_BIT                          0x02
+#define USBFS_UD_PORT_EN                         0x01
+
+/* R8_UEP4_1_MOD */
+#define USBFS_UEP1_RX_EN                         0x80
+#define USBFS_UEP1_TX_EN                         0x40
+#define USBFS_UEP1_BUF_MOD                       0x10
+#define USBFS_UEP4_RX_EN                         0x08
+#define USBFS_UEP4_TX_EN                         0x04
+#define USBFS_UEP4_BUF_MOD                       0x01
+
+/* R8_UEP2_3_MOD */
+#define USBFS_UEP3_RX_EN                         0x80
+#define USBFS_UEP3_TX_EN                         0x40
+#define USBFS_UEP3_BUF_MOD                       0x10
+#define USBFS_UEP2_RX_EN                         0x08
+#define USBFS_UEP2_TX_EN                         0x04
+#define USBFS_UEP2_BUF_MOD                       0x01
+
+/* R8_UEP5_6_MOD */
+#define USBFS_UEP6_RX_EN                         0x80
+#define USBFS_UEP6_TX_EN                         0x40
+#define USBFS_UEP6_BUF_MOD                       0x10
+#define USBFS_UEP5_RX_EN                         0x08
+#define USBFS_UEP5_TX_EN                         0x04
+#define USBFS_UEP5_BUF_MOD                       0x01
+
+/* R8_UEP7_MOD */
+#define USBFS_UEP7_RX_EN                         0x08
+#define USBFS_UEP7_TX_EN                         0x04
+#define USBFS_UEP7_BUF_MOD                       0x01
+
+/* R8_UEPn_TX_CTRL */
+#define USBFS_UEP_T_AUTO_TOG                     0x08
+#define USBFS_UEP_T_TOG                          0x04
+#define USBFS_UEP_T_RES_MASK                     0x03
+#define USBFS_UEP_T_RES_ACK                      0x00
+#define USBFS_UEP_T_RES_NONE                     0x01
+#define USBFS_UEP_T_RES_NAK                      0x02
+#define USBFS_UEP_T_RES_STALL                    0x03
+
+/* R8_UEPn_RX_CTRL, n=0-7 */
+#define USBFS_UEP_R_AUTO_TOG                     0x08
+#define USBFS_UEP_R_TOG                          0x04
+#define USBFS_UEP_R_RES_MASK                     0x03
+#define USBFS_UEP_R_RES_ACK                      0x00
+#define USBFS_UEP_R_RES_NONE                     0x01
+#define USBFS_UEP_R_RES_NAK                      0x02
+#define USBFS_UEP_R_RES_STALL                    0x03
+
+/* R8_UHOST_CTRL */
+#define USBFS_UH_PD_DIS                          0x80
+#define USBFS_UH_DP_PIN                          0x20
+#define USBFS_UH_DM_PIN                          0x10
+#define USBFS_UH_LOW_SPEED                       0x04
+#define USBFS_UH_BUS_RESET                       0x02
+#define USBFS_UH_PORT_EN                         0x01
+
+/* R32_UH_EP_MOD */
+#define USBFS_UH_EP_TX_EN                        0x40
+#define USBFS_UH_EP_TBUF_MOD                     0x10
+#define USBFS_UH_EP_RX_EN                        0x08
+#define USBFS_UH_EP_RBUF_MOD                     0x01
+
+/* R16_UH_SETUP */
+#define USBFS_UH_PRE_PID_EN                      0x0400
+#define USBFS_UH_SOF_EN                          0x0004
+
+/* R8_UH_EP_PID */
+#define USBFS_UH_TOKEN_MASK                      0xF0
+#define USBFS_UH_ENDP_MASK                       0x0F
+
+/* R8_UH_RX_CTRL */
+#define USBFS_UH_R_AUTO_TOG                      0x08
+#define USBFS_UH_R_TOG                           0x04
+#define USBFS_UH_R_RES                           0x01
+
+/* R8_UH_TX_CTRL */
+#define USBFS_UH_T_AUTO_TOG                      0x08
+#define USBFS_UH_T_TOG                           0x04
+#define USBFS_UH_T_RES                           0x01
+
+/* Aliases (current WCH SDK naming) */
+#define USBFSD                                   USBOTG_FS
+#define USBFSH                                   USBOTG_H_FS
+#define USBFS_IRQn                               USBHD_IRQn
+#define USBFSWakeUp_IRQn                         USBHDWakeUp_IRQn
+#define RCC_USBFS                                RCC_USBHD
+#define USBFS_UEP_T_RES_TOUT                     USBFS_UEP_T_RES_NONE
+#define USBFS_UEP_R_RES_TOUT                     USBFS_UEP_R_RES_NONE
+
+/******************************************************************************/
+/*                 USB Full-Speed Device (USBD) Packet Memory                 */
+/******************************************************************************/
+#define USBD_PMA_BASE                            ((uint32_t)0x40006000) /* 512 bytes, 2x16 bit */
+#define USBD_BUF                                 ((USBD_BUF_TypeDef *)USBD_PMA_BASE)
 
 /******************************************************************************/
 /*               Programmable Fast Interrupt Controller (PFIC)                */

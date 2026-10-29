@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.0 *
+// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -31,6 +31,7 @@ void UART1_init(void) {
   GPIOB->BSHR  = (uint32_t)1<<7;
   AFIO->PCFR1 |= (uint32_t)1<<2;
 #elif UART1_REMAP == 2
+  // Note: not supported by CH32V203 (D6), see RM
   // Remap UART pins, enable GPIO port A/B and UART
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN | RCC_IOPBEN | RCC_USART1EN;
 
@@ -41,6 +42,7 @@ void UART1_init(void) {
   GPIOA->BSHR  = (uint32_t)1<<8;
   AFIO->PCFR2 |= (uint32_t)1<<26;
 #elif UART1_REMAP == 3
+  // Note: not supported by CH32V203 (D6), see RM
   // Remap UART pins, enable GPIO port A and UART
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPAEN | RCC_USART1EN;
 
@@ -113,4 +115,47 @@ char UART2_read(void) {
 void UART2_write(const char c) {
   while(!UART2_ready());
   USART2->DATAR = c;
+}
+
+// ===================================================================================
+// UART3
+// ===================================================================================
+
+// Init UART
+void UART3_init(void) {
+#if UART3_REMAP == 0
+  // Set pin PB10 (TX) to output, push-pull, 10MHz, multiplex
+  // Set pin PB11 (RX) to input, pullup
+  RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPBEN;
+  GPIOB->CFGHR    = (GPIOB->CFGHR & ~(((uint32_t)0b1111<<(2<<2)) | ((uint32_t)0b1111<<(3<<2))))
+                                  |  (((uint32_t)0b1001<<(2<<2)) | ((uint32_t)0b1000<<(3<<2)));
+  GPIOB->BSHR     = (uint32_t)1<<11;
+#elif UART3_REMAP == 1
+  // Set pin PC10 (TX) to output, push-pull, 10MHz, multiplex
+  // Set pin PC11 (RX) to input, pullup
+  RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPCEN;
+  GPIOC->CFGHR    = (GPIOC->CFGHR & ~(((uint32_t)0b1111<<(2<<2)) | ((uint32_t)0b1111<<(3<<2))))
+                                  |  (((uint32_t)0b1001<<(2<<2)) | ((uint32_t)0b1000<<(3<<2)));
+  GPIOC->BSHR     = (uint32_t)1<<11;
+  AFIO->PCFR1     = (AFIO->PCFR1 & ~AFIO_PCFR1_USART3_REMAP) | AFIO_PCFR1_USART3_REMAP_PARTIALREMAP;
+#else
+  #warning Wrong UART3 REMAP
+#endif
+
+  // Setup and start UART (8N1, RX/TX, default BAUD rate)
+  RCC->APB1PCENR |= RCC_USART3EN;
+  USART3->BRR     = ((2 * F_CPU / UART3_BAUD) + 1) / 2;
+  USART3->CTLR1   = USART_CTLR1_RE | USART_CTLR1_TE | USART_CTLR1_UE;
+}
+
+// Read byte via UART
+char UART3_read(void) {
+  while(!UART3_available());
+  return USART3->DATAR;
+}
+
+// Send byte via UART
+void UART3_write(const char c) {
+  while(!UART3_ready());
+  USART3->DATAR = c;
 }

@@ -1,14 +1,14 @@
 // ===================================================================================
-// UART2 with DMA RX Buffer for CH32V203                                      * v1.0 *
+// UART2 with DMA RX Buffer for CH32V203                                      * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "uart2_dma.h"
 
 // Circular RX buffer
-char    UART2_RX_buffer[UART2_RX_BUF_SIZE];
-uint8_t UART2_RX_tptr = 0;
-#define UART2_RX_hptr (UART2_RX_BUF_SIZE - DMA1_Channel6->CNTR)
+char     UART2_RX_buffer[UART2_RX_BUF_SIZE];
+uint16_t UART2_RX_tptr = 0;
+#define UART2_RX_hptr ((uint16_t)((UART2_RX_BUF_SIZE - DMA1_Channel6->CNTR) % UART2_RX_BUF_SIZE))
 
 // Init UART
 void UART2_init(void) {

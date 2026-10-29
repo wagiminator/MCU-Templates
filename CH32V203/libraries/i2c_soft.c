@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software I2C Master Functions for CH32V203                                 * v1.0 *
+// Software I2C Master Functions for CH32V203                                 * v1.1 *
 // ===================================================================================
 //
 // Simple I2C bitbanging. ACK bit of the slave is ignored. Clock stretching by the 
@@ -13,8 +13,8 @@
 // ===================================================================================
 // I2C Delay
 // ===================================================================================
-#define I2C_DLY_TICKS_H   (((F_CPU *  9) / (I2C_CLKRATE * 25)) - 3)
-#define I2C_DLY_TICKS_L   (((F_CPU * 16) / (I2C_CLKRATE * 25)) - 12)
+#define I2C_DLY_TICKS_H   ((((F_CPU / 25) *  9) / I2C_CLKRATE) - 3)
+#define I2C_DLY_TICKS_L   ((((F_CPU / 25) * 16) / I2C_CLKRATE) - 12)
 
 #if I2C_DLY_TICKS_H >= 1
   #define I2C_DELAY_H()   DLY_ticks(I2C_DLY_TICKS_H)
@@ -36,7 +36,7 @@
 #define I2C_SCL_HIGH()  PIN_high(PIN_SCL)   // release SCL -> pulled HIGH by resistor
 #define I2C_SCL_LOW()   PIN_low(PIN_SCL)    // SCL LOW     -> pulled LOW  by MCU
 #define I2C_SDA_READ()  PIN_read(PIN_SDA)   // read SDA pin
-#define I2C_CLOCKOUT()  I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_SCL_LOW()
+#define I2C_CLOCKOUT()  do{I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_SCL_LOW();}while(0)
 
 // ===================================================================================
 // I2C Functions
@@ -74,6 +74,7 @@ void I2C_restart(uint8_t addr) {
   I2C_SDA_HIGH();                           // prepare SDA for HIGH to LOW transition
   I2C_DELAY_H();                            // delay
   I2C_SCL_HIGH();                           // restart condition: clock HIGH
+  I2C_DELAY_H();                            // setup time for repeated start
   I2C_start(addr);                          // start again
 }
 
@@ -102,4 +103,16 @@ uint8_t I2C_read(uint8_t ack) {
   if(ack) I2C_SDA_LOW();                    // pull SDA LOW to acknowledge (ACK)
   I2C_CLOCKOUT();                           // clock out -> slave reads ACK bit
   return data;                              // return the received byte
+}
+
+// Send data buffer via I2C bus and stop
+void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) I2C_write(*buf++);           // write buffer
+  I2C_stop();                               // stop transmission
+}
+
+// Read data via I2C bus to buffer and stop
+void I2C_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = I2C_read(len > 0);  // read buffer, NAK on last byte
+  I2C_stop();                               // stop transmission
 }

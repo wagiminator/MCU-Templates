@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic System Functions for CH32V203                                        * v1.1 *
+// Basic System Functions for CH32V203                                        * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
 // set up automatically on system start.
+//
+// Supported devices: CH32V203F6/F8/G6/G8/K6/K8/C6/C8 (CH32V20x_D6). The CH32V203RB
+// (CH32V20x_D8) has a different vector table and PLL/HSE settings and is not supported.
 //
 // System clock functions available:
 // ---------------------------------
@@ -37,9 +40,10 @@
 // MCO_setSYS()             output SYS_CLK on pin PA8
 // MCO_setHSI()             output internal oscillator on pin PA8
 // MCO_setHSE()             output external crystal on pin PA8 (if available)
-// MCO_setPLL()             output PLL on pin PA8
+// MCO_setPLL()             output PLL/2 on pin PA8
+// MCO_stop()               stop clock output
 //
-// Real-Time Clock (RTC) functions available:
+// Real-Time Clock (RTC) functions available (1 second ticks):
 // ------------------------------------------
 // RTC_init_LSI()           init RTC with internal low-speed clock
 // RTC_init_LSE()           init RTC with external low-speed clock
@@ -50,7 +54,7 @@
 //
 // Delay (DLY) functions available:
 // --------------------------------
-// DLY_ticks(n)             delay n system clock cycles
+// DLY_ticks(n)             delay n system clock cycles (n < 2^31)
 // DLY_us(n)                delay n microseconds
 // DLY_ms(n)                delay n milliseconds
 //
@@ -102,6 +106,10 @@ extern "C" {
 
 #include "ch32v203.h"
 
+// Legacy name of the USBFS interrupt handler (current WCH SDK: USBFS_IRQHandler)
+#define USBHD_IRQHandler        USBFS_IRQHandler
+#define USBHDWakeUp_IRQHandler  USBFSWakeUp_IRQHandler
+
 // ===================================================================================
 // System Options (set "1" to activate)
 // ===================================================================================
@@ -120,9 +128,11 @@ extern "C" {
   #define F_CPU           48000000  // 48Mhz if not otherwise defined
 #endif
 
-// Calculate system clock settings
+// Calculate system clock settings (8MHz HSI/HSE x PLL; PLL x17 does not exist)
+// USB requires F_CPU = 48MHz, 96MHz or 144MHz
 #if   F_CPU ==   8000000
   #define CLK_NO_PLL
+  #define CLK_MUL         RCC_PLLMULL2    // (not used, PLL is off)
 #elif F_CPU ==  16000000
   #define CLK_MUL         RCC_PLLMULL2
 #elif F_CPU ==  24000000
@@ -153,8 +163,6 @@ extern "C" {
   #define CLK_MUL         RCC_PLLMULL15
 #elif F_CPU == 128000000
   #define CLK_MUL         RCC_PLLMULL16
-#elif F_CPU == 136000000
-  #define CLK_MUL         RCC_PLLMULL17
 #elif F_CPU == 144000000
   #define CLK_MUL         RCC_PLLMULL18
 #else
@@ -190,35 +198,39 @@ void CLK_init_HSE_PLL(void);  // init external crystal (PLL) as system clock sou
 void CLK_reset(void);         // reset system clock to default state
 
 // Internal 8MHz high-speed clock (HSI) functions
-#define HSI_enable()      RCC->CTLR |= RCC_HSION        // enable HSI
-#define HSI_disable()     RCC->CTLR &= ~RCC_HSION       // disable HSI
+#define HSI_enable()      (RCC->CTLR |= RCC_HSION)      // enable HSI
+#define HSI_disable()     (RCC->CTLR &= ~RCC_HSION)     // disable HSI
 #define HSI_ready()       (RCC->CTLR & RCC_HSIRDY)      // check if HSI is stable
 
 // External high-speed clock (HSE) functions
-#define HSE_enable()      RCC->CTLR |= RCC_HSEON        // enable HSE
-#define HSE_disable()     RCC->CTLR &= ~RCC_HSEON       // disable HSE
+#define HSE_enable()      (RCC->CTLR |= RCC_HSEON)      // enable HSE
+#define HSE_disable()     (RCC->CTLR &= ~RCC_HSEON)     // disable HSE
 #define HSE_ready()       (RCC->CTLR & RCC_HSERDY)      // check if HSE is stable
-#define HSE_bypass_on()   RCC->CTLR |= RCC_HSEBYP       // enable HSE clock bypass
-#define HSE_bypass_off()  RCC->CTLR &= ~RCC_HSEBYP      // disable HSE clock bypass
+#define HSE_bypass_on()   (RCC->CTLR |= RCC_HSEBYP)     // enable HSE clock bypass
+#define HSE_bypass_off()  (RCC->CTLR &= ~RCC_HSEBYP)    // disable HSE clock bypass
 
 // Internal 40kHz low-speed clock (LSI) functions
-#define LSI_enable()      RCC->RSTSCKR |= RCC_LSION     // enable LSI
-#define LSI_disable()     RCC->RSTSCKR &= ~RCC_LSION    // disable LSI
+#define LSI_enable()      (RCC->RSTSCKR |= RCC_LSION)   // enable LSI
+#define LSI_disable()     (RCC->RSTSCKR &= ~RCC_LSION)  // disable LSI
 #define LSI_ready()       (RCC->RSTSCKR & RCC_LSIRDY)   // check if LSI is stable
 
-// External 32.768kHz low-speed clock (LSE) functions
-#define LSE_enable()      RCC->BDCTLR |= RCC_LSEON      // enable LSE
-#define LSE_disable()     RCC->BDCTLR &= ~RCC_LSEON     // disable LSE
+// External 32.768kHz low-speed clock (LSE) functions (backup domain, see BKP_unlock)
+#define LSE_enable()      (BKP_unlock(), RCC->BDCTLR |= RCC_LSEON)  // enable LSE
+#define LSE_disable()     (BKP_unlock(), RCC->BDCTLR &= ~RCC_LSEON) // disable LSE
 #define LSE_ready()       (RCC->BDCTLR & RCC_LSERDY)    // check if LSE is stable
-#define LSE_bypass_on()   RCC->BDCTLR |= RCC_LSEBYP     // enable LSE clock bypass
-#define LSE_bypass_off()  RCC->BDCTLR &= ~RCC_LSEBYP    // disable LSE clock bypass
+#define LSE_bypass_on()   (BKP_unlock(), RCC->BDCTLR |= RCC_LSEBYP) // enable LSE bypass
+#define LSE_bypass_off()  (BKP_unlock(), RCC->BDCTLR &= ~RCC_LSEBYP)// disable LSE bypass
+
+// Enable write access to the backup domain (RCC_BDCTLR, RTC, BKP registers)
+#define BKP_unlock()      (RCC->APB1PCENR |= RCC_PWREN | RCC_BKPEN, PWR->CTLR |= PWR_CTLR_DBP)
+#define BKP_lock()        (PWR->CTLR &= ~PWR_CTLR_DBP)
 
 // Clock output functions (pin PA8)
-#define MCO_setSYS()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_SYSCLK
-#define MCO_setHSI()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSI
-#define MCO_setHSE()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSE
-#define MCO_setPLL()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_PLL
-#define MCO_stop()        RCC->CFGR0 &= ~RCC_CFGR0_MCO  // stop clock output to pin PA8
+#define MCO_setSYS()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_SYSCLK)
+#define MCO_setHSI()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSI)
+#define MCO_setHSE()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSE)
+#define MCO_setPLL()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_PLL)
+#define MCO_stop()        (RCC->CFGR0 &= ~RCC_CFGR0_MCO) // stop clock output to pin PA8
 void MCO_init(void);                                    // init clock output to pin PA8
 
 // ===================================================================================
@@ -228,8 +240,8 @@ void RTC_init_LSI(void);          // init RTC with internal low-speed clock
 void RTC_init_LSE(void);          // init RTC with external low-speed clock
 void RTC_set(uint32_t n);         // set RTC counter
 void RTC_ALARM_set(uint32_t n);   // set RTC ALARM
-#define RTC_get()         (((uint32_t)RTC->CNTH << 16) & RTC->CNTL)   // get RTC counter
-#define RTC_ALARM_get()   (((uint32_t)RTC->ALRMH << 16) & RTC->ALRML) // get RTC ALARM
+#define RTC_get()         (((uint32_t)RTC->CNTH << 16) | RTC->CNTL)   // get RTC counter
+#define RTC_ALARM_get()   (((uint32_t)RTC->ALRMH << 16) | RTC->ALRML) // get RTC ALARM
 
 // ===================================================================================
 // Delay (DLY) Functions
@@ -237,16 +249,21 @@ void RTC_ALARM_set(uint32_t n);   // set RTC ALARM
 #define STK_init()        STK->CTLR = STK_CTLR_STE | STK_CTLR_STCLK // init SYSTICK @ F_CPU
 #define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n) * DLY_US_TIME)  // delay n microseconds
-#define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)  // delay n milliseconds
 #define DLY_cycles        DLY_ticks                     // alias
 void DLY_ticks(uint32_t n);                             // delay n system ticks
+static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
+  while(ms--) DLY_ticks(DLY_MS_TIME);
+}
+static inline void DLY_us(uint32_t us) {                // delay n microseconds
+  while(us >= 1000) { DLY_ticks(DLY_MS_TIME); us -= 1000; } // (no 32-bit overflow)
+  DLY_ticks(us * DLY_US_TIME);
+}
 
 // ===================================================================================
 // Reset (RST) Functions
 // ===================================================================================
-#define RST_now()         PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3
-#define RST_clearFlags()  RCC->RSTSCKR |= RCC_RMVF
+#define RST_now()         (PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3)
+#define RST_clearFlags()  (RCC->RSTSCKR |= RCC_RMVF)
 #define RST_wasLowPower() (RCC->RSTSCKR & RCC_LPWRRSTF)
 #define RST_wasWWDG()     (RCC->RSTSCKR & RCC_WWDGRSTF)
 #define RST_wasIWDG()     (RCC->RSTSCKR & RCC_IWDGRSTF)
@@ -261,7 +278,7 @@ void IWDG_start(uint16_t ticks);                           // start IWDG with n 
 void IWDG_reload(uint16_t ticks);                          // reload IWDG with n ticks
 #define IWDG_start_ms(n)  IWDG_start((n)*LSI_VALUE/64000)  // start IWDG timer with n ms
 #define IWDG_reload_ms(n) IWDG_reload((n)*LSI_VALUE/64000) // reload IWDG timer with n ms
-#define IWDG_feed()       IWDG->CTLR = 0xAAAA              // feed the dog (reload time)
+#define IWDG_feed()       (IWDG->CTLR = 0xAAAA)            // feed the dog (reload time)
 
 // ===================================================================================
 // Sleep Functions

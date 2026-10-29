@@ -70,6 +70,8 @@ The bootloader must be started manually for new uploads. To do this, the board m
 ### Uploading Firmware Binary
 WCH offers the free but closed-source software [WCHISPTool](https://www.wch.cn/downloads/WCHISPTool_Setup_exe.html) to upload firmware with Windows via the USB bootloader. Press the BOOT button and keep it pressed while connecting the board to the USB port of your PC. Release the BOOT button, open the *<firmware>.hex* file with WCHISPTool and upload it to the microcontroller.
 
+You can also use the [web app](https://wagiminator.github.io/apps/chprog/) to upload the binary. This only works in Chrome, Edge, or Opera browsers on a desktop computer. The prerequisites mentioned above regarding drivers or udev rules must be met.
+
 If [Python3](https://www.pythontutorial.net/getting-started/install-python/) is installed, you can also use the platform-independent open-source command-line tool [chprog](https://pypi.org/project/chprog/) for uploading:
 ```
 chprog <firmware>.bin
@@ -110,6 +112,8 @@ More information can be found in the [WCH-Link User Manual](http://www.wch-ic.co
 ### Uploading Firmware Binary
 WCH offers the free but closed-source software [WCH-LinkUtility](https://www.wch.cn/downloads/WCH-LinkUtility_ZIP.html) to upload the precompiled hex-file with Windows. Select the "WCH-LinkRV" mode in the software, open the *<firmware>.hex* file and upload it to the microcontroller.
 
+You can also use the [web app](https://wagiminator.github.io/apps/rvprog/) to upload the binary. This only works in Chrome, Edge, or Opera browsers on a desktop computer. The prerequisites mentioned above regarding drivers or udev rules must be met.
+
 Alternatively, there is an open-source tool called [minichlink](https://github.com/cnlohr/ch32v003fun/tree/master/minichlink) developed by Charles Lohr (CNLohr). It can be used with Windows, Linux and Mac.
 
 If you have installed [Python3](https://www.pythontutorial.net/getting-started/install-python/) on your system, you can also use the platform-independent open-source command-line tool [rvprog](https://pypi.org/project/rvprog/) for uploading:
@@ -123,6 +127,8 @@ Take a look [here](https://github.com/wagiminator/Development-Boards/tree/main/C
 # Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
 - [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
+- [USB Flasher Web App](https://wagiminator.github.io/apps/chprog/)
+- [WCH-LinkE Flasher Web App](https://wagiminator.github.io/apps/rvprog/)
 
 # License
 
