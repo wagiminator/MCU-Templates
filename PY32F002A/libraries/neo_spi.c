@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for PY32F0xx                   * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI for PY32F0xx                   * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -9,7 +9,7 @@
 // SPI Parameters and Variables
 // ===================================================================================
 
-// Define SPI prescaler for 6 MHz SPI frequency -> 166,67us per bit, 750kHz byte freq
+// Define SPI prescaler for 6 MHz SPI frequency -> 166.67ns per bit, 750kHz byte freq
 #if F_CPU == 48000000
 #define SPI_PRESC   2
 #elif F_CPU == 24000000
@@ -102,8 +102,8 @@ void NEO_sendByte(uint8_t data) {
   uint8_t i;
   for(i=8; i; i--, data<<=1) {              // 8 bits, MSB first
     while(!(SPI1->SR & SPI_SR_TXE));        // wait for transmit buffer empty
-    if(data & 0x80) SPI_DR_8BIT = 0x7c;     // 833us high for "1"-bit
-    else            SPI_DR_8BIT = 0x60;     // 333us high for "0"-bit
+    if(data & 0x80) SPI_DR_8BIT = 0x7c;     // 833ns high for "1"-bit
+    else            SPI_DR_8BIT = 0x60;     // 333ns high for "0"-bit
   }
 }
 
@@ -111,10 +111,11 @@ void NEO_sendByte(uint8_t data) {
 // Write Buffer to Pixels
 // ===================================================================================
 void NEO_update(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) NEO_sendByte(*ptr++);
+  while(SPI1->SR & SPI_SR_BSY);             // wait for last byte transmitted
   NEO_latch();
 }
 
@@ -122,7 +123,7 @@ void NEO_update(void) {
 // Clear all Pixels
 // ===================================================================================
 void NEO_clearAll(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0;

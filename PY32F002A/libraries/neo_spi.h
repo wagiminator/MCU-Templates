@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for PY32F0xx                   * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI for PY32F0xx                   * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -24,7 +24,8 @@
 // - Connect MOSI-pin (define below) to DIN of the pixels string.
 // - Works with most 800kHz addressable LEDs (NeoPixels).
 // - Set number of pixels and pixel type in the parameters below!
-// - System clock frequency must be 48MHz, 24MHz, or 12MHz.
+// - System clock frequency must be 48MHz (F030 only), 24MHz, or 12MHz.
+// - Max. 255 pixels (8-bit pixel index).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

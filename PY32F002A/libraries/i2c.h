@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions for PY32F0xx                                    * v1.2 *
+// Basic I2C Master Functions for PY32F0xx                                    * v1.3 *
 // ===================================================================================
 //
 // Functions available:
@@ -20,6 +20,7 @@
 // I2C_MAP   0     1     2     3     4     5     6     7
 // SDA-pin  PA2   PA7   PA9   PA12  PB7   PB7   PF0   No mapping
 // SCL-pin  PA3   PA8   PA10  PA11  PB6   PB8   PF1   No mapping
+// (PA11 and PB8 are not available on the PY32F002A)
 //
 // External pull-up resistors (4k7 - 10k) are mandatory!
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
@@ -46,8 +47,8 @@ uint8_t I2C_read(uint8_t ack);  // I2C receive one data byte from the slave
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 void I2C_readBuffer(uint8_t* buf, uint16_t len);
 
-#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
-#define I2C_getBuffer(addr,buf,len)   {I2C_start(addr); I2C_readBuffer(buf,len);}
+#define I2C_sendBuffer(addr,buf,len)  (I2C_start(addr), I2C_writeBuffer(buf,len))
+#define I2C_getBuffer(addr,buf,len)   (I2C_start(addr), I2C_readBuffer(buf,len))
 
 #ifdef __cplusplus
 };

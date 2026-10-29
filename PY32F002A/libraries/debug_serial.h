@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic Serial Debug Functions for PY32F0xx                                  * v1.1 *
+// Basic Serial Debug Functions for PY32F0xx                                  * v1.2 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // DEBUG_init()             Init serial DEBUG with default BAUD rate (115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_setBAUD(n)         Set BAUD rate
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string
@@ -22,6 +22,7 @@
 // ----------------------------------------------------
 // DEBUG_TX    0     1     2     3     4     5     6     7     8     9
 // TX-pin     PA2   PA7   PA9   PA10  PA14  PB6   PB8   PF1   PF3   No mapping
+// (PB8 and PF3 are not available on the PY32F002A, PA14 is SWCLK)
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -61,7 +62,7 @@ extern "C" {
   #define DEBUG_printf(f, ...)
 #endif
 
-#define DEBUG_setBAUD(n)  USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+#define DEBUG_setBAUD(n)  (USART1->BRR = ((2*F_CPU/(n))+1)/2)  // set BAUD rate
 #define DEBUG_newline()   DEBUG_write('\n')                   // send newline
 #define DEBUG_printS      DEBUG_print                         // alias for print
 

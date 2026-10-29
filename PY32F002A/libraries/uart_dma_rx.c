@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART1 with DMA (RX only) for PY32F0xx                                      * v1.0 *
+// UART1 with DMA (RX only) for PY32F0xx                                      * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,8 +7,8 @@
 
 // Circular RX buffer
 char UART_RX_buffer[UART_RX_BUF_SIZE];
-uint8_t UART_RX_tptr = 0;
-#define UART_RX_hptr (UART_RX_BUF_SIZE - UART_DMA_CHAN->CNDTR)
+uint16_t UART_RX_tptr = 0;
+#define UART_RX_hptr ((UART_RX_BUF_SIZE - UART_DMA_CHAN->CNDTR) % UART_RX_BUF_SIZE)
 
 // Init UART
 void UART_init(void) {
@@ -107,7 +107,8 @@ void UART_init(void) {
   // Setup DMA
   RCC->AHBENR   |= RCC_AHBENR_DMAEN;                  // enable DMA module clock
   RCC->APBENR2  |= RCC_APBENR2_SYSCFGEN;              // enable SYSCFG module clock
-  SYSCFG->CFGR3 |= 0b00110 << UART_DMA_POS;           // set USART1 RX as trigger
+  SYSCFG->CFGR3  = (SYSCFG->CFGR3 & ~((uint32_t)0x1f << UART_DMA_POS))
+                 | ((uint32_t)0b00110 << UART_DMA_POS); // set USART1 RX as trigger
   UART_DMA_CHAN->CNDTR = (uint16_t)UART_RX_BUF_SIZE;  // ring buffer size
   UART_DMA_CHAN->CMAR  = (uint32_t)UART_RX_buffer;    // memory address
   UART_DMA_CHAN->CPAR  = (uint32_t)&USART1->DR;       // peripheral address

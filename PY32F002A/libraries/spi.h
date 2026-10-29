@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for PY32F0xx                                    * v1.0 *
+// Basic SPI Master Functions for PY32F0xx                                    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -24,7 +24,8 @@
 // MOSI-pin  PA7   PA1   PA2   PA7   PA8   PA12  no mapping
 //
 // Slave select pins (NSS) must be defined and controlled by the application.
-// SPI clock rate must be defined below.
+// SPI clock rate must be defined below (max. 12MHz in master mode).
+// Mapping 4 and 5 use PA13 (SWDIO), PA9 as SCK is not available on all packages.
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -40,16 +41,16 @@ extern "C" {
 #define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)
 #define SPI_MAP             0     // SPI pin mapping (see above)
 
-// I2C Functions and Macros
+// SPI Functions and Macros
 #define SPI_busy()          (SPI1->SR & SPI_SR_BSY)
 #define SPI_ready()         (SPI1->SR & SPI_SR_TXE)
 #define SPI_available()     (SPI1->SR & SPI_SR_RXNE)
 
-#define SPI_enable()        SPI1->CR1 |=  SPI_CR1_SPE
-#define SPI_disable()       SPI1->CR1 &= ~SPI_CR1_SPE
-#define SPI_setCPOL(n)      (n)?(SPI1->CR1|=SPI_CR1_CPOL):(SPI1->CR1&=~SPI_CR1_CPOL)
-#define SPI_setCPHA(n)      (n)?(SPI1->CR1|=SPI_CR1_CPHA):(SPI1->CR1&=~SPI_CR1_CPHA)
-#define SPI_setBAUD(n)      SPI1->CR1 = (SPI1->CR1&~SPI_CR1_BR) | (((n)&7)<<3)
+#define SPI_enable()        (SPI1->CR1 |=  SPI_CR1_SPE)
+#define SPI_disable()       (SPI1->CR1 &= ~SPI_CR1_SPE)
+#define SPI_setCPOL(n)      ((n)?(SPI1->CR1|=SPI_CR1_CPOL):(SPI1->CR1&=~SPI_CR1_CPOL))
+#define SPI_setCPHA(n)      ((n)?(SPI1->CR1|=SPI_CR1_CPHA):(SPI1->CR1&=~SPI_CR1_CPHA))
+#define SPI_setBAUD(n)      (SPI1->CR1 = (SPI1->CR1&~SPI_CR1_BR) | (((n)&7)<<3))
 
 void SPI_init(void);
 uint8_t SPI_transfer(uint8_t data);

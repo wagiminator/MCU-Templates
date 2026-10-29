@@ -57,6 +57,8 @@ Then run the following command to upload your firmware (example):
 puyaisp -f firmware.bin
 ```
 
+You can also use the [web app](https://wagiminator.github.io/apps/puyaisp/) to upload your firmware. This only works in Chrome, Edge, or Opera browsers on a desktop computer.
+
 ## Via Serial Wire Debug Interface (SWD)
 You can use [PyOCD](https://pyocd.io/) for uploading and debugging. Install it via
 
@@ -94,6 +96,7 @@ Take a look [here](https://github.com/wagiminator/Development-Boards/tree/main/P
 # Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
 - [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
+- [PUYA ISP Web App](https://wagiminator.github.io/apps/puyaisp/)
 
 # License
 

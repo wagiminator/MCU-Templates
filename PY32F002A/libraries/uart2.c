@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART2 Functions for PY32F0xx                                        * v1.0 *
+// Basic USART2 Functions for PY32F0xx                                        * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -90,7 +90,7 @@ void UART2_init(void) {
                                      |  (                            ((uint32_t)0b01<<(0<<1)) );
     GPIOF->AFR[0]   = (GPIOF->AFR[0] & ~( ((uint32_t)0xf <<(1<<2)) | ((uint32_t)0xf <<(0<<2)) ))
                                      |  ( ((uint32_t)0x4 <<(1<<2)) | ((uint32_t)0x4 <<(0<<2)) );
-  #elif UART2_MAP == 7
+  #elif UART2_MAP == 8
     // Setup pin PF3 (TX) and pin PF2 (RX)
     RCC->IOPENR    |= RCC_IOPENR_GPIOFEN;
     GPIOF->MODER    = (GPIOF->MODER  & ~( ((uint32_t)0b11<<(3<<1)) | ((uint32_t)0b11<<(2<<1)) ))
@@ -101,7 +101,7 @@ void UART2_init(void) {
     GPIOF->AFR[0]   = (GPIOF->AFR[0] & ~( ((uint32_t)0xf <<(3<<2)) | ((uint32_t)0xf <<(2<<2)) ))
                                      |  ( ((uint32_t)0x4 <<(3<<2)) | ((uint32_t)0x4 <<(2<<2)) );
   #else
-    #warning No automatic pin mapping for USART1
+    #warning No automatic pin mapping for USART2
   #endif
 	
   // Setup and start UART (8N1, RX/TX, default BAUD rate)

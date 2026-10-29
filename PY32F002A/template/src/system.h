@@ -1,19 +1,23 @@
 // ===================================================================================
-// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.2 *
+// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
 // set up automatically on system start. Configure system options below.
 //
+// Note: Not all functions are available on all devices. The PY32F002A has no PLL,
+// no LSE and no RTC. HSI can only be set to 8MHz or 24MHz (and divided by HSIDIV),
+// the 4MHz and 16MHz HSI settings exist on the PY32F003/F030 only.
+//
 // System clock functions available:
 // ---------------------------------
 // CLK_init_HSI()           init internal oscillator (non PLL) as system clock source
-// CLK_init_HSI_PLL()       init internal oscillator with PLL as system clock source
+// CLK_init_HSI_PLL()       init internal oscillator with PLL as system clock (F030)
 // CLK_init_HSE()           init external crystal (non PLL) as system clock source
-// CLK_init_HSE_PLL()       init external crystal with PLL as system clock source
+// CLK_init_HSE_PLL()       init external crystal with PLL as system clock (F030)
 // CLK_reset()              reset system clock to default state
 //
-// HSI_enable()             enable internal 8MHz high-speed clock (HSI)
+// HSI_enable()             enable internal high-speed clock (HSI, 8/24MHz)
 // HSI_disable()            disable HSI
 // HSI_ready()              check if HSI is stable
 //
@@ -64,7 +68,7 @@
 //
 // Delay (DLY) and SysTick (STK) functions available:
 // --------------------------------------------------
-// DLY_ticks(n)             delay n+1 clock cycles
+// DLY_ticks(n)             delay n+1 clock cycles (n=0: no delay)
 // DLY_us(n)                delay n microseconds
 // DLY_ms(n)                delay n milliseconds
 //
@@ -83,6 +87,8 @@
 // LPT_shot(n)              start LPT single shot with period in ms
 // LPT_sleep(n)             put device in to SLEEP for period in ms
 // LPT_stop(n)              put device in to STOP for period in ms
+// SLEEP_ms(n)              init LPT and put device in to SLEEP for period in ms
+// STOP_ms(n)               init LPT and put device in to STOP for period in ms
 //
 // Sleep functions available:
 // --------------------------
@@ -152,42 +158,54 @@ extern "C" {
   #define F_CPU           8000000   // 8 MHz if not otherwise defined
 #endif
 
+// HSI frequency select and factory calibration values (RCC_ICSCR bits 15:0).
+// The factory words also contain the frequency select bits (bits 18:16) which must
+// not be written to ICSCR (these are the LSI trimming bits there), therefore & 0x1fff.
+#define CLK_HSI_4MHZ      ((0b000<<13) | (*(__I uint32_t *)(0x1fff0f00) & 0x1fff)) // F003/F030
+#define CLK_HSI_8MHZ      ((0b001<<13) | (*(__I uint32_t *)(0x1fff0f04) & 0x1fff))
+#define CLK_HSI_16MHZ     ((0b010<<13) | (*(__I uint32_t *)(0x1fff0f08) & 0x1fff)) // F003/F030
+#define CLK_HSI_24MHZ     ((0b100<<13) | (*(__I uint32_t *)(0x1fff0f10) & 0x1fff))
+
 // Calculate system clock settings
+// PY32F002A: 24, 12, 8, 6, 4, 3, 2, 1 MHz; PY32F003: + 16 MHz; PY32F030: + 32, 48 MHz (PLL)
 #if SYS_USE_HSE == 0
-  #if F_CPU   == 48000000
-     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+  #if F_CPU   == 48000000                 // HSI 24MHz x PLL (PY32F030 only)
+     #define CLK_MASK     CLK_HSI_24MHZ
      #define CLK_DIV      (0b000<<11)
-  #elif F_CPU == 32000000
-     #define CLK_MASK     ((0b010<<13) | *(uint32_t *)(0x1fff0f08))
+  #elif F_CPU == 32000000                 // HSI 16MHz x PLL (PY32F030 only)
+     #define CLK_MASK     CLK_HSI_16MHZ
      #define CLK_DIV      (0b000<<11)
-  #elif F_CPU == 24000000
-     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+  #elif F_CPU == 24000000                 // HSI 24MHz
+     #define CLK_MASK     CLK_HSI_24MHZ
      #define CLK_DIV      (0b000<<11)
-  #elif F_CPU == 16000000
-     #define CLK_MASK     ((0b010<<13) | *(uint32_t *)(0x1fff0f08))
+  #elif F_CPU == 16000000                 // HSI 16MHz (PY32F003/F030 only)
+     #define CLK_MASK     CLK_HSI_16MHZ
      #define CLK_DIV      (0b000<<11)
-  #elif F_CPU == 12000000
-     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+  #elif F_CPU == 12000000                 // HSI 24MHz / 2
+     #define CLK_MASK     CLK_HSI_24MHZ
      #define CLK_DIV      (0b001<<11)
-  #elif F_CPU ==  8000000
-     #define CLK_MASK     ((0b001<<13) | *(uint32_t *)(0x1fff0f04))
+  #elif F_CPU ==  8000000                 // HSI 8MHz
+     #define CLK_MASK     CLK_HSI_8MHZ
      #define CLK_DIV      (0b000<<11)
-  #elif F_CPU ==  6000000
-     #define CLK_MASK     ((0b100<<13) | *(uint32_t *)(0x1fff0f10))
+  #elif F_CPU ==  6000000                 // HSI 24MHz / 4
+     #define CLK_MASK     CLK_HSI_24MHZ
      #define CLK_DIV      (0b010<<11)
-  #elif F_CPU ==  4000000
-     #define CLK_MASK     ((0b000<<13) | *(uint32_t *)(0x1fff0f00))
-     #define CLK_DIV      (0b000<<11)
-  #elif F_CPU ==  2000000
-     #define CLK_MASK     ((0b000<<13) | *(uint32_t *)(0x1fff0f00))
+  #elif F_CPU ==  4000000                 // HSI 8MHz / 2
+     #define CLK_MASK     CLK_HSI_8MHZ
      #define CLK_DIV      (0b001<<11)
-  #elif F_CPU ==  1000000
-     #define CLK_MASK     ((0b000<<13) | *(uint32_t *)(0x1fff0f00))
+  #elif F_CPU ==  3000000                 // HSI 24MHz / 8
+     #define CLK_MASK     CLK_HSI_24MHZ
+     #define CLK_DIV      (0b011<<11)
+  #elif F_CPU ==  2000000                 // HSI 8MHz / 4
+     #define CLK_MASK     CLK_HSI_8MHZ
      #define CLK_DIV      (0b010<<11)
+  #elif F_CPU ==  1000000                 // HSI 8MHz / 8
+     #define CLK_MASK     CLK_HSI_8MHZ
+     #define CLK_DIV      (0b011<<11)
   #else
      #warning Unsupported system clock frequency, using internal 8 MHz
-     #define CLK_MASK ((0b001<<13) | *(uint32_t *)(0x1fff0f04))
-     #define CLK_DIV  (0b000<<11)
+     #define CLK_MASK     CLK_HSI_8MHZ
+     #define CLK_DIV      (0b000<<11)
      #undef  F_CPU
      #define F_CPU        8000000     
   #endif
@@ -211,8 +229,12 @@ extern "C" {
     #error HSE must be at least 4MHz
   #endif
 
+  #if F_CPU > 24000000
+    #error HSE must not be higher than 24MHz
+  #endif
+
   #define CLK_init        CLK_init_HSE
-  #define CLK_MASK        ((0b001<<13) | *(uint32_t *)(0x1fff0f04))
+  #define CLK_MASK        CLK_HSI_8MHZ
   #define CLK_DIV         (0b000<<11)
 #endif
 
@@ -239,23 +261,23 @@ void CLK_reset(void);         // reset system clock to default state
 #define HSE_bypass_on()   RCC->CR |=  RCC_CR_HSEBYP       // enable HSE clock bypass
 #define HSE_bypass_off()  RCC->CR &= ~RCC_CR_HSEBYP       // disable HSE clock bypass
 #define HSE_CSS_on()      RCC->CR |=  RCC_CR_CSSON        // enable HSE clock security
-#define HSE_CSS_off()     RCC->CR &= ~RCC_CR_CSSON        // enable HSE clock security
+#define HSE_CSS_off()     RCC->CR &= ~RCC_CR_CSSON        // disable HSE clock security
 
 // Internal 32.768kHz low-speed clock (LSI) functions
 #define LSI_enable()      RCC->CSR |=  RCC_CSR_LSION      // enable LSI
 #define LSI_disable()     RCC->CSR &= ~RCC_CSR_LSION      // disable LSI
 #define LSI_ready()       (RCC->CSR & RCC_CSR_LSIRDY)     // check if LSI is stable
 
-// External 32.768kHz low-speed clock (LSE) functions
+// External 32.768kHz low-speed clock (LSE) functions (not on PY32F002A)
 #define LSE_enable()      RCC->BDCR |=  RCC_BDCR_LSEON    // enable LSE
 #define LSE_disable()     RCC->BDCR &= ~RCC_BDCR_LSEON    // disable LSE
 #define LSE_ready()       (RCC->BDCR & RCC_BDCR_LSERDY)   // check if LSE is stable
 #define LSE_bypass_on()   RCC->BDCR |=  RCC_BDCR_LSEBYP   // enable LSE clock bypass
 #define LSE_bypass_off()  RCC->BDCR &= ~RCC_BDCR_LSEBYP   // disable LSE clock bypass
 #define LSE_CSS_on()      RCC->BDCR |=  RCC_BDCR_LSECSSON // enable LSE clock security
-#define LSE_CSS_off()     RCC->BDCR &= ~RCC_BDCR_LSECSSON // enable LSE clock security
+#define LSE_CSS_off()     RCC->BDCR &= ~RCC_BDCR_LSECSSON // disable LSE clock security
 
-// Phase-locked loop (PLL) functions
+// Phase-locked loop (PLL) functions (PY32F030 only)
 #define PLL_enable()      RCC->CR |=  RCC_CR_PLLON        // enable PLL
 #define PLL_disable()     RCC->CR &= ~RCC_CR_PLLON        // disable PLL
 #define PLL_ready()       (RCC->CR & RCC_CR_PLLRDY)       // check if PLL is stable
@@ -273,7 +295,7 @@ void CLK_reset(void);         // reset system clock to default state
 #define MCO_stop()        RCC->CFGR &= ~RCC_CFGR_MCOSEL
 
 // ===================================================================================
-// Real-Time Clock (RTC) Functions
+// Real-Time Clock (RTC) Functions (PY32F003/F030 only)
 // ===================================================================================
 void RTC_init(void);      // init RTC with LSI as clock source and 1s clock period
 void RTC_init_LSE(void);  // init RTC with LSE as clock source and 1s clock period
@@ -294,7 +316,7 @@ void RTC_setAlarm(uint32_t val);      // set RTC alarm value (default 0xffffffff
 // ===================================================================================
 #define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n)*DLY_US_TIME-1)  // delay n microseconds
+#define DLY_us(n)         ((n) ? DLY_ticks((uint32_t)(n)*DLY_US_TIME-1) : (void)0) // delay n us
 void DLY_ticks(uint32_t n);                             // delay n+1 clock cycles
 static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
   while(ms--) DLY_us(1000);
@@ -326,8 +348,8 @@ void STOP_WFI_now(void);    // put device into stop (deep sleep), wake up interr
 void STOP_WFE_now(void);    // put device into stop (deep sleep), wake up event
 void STOP_lowPower(void);   // set reduced power in stop mode
 
-#define SLEEP_ms(ms)      {LPT_init(); LPT_sleep(ms);}
-#define STOP_ms(ms)       {LPT_init(); LPT_stop(ms);}
+#define SLEEP_ms(ms)      (LPT_init(), LPT_sleep(ms))
+#define STOP_ms(ms)       (LPT_init(), LPT_stop(ms))
 
 // ===================================================================================
 // Reset (RST) Functions
@@ -470,7 +492,7 @@ __attribute__( ( always_inline ) ) __STATIC_INLINE uint32_t __get_MSP(void) {
 
 // Set Main Stack Pointer
 __attribute__( ( always_inline ) ) __STATIC_INLINE void __set_MSP(uint32_t topOfMainStack) {
-  __ASM volatile ("MSR msp, %0\n" : : "r" (topOfMainStack) : "sp");
+  __ASM volatile ("MSR msp, %0\n" : : "r" (topOfMainStack) : );
 }
 
 // Get Priority Mask

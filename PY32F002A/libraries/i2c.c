@@ -1,12 +1,20 @@
 // ===================================================================================
-// Basic I2C Master Functions for PY32F0xx                                    * v1.2 *
+// Basic I2C Master Functions for PY32F0xx                                    * v1.3 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c.h"
 
-// Read/write flag
-uint8_t I2C_rwflag;
+// I2C peripheral clock frequency in MHz (FREQ must match PCLK, see RM)
+#define I2C_FREQ      (F_CPU / 1000000)
+#if I2C_CLKRATE > 100000 && F_CPU < 12000000
+  #warning I2C fast mode (400kHz) requires PCLK >= 12MHz
+#elif F_CPU < 4000000
+  #warning I2C requires PCLK >= 4MHz
+#endif
+
+// Read/write flag and "data byte written" flag
+static uint8_t I2C_rwflag, I2C_txflag;
 
 // Init I2C
 void I2C_init(void) {
@@ -91,21 +99,21 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APBENR1 |= RCC_APBENR1_I2CEN;              // enable I2C module clock
-  I2C1->CR2     = 4;                              // set input clock rate
+  RCC->APBRSTR1 |=  RCC_APBRSTR1_I2CRST;          // reset I2C module after pin setup
+  RCC->APBRSTR1 &= ~RCC_APBRSTR1_I2CRST;          // (BUSY flag issue, see AN1015)
+  I2C1->CR2     = I2C_FREQ;                       // set input clock rate (PCLK in MHz)
   #if I2C_CLKRATE > 100000
   I2C1->CCR     = (F_CPU / (3 * I2C_CLKRATE))     // set clock division factor
                 | I2C_CCR_FS;                     // enable fast mode (400kHz)
-  I2C1->TRISE   = 16;                             // set maximum rise time (300ns)
+  I2C1->TRISE   = (I2C_FREQ * 300 / 1000) + 1;    // set maximum rise time (300ns)
   #else
   I2C1->CCR     = (F_CPU / (2 * I2C_CLKRATE));    // set clock and standard mode (100kHz)
-  I2C1->TRISE   = 16;                             // set maximum rise time (1000ns)
+  I2C1->TRISE   = I2C_FREQ + 1;                   // set maximum rise time (1000ns)
   #endif
   I2C1->CR1     = I2C_CR1_PE;                     // enable I2C
 }
 
 // Start I2C transmission (addr must contain R/W bit)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
 void I2C_start(uint8_t addr) {
   while(I2C1->SR2 & I2C_SR2_BUSY);                // wait until bus ready
   I2C1->CR1 |= I2C_CR1_START                      // set START condition
@@ -113,15 +121,16 @@ void I2C_start(uint8_t addr) {
   while(!(I2C1->SR1 & I2C_SR1_SB));               // wait for START generated
   I2C1->DR = addr;                                // send slave address + R/W bit
   while(!(I2C1->SR1 & I2C_SR1_ADDR));             // wait for address transmitted
-  uint16_t reg = I2C1->SR2;                       // clear flags
+  (void)I2C1->SR2;                                // clear flags
+  I2C_txflag = 0;                                 // no data byte written yet
   I2C_rwflag = addr & 1;                          // set read/write flag
 }
-#pragma GCC diagnostic pop
 
 // Send data byte via I2C bus
 void I2C_write(uint8_t data) {
   while(!(I2C1->SR1 & I2C_SR1_TXE));              // wait for last byte transmitted
   I2C1->DR = data;                                // send data byte
+  I2C_txflag = 1;                                 // data byte written
 }
 
 // Read data byte via I2C bus (ack=0 for last byte, ack>0 if more bytes to follow)
@@ -136,8 +145,8 @@ uint8_t I2C_read(uint8_t ack) {
 
 // Stop I2C transmission
 void I2C_stop(void) {
-  if(!I2C_rwflag) {                               // for read operation only
-    while(!(I2C1->SR1 & I2C_SR1_BTF));            // wait for last byte transmitted
+  if(!I2C_rwflag) {                               // for write operation only
+    if(I2C_txflag) while(!(I2C1->SR1 & I2C_SR1_BTF)); // wait for last byte
     I2C1->CR1 |= I2C_CR1_STOP;                    // set STOP condition
   }
 }

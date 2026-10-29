@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.2 *
+// Basic System Functions for PY32F002, PY32F003, and PY32F030                * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -40,11 +40,13 @@ void CLK_init_HSI(void) {
   RCC->CR = CLK_DIV | RCC_CR_HSION;                       // set HSI divisor
   #endif
   RCC->ICSCR = (RCC->ICSCR & 0xFFFF0000) | CLK_MASK;      // set HSI freq and calibration
+  while(!(RCC->CR & RCC_CR_HSIRDY));                      // wait for HSI ready
 }
 
-// Init internal oscillator with PLL as system clock source
+// Init internal oscillator with PLL as system clock source (PY32F030 only)
 void CLK_init_HSI_PLL(void) {
   RCC->ICSCR = (RCC->ICSCR & 0xFFFF0000) | CLK_MASK;      // set HSI freq and calibration
+  while(!(RCC->CR & RCC_CR_HSIRDY));                      // wait for HSI ready
   //RCC->PLLCFGR = RCC_PLLCFGR_PLLSRC_HSI;                // set HSI as source for PLL
   RCC->CR |= RCC_CR_PLLON;                                // Enable PLL
   while(!(RCC->CR & RCC_CR_PLLRDY));                      // Wait till PLL is ready      
@@ -61,7 +63,7 @@ void CLK_init_HSE(void) {
   while((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_HSE); // Wait for HSE
 }
 
-// Init external crystal with PLL as system clock source
+// Init external crystal with PLL as system clock source (PY32F030 only)
 void CLK_init_HSE_PLL(void) {
   RCC->ECSCR = (RCC->ECSCR & ~RCC_ECSCR_HSE_FREQ) | CLK_HSE_FREQ; // set frequency
   RCC->CR |= RCC_CR_HSEON;                                // Turn on HSE
@@ -80,7 +82,7 @@ void CLK_reset(void) {
   RCC->CFGR    = 0x00000000;                              // HSI as system clock source
   while(RCC->CFGR & RCC_CFGR_SWS_Msk);                    // wait until switched to HSI
   RCC->CR      = RCC_CR_HSION;                            // keep only HSI on
-  RCC->ICSCR   = 0x00ff10ff;                              // reset ICSCR register
+  RCC->ICSCR   = (RCC->ICSCR & 0xFFFF0000) | CLK_HSI_8MHZ; // HSI 8MHz, factory trimming
   RCC->PLLCFGR = 0x00000000;                              // reset PLLCFGR register
   RCC->CIER    = 0x00000000;                              // disable all interrupts
   RCC->CICR    = 0xffffffff;                              // clear all interrupt flags
@@ -88,7 +90,7 @@ void CLK_reset(void) {
 }
 
 // ===================================================================================
-// Real-Time Clock (RTC) Functions
+// Real-Time Clock (RTC) Functions (PY32F003/F030 only, the PY32F002A has no RTC)
 // ===================================================================================
 
 // Init RTC with LSI as clock source and 1s clock period
@@ -142,11 +144,16 @@ void RTC_setAlarm(uint32_t val) {
 // Delay Functions
 // ===================================================================================
 
-// Wait n+1 counts of SysTick
+// Wait n+1 counts of SysTick (no delay for n=0, longer delays are split into
+// chunks, because SysTick is a 24-bit counter)
 void DLY_ticks(uint32_t n) {
-  SysTick->LOAD = n;
-  SysTick->VAL  = 0;
-  while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
+  while(n) {
+    uint32_t t = (n > SysTick_LOAD_RELOAD_Msk) ? SysTick_LOAD_RELOAD_Msk : n;
+    SysTick->LOAD = t;
+    SysTick->VAL  = 0;
+    while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
+    n -= t;
+  }
 }
 
 // ===================================================================================
@@ -200,7 +207,7 @@ void LPT_shot(uint16_t ms) {
 void LPT_sleep(uint16_t ms) {
   LPT_shot(ms);                         // start low-power timer (LPT) single shot
   SCB->SCR |=  SCB_SCR_SEVONPEND_Msk;   // enable wake-up on pending interrupt
-  SLEEP_WFE_now();                      // put device into stop, wake up by LPT event
+  SLEEP_WFE_now();                      // put device into sleep, wake up by LPT event
   SCB->SCR &= ~SCB_SCR_SEVONPEND_Msk;   // disable wake-up on pending interrupt
   LPTIM->ICR = LPTIM_ICR_ARRMCF;        // clear LPT interrupt flag
   NVIC_ClearPendingIRQ(LPTIM1_IRQn);    // clear NVIC pending interrupt flag
@@ -234,7 +241,7 @@ void SLEEP_WFE_now(void) {
 void STOP_WFI_now(void) {
   NVIC->ICPR[0] = 0xffffffff;           // clear pending interrupts
   EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
-  RTC->CRL = 0;                         // clear RTC interrupt flags
+  RTC->CRL = 0;                         // clear RTC interrupt flags (ignored on F002A)
   SCB->SCR |=  SCB_SCR_SLEEPDEEP_Msk;   // set deep sleep mode
   __WFI();                              // wait for interrupt
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
@@ -244,7 +251,7 @@ void STOP_WFI_now(void) {
 void STOP_WFE_now(void) {
   NVIC->ICPR[0] = 0xffffffff;           // clear pending interrupts
   EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
-  RTC->CRL = 0;                         // clear RTC interrupt flags
+  RTC->CRL = 0;                         // clear RTC interrupt flags (ignored on F002A)
   SCB->SCR |=  SCB_SCR_SLEEPDEEP_Msk;   // set deep sleep mode
   __WFE();                              // wait for event
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
@@ -253,9 +260,10 @@ void STOP_WFE_now(void) {
 // Reduce power in stop mode
 void STOP_lowPower(void) {
   RCC->APBENR1 |= RCC_APBENR1_PWREN;    // enable low power control block clock
-  PWR->CR1 = PWR_CR1_LPR                // use low power regulator in stop mode
+  PWR->CR1 = (PWR->CR1 & ~((uint32_t)0b111 << 16)) // keep other settings
+           | PWR_CR1_LPR                // use low power regulator in stop mode
            | PWR_CR1_VOS                // use VDD = 1.0V in stop mode
-           | (0b011 << 16);             // supply 0.9V to SRAM in stop mode
+           | ((uint32_t)0b011 << 16);   // supply 0.9V to SRAM in stop mode
 }
 
 // ===================================================================================

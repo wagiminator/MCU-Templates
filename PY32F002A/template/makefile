@@ -42,7 +42,8 @@ ISPTOOL  = puyaisp -f $(OUTPUT)/$(PROJECT).bin
 # should be fine for C projects tho, saves about 100 bytes of flash
 
 # Compiler Flags
-CFLAGS   = -Os -flto -std=gnu23 -Wall
+CSTD    := $(shell $(CC) -std=gnu23 -E -x c /dev/null >/dev/null 2>&1 && echo gnu23 || echo gnu2x)
+CFLAGS   = -Os -flto -std=$(CSTD) -Wall
 # CFLAGS   = -Os -flto -std=c++26 -fno-exceptions -fno-rtti -Wall -Wno-volatile -Wno-register -fpermissive
 CFLAGS  += $(INCLUDE) $(CPUARCH) -DF_CPU=$(F_CPU) -fdata-sections -ffunction-sections -fno-builtin -fno-common
 LDFLAGS  = -T$(LDSCRIPT) --specs=nano.specs --specs=nosys.specs #-nostartfiles #-nostdlib
@@ -101,7 +102,7 @@ flash:	$(OUTPUT)/$(PROJECT).bin removeelf
 
 clean:
 	@echo "Cleaning all up ..."
-	@rm -r $(OUTPUT)
+	@rm -rf $(OUTPUT)
 
 removeelf:
 	@echo "Removing $(OUTPUT)/$(PROJECT).elf ..."

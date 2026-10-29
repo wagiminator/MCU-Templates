@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for PY32F002, PY32F003, and PY32F030                  * v0.3 *
+// Basic GPIO Functions for PY32F002, PY32F003, and PY32F030                  * v1.0 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PF14, PF15 - e.g.:
@@ -45,10 +45,10 @@
 //
 // Analog-to-Digital Converter (ADC) functions available:
 // ------------------------------------------------------
-// ADC_init()               Init, enable and calibrate ADC (must be called first)
-// ADC_enable()             Enable ADC (power-up)
-// ADC_disable()            Disable ADC (power-down)
-// ADC_calibrate()          Calibrate ADC (ADC must be disabled)
+// ADC_init()               Init, calibrate and enable ADC (must be called first)
+// ADC_enable()             Set ADC clock, calibrate and enable ADC (power-up)
+// ADC_disable()            Disable ADC (power-down by module reset)
+// ADC_calibrate()          Re-calibrate ADC (keeps sampling time and input channel)
 //
 // ADC_fast()               Set fast mode   (  3.5 ADC clock cycles, least accurate) (*)
 // ADC_medium()             Set medium mode ( 71.5 ADC clock cycles, medium accurate)
@@ -66,7 +66,12 @@
 // ------
 // - (*) reset state
 // - Pins used for ADC must be set with PIN_input_AN beforehand. ADC input pins are:
-//   PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1.
+//   PA0 - PA7 (ADC_IN0 - ADC_IN7), PB1 (ADC_IN9). PB0 has no ADC input.
+// - The ADC clock (PCLK / 1..64) is set to the highest frequency <= ADC_CLK_MAX
+//   (default 6MHz, valid for VCC >= 1.7V; up to 12MHz for VCC >= 2.3V).
+// - Once enabled, the ADC can only be disabled by resetting the module (RM/AN1011).
+//   ADC_disable() therefore resets the ADC, all ADC settings are lost.
+// - The temperature sensor requires a sampling time of at least 9us (ADC_slow()).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -339,9 +344,12 @@ enum{
 // Toggle PIN output value
 // ===================================================================================
 #define PIN_toggle(PIN) \
-  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->ODR ^= 1<<((PIN)&15) ) : \
+  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->BSRR = (GPIOA->ODR & (1<<((PIN)&15))) \
+                                           ? (1<<(((PIN)&15)+16)) : (1<<((PIN)&15)) ) : \
+  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->BSRR = (GPIOB->ODR & (1<<((PIN)&15))) \
+                                           ? (1<<(((PIN)&15)+16)) : (1<<((PIN)&15)) ) : \
+  ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->BSRR = (GPIOF->ODR & (1<<((PIN)&15))) \
+                                           ? (1<<(((PIN)&15)+16)) : (1<<((PIN)&15)) ) : \
 (0))))
 
 // ===================================================================================
@@ -356,17 +364,17 @@ enum{
 // ===================================================================================
 // Write PIN output value (0 = LOW / 1 = HIGH)
 // ===================================================================================
-#define PIN_write(PIN, val) (val)?(PIN_high(PIN)):(PIN_low(PIN))
+#define PIN_write(PIN, val) ((val)?(PIN_high(PIN)):(PIN_low(PIN)))
 
 // ===================================================================================
 // Enable GPIO PORTS
 // ===================================================================================
-#define PORTA_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOAEN
-#define PORTB_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOBEN
-#define PORTF_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOFEN
-#define PORTS_enable()    RCC->IOPENR  = RCC_IOPENR_GPIOAEN \
-                                       | RCC_IOPENR_GPIOBEN \
-                                       | RCC_IOPENR_GPIOFEN
+#define PORTA_enable()    (RCC->IOPENR |= RCC_IOPENR_GPIOAEN)
+#define PORTB_enable()    (RCC->IOPENR |= RCC_IOPENR_GPIOBEN)
+#define PORTF_enable()    (RCC->IOPENR |= RCC_IOPENR_GPIOFEN)
+#define PORTS_enable()    (RCC->IOPENR  = RCC_IOPENR_GPIOAEN \
+                                        | RCC_IOPENR_GPIOBEN \
+                                        | RCC_IOPENR_GPIOFEN)
 
 #define PORT_enable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->IOPENR |= RCC_IOPENR_GPIOAEN ) : \
@@ -377,10 +385,10 @@ enum{
 // ===================================================================================
 // Disable GPIO PORTS
 // ===================================================================================
-#define PORTA_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN
-#define PORTB_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOBEN
-#define PORTF_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOFEN
-#define PORTS_disable()   RCC->IOPENR  = 0
+#define PORTA_disable()   (RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN)
+#define PORTB_disable()   (RCC->IOPENR &= ~RCC_IOPENR_GPIOBEN)
+#define PORTF_disable()   (RCC->IOPENR &= ~RCC_IOPENR_GPIOFEN)
+#define PORTS_disable()   (RCC->IOPENR  = 0)
 
 #define PORT_disable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN ) : \
@@ -392,6 +400,28 @@ enum{
 // ADC Functions
 // ===================================================================================
 
+// ADC parameters
+#ifndef ADC_CLK_MAX
+#define ADC_CLK_MAX         6000000   // max ADC clock (6MHz: VCC >= 1.7V, 12MHz: >= 2.3V)
+#endif
+
+// ADC clock prescaler (CKMODE = PCLK / 2^n, n = 0..6, PCLK = F_CPU)
+#if   (F_CPU /  1) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0000
+#elif (F_CPU /  2) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0001
+#elif (F_CPU /  4) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0010
+#elif (F_CPU /  8) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0011
+#elif (F_CPU / 16) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0100
+#elif (F_CPU / 32) <= ADC_CLK_MAX
+  #define ADC_CKMODE        0b0101
+#else
+  #define ADC_CKMODE        0b0110
+#endif
+
 // ADC calibration registers
 #define ADC_TSCAL1          (*(__I uint16_t*)(0x1FFF0F14))    // at 30°C
 #define ADC_TSCAL2          (*(__I uint16_t*)(0x1FFF0F18))    // at 85°C
@@ -401,53 +431,61 @@ enum{
 #define ADC_CTEMP2          85    // calibration temperature of TSCAL2
 
 // Set ADC sampling rate
-#define ADC_fast()          ADC1->SMPR = 0b000
-#define ADC_medium()        ADC1->SMPR = 0b110
-#define ADC_slow()          ADC1->SMPR = 0b111
+#define ADC_fast()          (ADC1->SMPR = 0b000)
+#define ADC_medium()        (ADC1->SMPR = 0b110)
+#define ADC_slow()          (ADC1->SMPR = 0b111)
 
 // Set ADC input
-#define ADC_input_TEMP()    ADC1->CHSELR = (uint16_t)1<<11
-#define ADC_input_VREF()    ADC1->CHSELR = (uint16_t)1<<12
+#define ADC_input_TEMP()    (ADC1->CHSELR = (uint16_t)1<<11)
+#define ADC_input_VREF()    (ADC1->CHSELR = (uint16_t)1<<12)
 #define ADC_input(PIN) \
-  ((PIN>=PA0)&&(PIN<=PA7) ? ( ADC1->CHSELR = (uint16_t)1<<( (PIN)&7)    ) : \
-  ((PIN>=PB0)&&(PIN<=PB1) ? ( ADC1->CHSELR = (uint16_t)1<<(((PIN)&7)+8) ) : \
+  ((PIN>=PA0)&&(PIN<=PA7) ? ( ADC1->CHSELR = (uint16_t)1<<((PIN)&7) ) : \
+  ((PIN==PB1)             ? ( ADC1->CHSELR = (uint16_t)1<<9         ) : \
 (0)))
 
-// Enable ADC
-static inline void ADC_enable(void) {
-  ADC->CCR  = ADC_CCR_TSEN | ADC_CCR_VREFEN;    // enable VREF and TEMP
-  ADC1->ISR = 0xff;                             // clear ADC flags
-  ADC1->CR |= ADC_CR_ADEN;                      // enable ADC
-  DLY_us(20);                                   // wait until stable
-}
-
-// Disable ADC
+// Disable ADC (power-down); ADEN cannot be cleared by software, the ADC module is reset
 static inline void ADC_disable(void) {
-  ADC->CCR = 0;                                 // disable VREF and TEMP
   if(ADC1->CR & ADC_CR_ADSTART) {               // ADC still converting?
     ADC1->CR |= ADC_CR_ADSTP;                   // stop ongoing conversion
     while(ADC1->CR & ADC_CR_ADSTP);             // wait for conversion stopped
   }
-  ADC1->CR &= ~ADC_CR_ADEN;                     // disable ADC
+  ADC->CCR = 0;                                 // disable VREF and TEMP
+  RCC->APBRSTR2 |=  RCC_APBRSTR2_ADCRST;        // reset ADC module
+  RCC->APBRSTR2 &= ~RCC_APBRSTR2_ADCRST;
 }
 
-// Calibrate ADC (ADC must be disabled)
-static inline void ADC_calibrate(void) {
-  ADC1->CR |= ADC_CR_ADCAL;                     // start calibration
+// Set ADC clock, calibrate and enable ADC (ADC must be disabled/reset)
+static inline void ADC_enable(void) {
+  ADC1->CFGR2 = (uint32_t)ADC_CKMODE << 28;     // set ADC clock (PCLK/n)
+  ADC1->CR    = ADC_CR_ADCAL;                   // start calibration
   while(ADC1->CR & ADC_CR_ADCAL);               // wait until finished
+  ADC->CCR    = ADC_CCR_TSEN | ADC_CCR_VREFEN;  // enable VREF and TEMP
+  DLY_us(20);                                   // wait until stable (> 4 ADC clocks)
+  ADC1->ISR   = 0xff;                           // clear ADC flags
+  ADC1->CR    = ADC_CR_ADEN;                    // enable ADC
+}
+
+// Re-calibrate ADC (keeps sampling time and input channel)
+static inline void ADC_calibrate(void) {
+  uint32_t smpr   = ADC1->SMPR;                 // save sampling time
+  uint32_t chselr = ADC1->CHSELR;               // save input channel
+  ADC_disable();                                // reset ADC (ADEN = 0)
+  ADC_enable();                                 // calibrate and enable ADC
+  ADC1->SMPR   = smpr;                          // restore sampling time
+  ADC1->CHSELR = chselr;                        // restore input channel
 }
 
 // Setup, calibrate and enable ADC
 static inline void ADC_init(void) {
   RCC->APBENR2 |= RCC_APBENR2_ADCEN;            // power on ADC
-  ADC1->CFGR2 = (uint32_t)0b0100 << 28;         // set PCLK/16 as ADC clock source
-  DLY_us(20);                                   // wait until stable
-  ADC_enable();                                 // turn on ADC
+  ADC_disable();                                // reset ADC (no reset on power-up)
+  ADC_enable();                                 // calibrate and turn on ADC
 }
 
 // Sample and read ADC value of current input
 static inline uint16_t ADC_read(void) {
-  DLY_us(20);                                   // wait a bit
+  ADC1->CR |= ADC_CR_ADEN;                      // single mode: re-enable ADC (AN1011)
+  DLY_us(20);                                   // wait a bit (> 8 ADC clocks)
   ADC1->CR |= ADC_CR_ADSTART;                   // start conversion
   while(ADC1->CR & ADC_CR_ADSTART);             // wait until finished
   return ADC1->DR;                              // return result
@@ -459,10 +497,11 @@ static inline uint16_t ADC_read_VDD(void) {
   return((uint32_t)1200 * 4095 / ADC_read());   // return VDD in mV
 }
 
-// Sample and read temperature sensor in °C
+// Sample and read temperature sensor in °C (calibrated at VCC = 3.3V)
 static inline int8_t ADC_read_TEMP(void) {
   ADC_input_TEMP();                             // set temp sensor as ADC input
-  return((ADC_read()-ADC_TSCAL1)*(ADC_CTEMP2-ADC_CTEMP1)/(ADC_TSCAL2-ADC_TSCAL1)+ADC_CTEMP1);
+  int32_t t1 = ADC_TSCAL1, t2 = ADC_TSCAL2;
+  return(((int32_t)ADC_read()-t1)*(ADC_CTEMP2-ADC_CTEMP1)/(t2-t1)+ADC_CTEMP1);
 }
 
 #ifdef __cplusplus

@@ -1,16 +1,17 @@
 // ===================================================================================
-// UART1 with DMA for PY32F0xx (RX only)                                      * v1.0 *
+// UART1 with DMA for PY32F0xx (RX only)                                      * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART_init()              Init UART with 8N1 and default BAUD rate (115200)
-// UART_setBaud(n)          Set BAUD rate
+// UART_setBAUD(n)          Set BAUD rate
 // UART_setDataBits(n)      Set number of data bits (n = 8, 9)
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
 // UART_setNoParity()       Set no parity bit
 // UART_setOddParity()      Set parity bit, odd
-// UART_setEvenParity()     Set parity bit, even
+// UART_setEvenParity()     Set parity bit, even (parity bit is part of the data bits,
+//                          use UART_setDataBits(9) for 8 data bits plus parity)
 //
 // UART_available()         Check if there is something to read
 // UART_read()              Read character via UART
@@ -21,7 +22,10 @@
 // USART1 pin mapping (set below in UART parameters):
 // --------------------------------------------------
 // UART_MAP   0    1    2    3     4     5     6    7    8
-// RX-pin    PA3  PA8  PA9  PA10  PA13  PA15  PB2  PB7  PF0  
+// RX-pin    PA3  PA8  PA9  PA10  PA13  PA15  PB2  PB7  PF0
+// (PA15 is not available on the PY32F002A, PA13 is SWDIO)
+//
+// Note: Requires DMA, which is only available on the PY32F003 and PY32F030!
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -40,15 +44,15 @@ extern "C" {
 #define UART_DMA_CHANNEL      1         // DMA channel (1 - 3)
 
 // UART macros
-#define UART_enable()         USART1->CR1 |= USART_CR1_UE         // enable USART
-#define UART_disable()        USART1->CR1 &= ~USART_CR1_UE        // disable USART
+#define UART_enable()         (USART1->CR1 |= USART_CR1_UE)         // enable USART
+#define UART_disable()        (USART1->CR1 &= ~USART_CR1_UE)        // disable USART
 
-#define UART_setBAUD(n)       USART1->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
-#define UART_setDataBits(n)   (n==9 ? (USART1->CR1 |= USART_CR1_M) : (USART1->CR1 &= ~USART_CR1_M))
-#define UART_setStopBits(n)   (n==2 ? (USART1->CR2 |= USART_CR2_STOP) : (USART1->CR2 &= ~USART_CR2_STOP))
-#define UART_setEvenParity()  {USART1->CR1 |= USART_CR1_PCE; USART1->CR1 &= ~USART_CR1_PS;}
-#define UART_setOddParity()   {USART1->CR1 |= USART_CR1_PCE; USART1->CR1 |=  USART_CR1_PS;}
-#define UART_setNoParity()    USART1->CR1 &= ~USART_CR1_PCE
+#define UART_setBAUD(n)       (USART1->BRR = ((2*F_CPU/(n))+1)/2)   // set BAUD rate
+#define UART_setDataBits(n)   ((n)==9 ? (USART1->CR1 |= USART_CR1_M) : (USART1->CR1 &= ~USART_CR1_M))
+#define UART_setStopBits(n)   ((n)==2 ? (USART1->CR2 |= USART_CR2_STOP) : (USART1->CR2 &= ~USART_CR2_STOP))
+#define UART_setEvenParity()  (USART1->CR1 = (USART1->CR1 & ~USART_CR1_PS) | USART_CR1_PCE)
+#define UART_setOddParity()   (USART1->CR1 = (USART1->CR1 | USART_CR1_PS) | USART_CR1_PCE)
+#define UART_setNoParity()    (USART1->CR1 &= ~USART_CR1_PCE)
 
 // UART functions
 void UART_init(void);         // init UART with default BAUD rate
