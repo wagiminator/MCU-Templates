@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V003                                        * v1.7 *
+// Basic System Functions for CH32V003                                        * v1.8 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -19,8 +19,8 @@
 void SYS_init(void) {
   // Init system clock
   #if SYS_CLK_INIT > 0
-  #if F_CPU > 24000000
-  FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;                     // 1 cycle latency
+  #if (F_CPU > 24000000) || defined(SYS_USE_PLL)
+  FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;                     // 1 cycle latency (SYSCLK 48MHz)
   #endif
   CLK_init();                                               // init system clock
   #endif
@@ -76,18 +76,18 @@ void CLK_init_HSE_PLL(void) {
   while((RCC->CFGR0 & RCC_SWS) != RCC_SWS_PLL);                 // wait till PLL is used as system clock source
 }
 
-// Reset system clock to default state
+// Reset system clock to default state (HSI/3 = 8MHz)
 void CLK_reset(void) {
   RCC->CTLR |= RCC_HSION;                                       // enable HSI
   while(!(RCC->CTLR & RCC_HSIRDY));                             // wait until HSI is ready
-  RCC->CFGR0 = 0x00000000;                                      // select HSI as system clock source
+  RCC->CFGR0 = RCC_HPRE_DIV3;                                   // select HSI/3 as system clock (reset value)
   while(RCC->CFGR0 & RCC_SWS);                                  // wait until HSI is selected
   RCC->CTLR  = RCC_HSION | ((HSITRIM) << 3);                    // use HSI only
   RCC->INTR  = 0x009F0000;                                      // disable interrupts and clear flags
   FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;                         // no flash wait states
 }
 
-// Setup pin PC4 for MCO (output, push-pull, 50MHz, auxiliary)
+// Setup pin PC4 for MCO (output, push-pull, 30MHz, auxiliary)
 void MCO_init(void) {
   RCC->APB2PCENR |= RCC_AFIOEN | RCC_IOPCEN;
   GPIOC->CFGLR    = (GPIOC->CFGLR & ~((uint32_t)0b1111<<(4<<2))) | ((uint32_t)0b1011<<(4<<2));
@@ -113,7 +113,7 @@ void BOOT_now(void) {
   FLASH->KEYR = 0xCDEF89AB;
   FLASH->BOOT_MODEKEYR = 0x45670123;
   FLASH->BOOT_MODEKEYR = 0xCDEF89AB;      // unlock flash
-  FLASH->STATR = (uint16_t)1<<14;         // start bootloader after software reset
+  FLASH->STATR = FLASH_STATR_BOOT_MODE;   // start bootloader after software reset
   FLASH->CTLR  = FLASH_CTLR_LOCK;         // lock flash
   RCC->RSTSCKR = RCC_RMVF;                // clear reset flags
   PFIC->SCTLR  = PFIC_SYSRESET;           // perform software reset
@@ -333,7 +333,7 @@ void reset_handler(void) {
     #if __GNUC__ > 10
     ".option arch, +zicsr     \n"
     #endif
-  " li a0, 0x88               \n\
+  " li a0, 0x1888             \n\
     csrw mstatus, a0          \n\
     li a1, 0x3                \n\
     csrw 0x804, a1            \n\

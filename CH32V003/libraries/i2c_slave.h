@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Slave Functions Functions for CH32V003                           * v1.0 *
+// Basic I2C Slave Functions for CH32V003                           * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -41,7 +41,8 @@ extern "C" {
 #define I2C_CLKRATE     400000      // I2C bus clock rate (Hz)
 
 #define I2C_REG_SLCT    0           // 0: transmission will always start with register 0
-                                    // 1: first byte written is register address (pointer)
+                                    // 1: first byte written is register address (pointer),
+                                    //    a following read continues at this address
 
 // Interrupt enable check
 #if SYS_USE_VECTORS == 0

@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic I2C Slave Functions for CH32V003                                     * v1.0 *
+// Basic I2C Slave Functions for CH32V003                                     * v1.1 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_slave.h"
+
+// I2C peripheral clock in MHz (FREQ[5:0], RM: 8..48)
+#define I2C_FREQ      ((F_CPU / 1000000) < 8 ? 8 : (F_CPU / 1000000) > 48 ? 48 : (F_CPU / 1000000))
 
 // I2C slave registers
 uint8_t I2C_REG_ptr;                              // register pointer
@@ -40,7 +43,7 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APB1PCENR |= RCC_I2C1EN;                   // enable I2C module clock
-  I2C1->CTLR2     = 4                             // set input clock rate
+  I2C1->CTLR2     = I2C_FREQ                             // set input clock rate
                   | I2C_CTLR2_ITBUFEN             // enable buffer interrupt
                   | I2C_CTLR2_ITEVTEN             // enable event interrupt
                   | I2C_CTLR2_ITERREN;            // enable error interrupt
@@ -58,14 +61,17 @@ void I2C_init(void) {
 void I2C1_EV_IRQHandler(void) __attribute__((interrupt));
 void I2C1_EV_IRQHandler(void) {
   uint16_t star1, star2 __attribute__((unused));
+  if(I2C_REG_ptr >= I2C_REG_SIZE) I2C_REG_ptr = 0; // keep pointer in range
   star1 = I2C1->STAR1;
   star2 = I2C1->STAR2;
 
   // Address match handler
   if(star1 & I2C_STAR1_ADDR) {
-    I2C_REG_ptr   = 0;                            // reset register pointer
     #if I2C_REG_SLCT > 0
-    I2C_FLAG_reg  = 1;                            // first byte will be reg ptr
+    if(!(star2 & I2C_STAR2_TRA)) I2C_FLAG_reg = 1; // write: first byte will be reg ptr
+                                                  // read: continue at reg ptr
+    #else
+    I2C_REG_ptr   = 0;                            // reset register pointer
     #endif
   }
 
@@ -74,6 +80,7 @@ void I2C1_EV_IRQHandler(void) {
     #if I2C_REG_SLCT > 0
     if(I2C_FLAG_reg) {
       I2C_REG_ptr = I2C1->DATAR;                  // read register address (pointer)
+      if(I2C_REG_ptr >= I2C_REG_SIZE) I2C_REG_ptr = 0;  // keep pointer in range
       I2C_FLAG_reg = 0;                           // next bytes will be data
     }
     else

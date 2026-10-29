@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI and DMA for CH32V003           * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI and DMA for CH32V003           * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -50,6 +50,7 @@ extern "C" {
 // NeoPixel Functions and Macros
 // ===================================================================================
 void NEO_init(void);
+void NEO_latch(void);
 void NEO_update(void);
 void NEO_clearAll(void);
 void NEO_writeColor(uint8_t pixel, uint8_t r, uint8_t g, uint8_t b);

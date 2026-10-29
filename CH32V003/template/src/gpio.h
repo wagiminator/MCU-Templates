@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for CH32V003                                          * v1.6 *
+// Basic GPIO Functions for CH32V003                                          * v1.7 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PC0, PC1, etc. - e.g.:
@@ -55,9 +55,9 @@
 // ADC_disable()            Disable ADC (power-down)
 // ADC_calibrate()          Calibrate ADC
 //
-// ADC_fast()               Set fast mode   ( 28 clock cycles, least accurate) (*)
-// ADC_medium()             Set medium mode (168 clock cycles, medium accurate)
-// ADC_slow()               Set slow mode   (504 clock cycles, most accurate)
+// ADC_fast()               Set fast mode   ( 14 ADC clock cycles, least accurate) (*)
+// ADC_medium()             Set medium mode ( 84 ADC clock cycles, medium accurate)
+// ADC_slow()               Set slow mode   (252 ADC clock cycles, most accurate)
 //
 // ADC_input(PIN)           Set PIN as ADC input
 // ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
@@ -83,6 +83,9 @@
 //   (For example, PA1 and PC1 cannot be used simultaneously, but PA1 and PC2).
 // - Pins used for ADC must be set with PIN_input_AN beforehand. Only the following 
 //   pins can be used as INPUT for the ADC: PA1, PA2, PC4, PD2, PD3, PD4, PD5, PD6.
+// - ADC_init() sets the ADC clock to F_CPU/2..8 so that it does not exceed ADC_CLK_MAX
+//   (default 12MHz, datasheet: max. 6MHz @ VDD>=2.8V, 12MHz @ VDD>=3.2V, 24MHz @
+//   VDD>=4.5V). Define ADC_CLK_MAX before including gpio.h to change it.
 // - Pins used as input for OPA comparator must be set with PIN_input_AN beforehand.
 //   Only the following pins can be used for the OPA: PA1 or PD0 as negative
 //   (inverting) input, PA2 or PD7 as positive (non-inverting) input and PD4 as
@@ -330,9 +333,9 @@ enum{PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH};
 // ===================================================================================
 // Enable GPIO PORTS
 // ===================================================================================
-#define PORTA_enable()      RCC->APB2PCENR |= RCC_IOPAEN;
-#define PORTC_enable()      RCC->APB2PCENR |= RCC_IOPCEN;
-#define PORTD_enable()      RCC->APB2PCENR |= RCC_IOPDEN;
+#define PORTA_enable()      RCC->APB2PCENR |= RCC_IOPAEN
+#define PORTC_enable()      RCC->APB2PCENR |= RCC_IOPCEN
+#define PORTD_enable()      RCC->APB2PCENR |= RCC_IOPDEN
 #define PORTS_enable()      RCC->APB2PCENR |= RCC_IOPAEN | RCC_IOPCEN | RCC_IOPDEN
 
 #define PORT_enable(PIN) \
@@ -385,8 +388,23 @@ static inline void ADC_calibrate(void) {
   while(ADC1->CTLR2 & ADC_CAL);                 // wait until finished
 }
 
+// ADC clock prescaler (ADC clock must not exceed ADC_CLK_MAX)
+#ifndef ADC_CLK_MAX
+  #define ADC_CLK_MAX       12000000            // max ADC clock (VDD >= 3.2V)
+#endif
+#if   F_CPU / 2 <= ADC_CLK_MAX
+  #define ADC_CLK_DIV       RCC_ADCPRE_DIV2
+#elif F_CPU / 4 <= ADC_CLK_MAX
+  #define ADC_CLK_DIV       RCC_ADCPRE_DIV4
+#elif F_CPU / 6 <= ADC_CLK_MAX
+  #define ADC_CLK_DIV       RCC_ADCPRE_DIV6
+#else
+  #define ADC_CLK_DIV       RCC_ADCPRE_DIV8
+#endif
+
 static inline void ADC_init(void) {
   RCC->APB2PCENR |= RCC_ADC1EN | RCC_AFIOEN;    // enable ADC and AFIO
+  RCC->CFGR0      = (RCC->CFGR0 & ~RCC_ADCPRE) | ADC_CLK_DIV; // set ADC clock
   ADC1->CTLR2 = ADC_ADON | ADC_EXTSEL;          // turn on ADC, software triggering
   DLY_us(10);                                   // wait to settle
   ADC_calibrate();                              // calibrate ADC
@@ -398,6 +416,7 @@ static inline uint16_t ADC_read(void) {
   return ADC1->RDATAR;                          // return result
 }
 
+// Vref is about 1.2V (1.17..1.23V), use ADC_slow() for best results
 static inline uint16_t ADC_read_VDD(void) {
   ADC_input_VREF();                             // set VREF as ADC input
   return((uint32_t)1200 * 1023 / ADC_read());   // return VDD im mV

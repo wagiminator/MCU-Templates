@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V003                                        * v1.7 *
+// Basic System Functions for CH32V003                                        * v1.8 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -11,9 +11,9 @@
 // CLK_init_HSI_PLL()       init internal oscillator with PLL as system clock source
 // CLK_init_HSE()           init external crystal (non PLL) as system clock source
 // CLK_init_HSE_PLL()       init external crystal (PLL) as system clock source
-// CLK_reset()              reset system clock to default state
+// CLK_reset()              reset system clock to default state (HSI/3 = 8MHz)
 //
-// HSI_enable()             enable internal 8MHz high-speed clock (HSI)
+// HSI_enable()             enable internal 24MHz high-speed clock (HSI)
 // HSI_disable()            disable HSI
 // HSI_ready()              check if HSI is stable
 //
@@ -200,7 +200,7 @@ void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock
 void CLK_init_HSE_PLL(void);  // init external crystal (PLL) as system clock source
 void CLK_reset(void);         // reset system clock to default state
 
-// Internal 8MHz high-speed clock (HSI) functions
+// Internal 24MHz high-speed clock (HSI) functions
 #define HSI_enable()      RCC->CTLR |= RCC_HSION        // enable HSI
 #define HSI_disable()     RCC->CTLR &= ~RCC_HSION       // disable HSI
 #define HSI_ready()       (RCC->CTLR & RCC_HSIRDY)      // check if HSI is stable
@@ -238,7 +238,11 @@ void MCO_init(void);                                    // init clock output to 
 #define STK_init()        STK->CTLR = STK_CTLR_STE | STK_CTLR_STCLK // init SYSTICK @ F_CPU
 #define DLY_US_TIME       (F_CPU / 1000000)                   // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 1000)                      // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n) * DLY_MS_TIME / 1000) // delay n microseconds
+#if F_CPU % 1000000 == 0
+  #define DLY_us(n)       DLY_ticks((n) * DLY_US_TIME)        // delay n microseconds
+#else
+  #define DLY_us(n)       DLY_ticks((n) * DLY_MS_TIME / 1000) // delay n microseconds
+#endif
 #define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)        // delay n milliseconds
 void DLY_ticks(uint32_t n);                                   // delay n system ticks
 
@@ -274,7 +278,7 @@ void AWU_init(void);        // init automatic wake-up timer
 void AWU_stop(void);        // stop automatic wake-up timer
 
 // AWU macros
-#define AWU_start(n)          {AWU_init(); AWU_set(n);}
+#define AWU_start(n)          {AWU_init(); AWU_set((n));}
 #define AWU_enable()          PWR->AWUCSR = PWR_AWUCSR_AWUEN
 #define AWU_disable()         PWR->AWUCSR = 0x00
 #define AWU_RT_enable()       EXTI->RTENR  |=  ((uint32_t)1 << 9)
@@ -287,16 +291,18 @@ void AWU_stop(void);        // stop automatic wake-up timer
 #define AWU_sleep(ms)         {AWU_set(ms); SLEEP_WFE_now();}
 #define AWU_stdby(ms)         {AWU_set(ms); STDBY_WFE_now();}
 
-// Set automatic wake-up timer in milliseconds
+// Set automatic wake-up timer in milliseconds (1..30720ms, LSI = 128kHz)
+// The wake-up period is (AWUWR + 1) * prescaler / LSI.
+#define AWU_WR(ms, t)         ((ms) >= (t) ? ((ms) / (t)) - 1 : 0)
 #define AWU_set(ms) \
-  (ms <    64 ? ({PWR->AWUPSC = 0b1000; PWR->AWUWR = (ms);    }) : \
-  (ms <   128 ? ({PWR->AWUPSC = 0b1001; PWR->AWUWR = (ms)>>1; }) : \
-  (ms <   256 ? ({PWR->AWUPSC = 0b1010; PWR->AWUWR = (ms)>>2; }) : \
-  (ms <   512 ? ({PWR->AWUPSC = 0b1011; PWR->AWUWR = (ms)>>3; }) : \
-  (ms <  1024 ? ({PWR->AWUPSC = 0b1100; PWR->AWUWR = (ms)>>4; }) : \
-  (ms <  2048 ? ({PWR->AWUPSC = 0b1101; PWR->AWUWR = (ms)>>5; }) : \
-  (ms <  5120 ? ({PWR->AWUPSC = 0b1110; PWR->AWUWR = (ms)/80; }) : \
-  (ms < 30720 ? ({PWR->AWUPSC = 0b1111; PWR->AWUWR = (ms)/480;}) : \
+  ((ms) <=    64 ? ({PWR->AWUPSC = 0b1000; PWR->AWUWR = AWU_WR((ms),   1);}) : \
+  ((ms) <=   128 ? ({PWR->AWUPSC = 0b1001; PWR->AWUWR = AWU_WR((ms),   2);}) : \
+  ((ms) <=   256 ? ({PWR->AWUPSC = 0b1010; PWR->AWUWR = AWU_WR((ms),   4);}) : \
+  ((ms) <=   512 ? ({PWR->AWUPSC = 0b1011; PWR->AWUWR = AWU_WR((ms),   8);}) : \
+  ((ms) <=  1024 ? ({PWR->AWUPSC = 0b1100; PWR->AWUWR = AWU_WR((ms),  16);}) : \
+  ((ms) <=  2048 ? ({PWR->AWUPSC = 0b1101; PWR->AWUWR = AWU_WR((ms),  32);}) : \
+  ((ms) <=  5120 ? ({PWR->AWUPSC = 0b1110; PWR->AWUWR = AWU_WR((ms),  80);}) : \
+  ((ms) <= 30720 ? ({PWR->AWUPSC = 0b1111; PWR->AWUWR = AWU_WR((ms), 480);}) : \
   (0)))))))))
 
 // ===================================================================================

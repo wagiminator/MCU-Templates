@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software USB Handler for CH32V003                                          * v1.0 *
+// Software USB Handler for CH32V003                                          * v1.1 *
 // ===================================================================================
 //
 // This file contains a copy of rv003usb.c (https://github.com/cnlohr/rv003usb),
@@ -108,7 +108,7 @@ void usb_pid_handle_data(uint32_t this_token, uint8_t * data, uint32_t which_dat
   e->toggle_out = !e->toggle_out;
 
   #if RV003USB_HANDLE_USER_DATA
-  if(epno || (!ist->setup_request && length > 3)) {
+  if(epno || (!ist->setup_request && length > 0)) {   // fix from rv003usb upstream (eeba5cf)
     usb_handle_user_data( e, epno, data_in, length, ist );
     #if RV003USB_USER_DATA_HANDLES_TOKEN
     return;

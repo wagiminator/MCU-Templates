@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Composite Device Functions for CH32V003                            * v1.0 *
+// USB HID Composite Device Functions for CH32V003                            * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -44,9 +44,9 @@ void KBD_type(uint8_t key);                 // press and release a key on keyboa
 void KBD_releaseAll(void);                  // release all keys on keyboard
 void KBD_print(char* str);                  // type some text on the keyboard
 
-void CON_press(uint8_t key);                // press a consumer key on keyboard
+void CON_press(uint16_t key);                // press a consumer key on keyboard
 void CON_release(void);                     // release consumer key on keyboard
-void CON_type(uint8_t key);                 // press and release a consumer key
+void CON_type(uint16_t key);                // press and release a consumer key
 
 void MOUSE_press(uint8_t buttons);          // press button(s)
 void MOUSE_release(uint8_t buttons);        // release button(s)

@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for CH32V003                       * v1.4 *
+// Basic I2C Master Functions (write only) for CH32V003                       * v1.5 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_tx.h"
+
+// I2C peripheral clock in MHz (FREQ[5:0], RM: 8..48)
+#define I2C_FREQ      ((F_CPU / 1000000) < 8 ? 8 : (F_CPU / 1000000) > 48 ? 48 : (F_CPU / 1000000))
 
 // Init I2C
 void I2C_init(void) {
@@ -31,7 +34,7 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APB1PCENR |= RCC_I2C1EN;                   // enable I2C module clock
-  I2C1->CTLR2     = 4;                            // set input clock rate
+  I2C1->CTLR2     = I2C_FREQ;                            // set input clock rate
   #if I2C_CLKRATE > 100000                        // Fast mode ?
     I2C1->CKCFGR  = (F_CPU / (3 * I2C_CLKRATE))   // -> set clock division factor 1:2
                   | I2C_CKCFGR_FS;                // -> enable fast mode (400kHz)

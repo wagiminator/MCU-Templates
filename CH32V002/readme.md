@@ -79,6 +79,8 @@ More information can be found in the [WCH-Link User Manual](http://www.wch-ic.co
 ## Uploading Firmware Binary
 WCH offers the free but closed-source software [WCH-LinkUtility](https://www.wch.cn/downloads/WCH-LinkUtility_ZIP.html) to upload the precompiled hex-file with Windows. Select the "WCH-LinkRV" mode in the software, open the *<firmware>.hex* file and upload it to the microcontroller.
 
+You can also use the [web app](https://wagiminator.github.io/apps/rvprog/) to upload the binary. This only works in Chrome, Edge, or Opera browsers on a desktop computer. The prerequisites mentioned above regarding drivers or udev rules must be met.
+
 Alternatively, there is an open-source tool called [minichlink](https://github.com/cnlohr/ch32v003fun/tree/master/minichlink) developed by Charles Lohr (CNLohr). It can be used with Windows, Linux and Mac.
 
 If you have installed [Python3](https://www.pythontutorial.net/getting-started/install-python/) on your system, you can also use the platform-independent open-source command-line tool [rvprog](https://pypi.org/project/rvprog/) for uploading:
@@ -89,6 +91,7 @@ rvprog -f <firmware>.bin
 # Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
 - [MCU Development Boards](https://github.com/wagiminator/Development-Boards)
+- [WCH-LinkE Flasher Web App](https://wagiminator.github.io/apps/rvprog/)
 
 # License
 

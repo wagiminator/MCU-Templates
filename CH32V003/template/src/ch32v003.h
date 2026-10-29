@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header File for CH32V003                                                   * v1.5 *
+// Header File for CH32V003                                                   * v1.6 *
 // ===================================================================================
 // This contains a copy of ch32v00x.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by CNLohr.
@@ -543,6 +543,9 @@ typedef struct
 
 #define ADC_JAWDEN                              ((uint32_t)0x00400000) /* Analog watchdog enable on injected channels */
 #define ADC_AWDEN                               ((uint32_t)0x00800000) /* Analog watchdog enable on regular channels */
+#define ADC_CALVOLSELECT                        ((uint32_t)0x06000000) /* CALVOL[1:0] calibration voltage selection */
+#define ADC_CALVOLSELECT_0                      ((uint32_t)0x02000000) /* 01: 2/4 AVDD */
+#define ADC_CALVOLSELECT_1                      ((uint32_t)0x04000000) /* 10: 3/4 AVDD */
 
 /*******************  Bit definition for ADC_CTLR2 register  ********************/
 #define ADC_ADON                                ((uint32_t)0x00000001) /* A/D Converter ON / OFF */
@@ -662,22 +665,22 @@ typedef struct
 #define ADC_SMP9_2                              ((uint32_t)0x20000000) /* Bit 2 */
 
 /******************  Bit definition for ADC_IOFR1 register  *******************/
-#define ADC_JOFFSET1                            ((uint16_t)0x0FFF) /* Data offset for injected channel 1 */
+#define ADC_JOFFSET1                            ((uint16_t)0x03FF) /* Data offset for injected channel 1 */
 
 /******************  Bit definition for ADC_IOFR2 register  *******************/
-#define ADC_JOFFSET2                            ((uint16_t)0x0FFF) /* Data offset for injected channel 2 */
+#define ADC_JOFFSET2                            ((uint16_t)0x03FF) /* Data offset for injected channel 2 */
 
 /******************  Bit definition for ADC_IOFR3 register  *******************/
-#define ADC_JOFFSET3                            ((uint16_t)0x0FFF) /* Data offset for injected channel 3 */
+#define ADC_JOFFSET3                            ((uint16_t)0x03FF) /* Data offset for injected channel 3 */
 
 /******************  Bit definition for ADC_IOFR4 register  *******************/
-#define ADC_JOFFSET4                            ((uint16_t)0x0FFF) /* Data offset for injected channel 4 */
+#define ADC_JOFFSET4                            ((uint16_t)0x03FF) /* Data offset for injected channel 4 */
 
 /*******************  Bit definition for ADC_WDHTR register  ********************/
-#define ADC_HT                                  ((uint16_t)0x0FFF) /* Analog watchdog high threshold */
+#define ADC_HT                                  ((uint16_t)0x03FF) /* Analog watchdog high threshold */
 
 /*******************  Bit definition for ADC_WDLTR register  ********************/
-#define ADC_LT                                  ((uint16_t)0x0FFF) /* Analog watchdog low threshold */
+#define ADC_LT                                  ((uint16_t)0x03FF) /* Analog watchdog low threshold */
 
 /*******************  Bit definition for ADC_RSQR1 register  *******************/
 #define ADC_SQ13                                ((uint32_t)0x0000001F) /* SQ13[4:0] bits (13th conversion in regular sequence) */
@@ -847,6 +850,10 @@ typedef struct
 
 /********************  Bit definition for ADC_RDATAR register  ********************/
 #define ADC_RDATAR_DATA                         ((uint32_t)0x0000FFFF) /* Regular data */
+
+/********************  Bit definition for ADC_DLYR register  ********************/
+#define ADC_DLYR_DLYVLU                         ((uint32_t)0x000001FF) /* External trigger delay (ADC clock cycles) */
+#define ADC_DLYR_DLYSRC                         ((uint32_t)0x00000200) /* Delay source: 1: injected, 0: regular */
 #define ADC_RDATAR_ADC2DATA                     ((uint32_t)0xFFFF0000) /* ADC2 data */
 
 /******************************************************************************/
@@ -1228,7 +1235,7 @@ typedef struct
 #define FLASH_ACTLR_LATENCY                     ((uint8_t)0x03) /* LATENCY[2:0] bits (Latency) */
 #define FLASH_ACTLR_LATENCY_0                   ((uint8_t)0x00) /* Bit 0 */
 #define FLASH_ACTLR_LATENCY_1                   ((uint8_t)0x01) /* Bit 0 */
-#define FLASH_ACTLR_LATENCY_2                   ((uint8_t)0x02) /* Bit 1 */
+#define FLASH_ACTLR_LATENCY_2                   ((uint8_t)0x02) /* Bit 1 (invalid on CH32V003) */
 
 /******************  Bit definition for FLASH_KEYR register  ******************/
 #define FLASH_KEYR_FKEYR                        ((uint32_t)0xFFFFFFFF) /* FPEC Key */
@@ -1245,8 +1252,10 @@ typedef struct
 #define FLASH_STATR_TURBO                       ((uint8_t)0x80) /* The state of TURBO Enable */
 #define FLASH_STATR_BOOT_AVA                    ((uint16_t)0x100) /* The state of Init Config */
 #define FLASH_STATR_BOOT_STATUS                 ((uint16_t)0x200) /* The source of Execute Program */
-#define FLASH_STATR_BOOT_MODE                   ((uint16_t)0x400) /* The switch of user section or boot section*/
-#define FLASH_STATR_BOOT_LOCK                   ((uint16_t)0x800) /* Lock boot area*/
+#define FLASH_STATR_BOOT_MODE                   ((uint16_t)0x4000) /* The switch of user section or boot section*/
+#define FLASH_STATR_BOOT_LOCK                   ((uint16_t)0x8000) /* Lock boot area*/
+#define FLASH_STATR_MODE                        FLASH_STATR_BOOT_MODE
+#define FLASH_STATR_LOCK                        FLASH_STATR_BOOT_LOCK
 
 /*******************  Bit definition for FLASH_CTLR register  *******************/
 #define FLASH_CTLR_PG                           ((uint16_t)0x0001)     /* Programming */
@@ -1616,6 +1625,11 @@ typedef struct
 #define AFIO_PCFR1_ADC2_ETRGINJ_REMAP           ((uint32_t)0x00080000) /* ADC 2 External Trigger Injected Conversion remapping */
 #define AFIO_PCFR1_ADC2_ETRGREG_REMAP           ((uint32_t)0x00100000) /* ADC 2 External Trigger Regular Conversion remapping */
 
+#define AFIO_PCFR1_USART1_HIGH_BIT_REMAP        ((uint32_t)0x00200000) /* USART1_RM1: USART1 remapping high bit */
+#define AFIO_PCFR1_I2C1_HIGH_BIT_REMAP          ((uint32_t)0x00400000) /* I2C1_RM1: I2C1 remapping high bit */
+#define AFIO_PCFR1_TIM1_1_RM                    ((uint32_t)0x00800000) /* TIM1 channel 1 internal LSI remap */
+#define AFIO_PCFR1_PA1PA2_REMAP                 AFIO_PCFR1_PA12_REMAP  /* PA1/PA2 used for external crystal */
+
 #define AFIO_PCFR1_SWJ_CFG                      ((uint32_t)0x07000000) /* SWJ_CFG[2:0] bits (Serial Wire JTAG configuration) */
 #define AFIO_PCFR1_SWJ_CFG_0                    ((uint32_t)0x01000000) /* Bit 0 */
 #define AFIO_PCFR1_SWJ_CFG_1                    ((uint32_t)0x02000000) /* Bit 1 */
@@ -1626,43 +1640,47 @@ typedef struct
 #define AFIO_PCFR1_SWJ_CFG_JTAGDISABLE          ((uint32_t)0x02000000) /* JTAG-DP Disabled and SW-DP Enabled */
 #define AFIO_PCFR1_SWJ_CFG_DISABLE              ((uint32_t)0x04000000) /* JTAG-DP Disabled and SW-DP Disabled */
 
-/*****************  Bit definition for AFIO_EXTICR1 register  *****************/
-#define AFIO_EXTICR1_EXTI0                      ((uint16_t)0x000F) /* EXTI 0 configuration */
-#define AFIO_EXTICR1_EXTI1                      ((uint16_t)0x00F0) /* EXTI 1 configuration */
-#define AFIO_EXTICR1_EXTI2                      ((uint16_t)0x0F00) /* EXTI 2 configuration */
-#define AFIO_EXTICR1_EXTI3                      ((uint16_t)0xF000) /* EXTI 3 configuration */
+/*****************  Bit definition for AFIO_EXTICR register  ******************/
+#define AFIO_EXTICR1_EXTI0                      ((uint16_t)0x0003) /* EXTI 0 configuration */
+#define AFIO_EXTICR1_EXTI1                      ((uint16_t)0x000C) /* EXTI 1 configuration */
+#define AFIO_EXTICR1_EXTI2                      ((uint16_t)0x0030) /* EXTI 2 configuration */
+#define AFIO_EXTICR1_EXTI3                      ((uint16_t)0x00C0) /* EXTI 3 configuration */
+#define AFIO_EXTICR1_EXTI4                      ((uint16_t)0x0300) /* EXTI 4 configuration */
+#define AFIO_EXTICR1_EXTI5                      ((uint16_t)0x0C00) /* EXTI 5 configuration */
+#define AFIO_EXTICR1_EXTI6                      ((uint16_t)0x3000) /* EXTI 6 configuration */
+#define AFIO_EXTICR1_EXTI7                      ((uint16_t)0xC000) /* EXTI 7 configuration */
 
 #define AFIO_EXTICR1_EXTI0_PA                   ((uint16_t)0x0000) /* PA[0] pin */
-#define AFIO_EXTICR1_EXTI0_PB                   ((uint16_t)0x0001) /* PB[0] pin */
 #define AFIO_EXTICR1_EXTI0_PC                   ((uint16_t)0x0002) /* PC[0] pin */
 #define AFIO_EXTICR1_EXTI0_PD                   ((uint16_t)0x0003) /* PD[0] pin */
-#define AFIO_EXTICR1_EXTI0_PE                   ((uint16_t)0x0004) /* PE[0] pin */
-#define AFIO_EXTICR1_EXTI0_PF                   ((uint16_t)0x0005) /* PF[0] pin */
-#define AFIO_EXTICR1_EXTI0_PG                   ((uint16_t)0x0006) /* PG[0] pin */
 
 #define AFIO_EXTICR1_EXTI1_PA                   ((uint16_t)0x0000) /* PA[1] pin */
-#define AFIO_EXTICR1_EXTI1_PB                   ((uint16_t)0x0010) /* PB[1] pin */
-#define AFIO_EXTICR1_EXTI1_PC                   ((uint16_t)0x0020) /* PC[1] pin */
-#define AFIO_EXTICR1_EXTI1_PD                   ((uint16_t)0x0030) /* PD[1] pin */
-#define AFIO_EXTICR1_EXTI1_PE                   ((uint16_t)0x0040) /* PE[1] pin */
-#define AFIO_EXTICR1_EXTI1_PF                   ((uint16_t)0x0050) /* PF[1] pin */
-#define AFIO_EXTICR1_EXTI1_PG                   ((uint16_t)0x0060) /* PG[1] pin */
+#define AFIO_EXTICR1_EXTI1_PC                   ((uint16_t)0x0008) /* PC[1] pin */
+#define AFIO_EXTICR1_EXTI1_PD                   ((uint16_t)0x000C) /* PD[1] pin */
 
 #define AFIO_EXTICR1_EXTI2_PA                   ((uint16_t)0x0000) /* PA[2] pin */
-#define AFIO_EXTICR1_EXTI2_PB                   ((uint16_t)0x0100) /* PB[2] pin */
-#define AFIO_EXTICR1_EXTI2_PC                   ((uint16_t)0x0200) /* PC[2] pin */
-#define AFIO_EXTICR1_EXTI2_PD                   ((uint16_t)0x0300) /* PD[2] pin */
-#define AFIO_EXTICR1_EXTI2_PE                   ((uint16_t)0x0400) /* PE[2] pin */
-#define AFIO_EXTICR1_EXTI2_PF                   ((uint16_t)0x0500) /* PF[2] pin */
-#define AFIO_EXTICR1_EXTI2_PG                   ((uint16_t)0x0600) /* PG[2] pin */
+#define AFIO_EXTICR1_EXTI2_PC                   ((uint16_t)0x0020) /* PC[2] pin */
+#define AFIO_EXTICR1_EXTI2_PD                   ((uint16_t)0x0030) /* PD[2] pin */
 
 #define AFIO_EXTICR1_EXTI3_PA                   ((uint16_t)0x0000) /* PA[3] pin */
-#define AFIO_EXTICR1_EXTI3_PB                   ((uint16_t)0x1000) /* PB[3] pin */
-#define AFIO_EXTICR1_EXTI3_PC                   ((uint16_t)0x2000) /* PC[3] pin */
-#define AFIO_EXTICR1_EXTI3_PD                   ((uint16_t)0x3000) /* PD[3] pin */
-#define AFIO_EXTICR1_EXTI3_PE                   ((uint16_t)0x4000) /* PE[3] pin */
-#define AFIO_EXTICR1_EXTI3_PF                   ((uint16_t)0x5000) /* PF[3] pin */
-#define AFIO_EXTICR1_EXTI3_PG                   ((uint16_t)0x6000) /* PG[3] pin */
+#define AFIO_EXTICR1_EXTI3_PC                   ((uint16_t)0x0080) /* PC[3] pin */
+#define AFIO_EXTICR1_EXTI3_PD                   ((uint16_t)0x00C0) /* PD[3] pin */
+
+#define AFIO_EXTICR1_EXTI4_PA                   ((uint16_t)0x0000) /* PA[4] pin */
+#define AFIO_EXTICR1_EXTI4_PC                   ((uint16_t)0x0200) /* PC[4] pin */
+#define AFIO_EXTICR1_EXTI4_PD                   ((uint16_t)0x0300) /* PD[4] pin */
+
+#define AFIO_EXTICR1_EXTI5_PA                   ((uint16_t)0x0000) /* PA[5] pin */
+#define AFIO_EXTICR1_EXTI5_PC                   ((uint16_t)0x0800) /* PC[5] pin */
+#define AFIO_EXTICR1_EXTI5_PD                   ((uint16_t)0x0C00) /* PD[5] pin */
+
+#define AFIO_EXTICR1_EXTI6_PA                   ((uint16_t)0x0000) /* PA[6] pin */
+#define AFIO_EXTICR1_EXTI6_PC                   ((uint16_t)0x2000) /* PC[6] pin */
+#define AFIO_EXTICR1_EXTI6_PD                   ((uint16_t)0x3000) /* PD[6] pin */
+
+#define AFIO_EXTICR1_EXTI7_PA                   ((uint16_t)0x0000) /* PA[7] pin */
+#define AFIO_EXTICR1_EXTI7_PC                   ((uint16_t)0x8000) /* PC[7] pin */
+#define AFIO_EXTICR1_EXTI7_PD                   ((uint16_t)0xC000) /* PD[7] pin */
 
 /******************************************************************************/
 /*                           Independent WATCHDOG                             */
@@ -1831,6 +1849,27 @@ typedef struct
 /******************  Bit definition for PWR_AWUCSR register  ******************/
 #define PWR_AWUCSR_AWUEN                        ((uint8_t)0x02)    /* enable auto wake-up */
 
+/******************  Bit definition for PWR_AWUWR register  *******************/
+#define PWR_AWUWR                               ((uint8_t)0x3F)    /* AWU window value */
+
+/******************  Bit definition for PWR_AWUPSC register  ******************/
+#define PWR_AWUPSC                              ((uint8_t)0x0F)    /* AWU prescaler */
+#define PWR_AWUPSC_0                            ((uint8_t)0x00)    /* prescaler off */
+#define PWR_AWUPSC_2                            ((uint8_t)0x02)    /* LSI / 2 */
+#define PWR_AWUPSC_4                            ((uint8_t)0x03)    /* LSI / 4 */
+#define PWR_AWUPSC_8                            ((uint8_t)0x04)    /* LSI / 8 */
+#define PWR_AWUPSC_16                           ((uint8_t)0x05)    /* LSI / 16 */
+#define PWR_AWUPSC_32                           ((uint8_t)0x06)    /* LSI / 32 */
+#define PWR_AWUPSC_64                           ((uint8_t)0x07)    /* LSI / 64 */
+#define PWR_AWUPSC_128                          ((uint8_t)0x08)    /* LSI / 128 */
+#define PWR_AWUPSC_256                          ((uint8_t)0x09)    /* LSI / 256 */
+#define PWR_AWUPSC_512                          ((uint8_t)0x0A)    /* LSI / 512 */
+#define PWR_AWUPSC_1024                         ((uint8_t)0x0B)    /* LSI / 1024 */
+#define PWR_AWUPSC_2048                         ((uint8_t)0x0C)    /* LSI / 2048 */
+#define PWR_AWUPSC_4096                         ((uint8_t)0x0D)    /* LSI / 4096 */
+#define PWR_AWUPSC_10240                        ((uint8_t)0x0E)    /* LSI / 10240 */
+#define PWR_AWUPSC_61440                        ((uint8_t)0x0F)    /* LSI / 61440 */
+
 /******************************************************************************/
 /*                         Reset and Clock Control                            */
 /******************************************************************************/
@@ -1906,7 +1945,7 @@ typedef struct
 #define RCC_PPRE2_DIV8                          ((uint32_t)0x00003000) /* HCLK divided by 8 */
 #define RCC_PPRE2_DIV16                         ((uint32_t)0x00003800) /* HCLK divided by 16 */
 
-#define RCC_ADCPRE                              ((uint32_t)0x0000C000) /* ADCPRE[1:0] bits (ADC prescaler) */
+#define RCC_ADCPRE                              ((uint32_t)0x0000F800) /* ADCPRE[4:0] bits (ADC prescaler) */
 #define RCC_ADCPRE_0                            ((uint32_t)0x00004000) /* Bit 0 */
 #define RCC_ADCPRE_1                            ((uint32_t)0x00008000) /* Bit 1 */
 
@@ -1914,6 +1953,14 @@ typedef struct
 #define RCC_ADCPRE_DIV4                         ((uint32_t)0x00004000) /* PCLK2 divided by 4 */
 #define RCC_ADCPRE_DIV6                         ((uint32_t)0x00008000) /* PCLK2 divided by 6 */
 #define RCC_ADCPRE_DIV8                         ((uint32_t)0x0000C000) /* PCLK2 divided by 8 */
+#define RCC_ADCPRE_DIV12                        ((uint32_t)0x0000A000) /* PCLK2 divided by 12 */
+#define RCC_ADCPRE_DIV16                        ((uint32_t)0x0000E000) /* PCLK2 divided by 16 */
+#define RCC_ADCPRE_DIV24                        ((uint32_t)0x0000A800) /* PCLK2 divided by 24 */
+#define RCC_ADCPRE_DIV32                        ((uint32_t)0x0000E800) /* PCLK2 divided by 32 */
+#define RCC_ADCPRE_DIV48                        ((uint32_t)0x0000B000) /* PCLK2 divided by 48 */
+#define RCC_ADCPRE_DIV64                        ((uint32_t)0x0000F000) /* PCLK2 divided by 64 */
+#define RCC_ADCPRE_DIV96                        ((uint32_t)0x0000B800) /* PCLK2 divided by 96 */
+#define RCC_ADCPRE_DIV128                       ((uint32_t)0x0000F800) /* PCLK2 divided by 128 */
 
 #define RCC_PLLSRC                              ((uint32_t)0x00010000) /* PLL entry clock source */
 
@@ -2075,6 +2122,7 @@ typedef struct
 #define SPI_CTLR1_BR_2                          ((uint16_t)0x0020) /* Bit 2 */
 
 #define SPI_CTLR1_SPE                           ((uint16_t)0x0040) /* SPI Enable */
+#define SPI_CTLR1_LSBFIRST                      ((uint16_t)0x0080) /* Frame Format (LSB first) */
 #define SPI_CTLR1_SSI                           ((uint16_t)0x0100) /* Internal slave select */
 #define SPI_CTLR1_SSM                           ((uint16_t)0x0200) /* Software slave management */
 #define SPI_CTLR1_RXONLY                        ((uint16_t)0x0400) /* Receive only */

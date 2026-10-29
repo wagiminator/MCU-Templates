@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Software Bit-banging for CH32V003           * v1.0 *
+// Basic NeoPixel Functions using Software Bit-banging for CH32V003           * v1.1 *
 // ===================================================================================
 //
 // Basic control functions for 800kHz addressable LEDs (NeoPixel). A simplified 
@@ -99,7 +99,7 @@ void NEO_sendByte(uint8_t data) {
 // Write Buffer to Pixels
 // ===================================================================================
 void NEO_update(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) NEO_sendByte(*ptr++);
@@ -110,7 +110,7 @@ void NEO_update(void) {
 // Clear all Pixels
 // ===================================================================================
 void NEO_clearAll(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0;

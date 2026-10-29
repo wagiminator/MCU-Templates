@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Standard Mouse Functions for CH32V003                              * v1.0 *
+// USB HID Standard Mouse Functions for CH32V003                              * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -30,6 +30,12 @@ volatile HID_MOUSE_REPORT_TYPE MOUSE_report = {
 // ===================================================================================
 
 // Press mouse button(s)
+// Add relative movement with saturation (-127..127)
+static int8_t MOUSE_add(int8_t a, int8_t b) {
+  int16_t r = (int16_t)a + b;
+  return (r > 127) ? 127 : (r < -127) ? -127 : (int8_t)r;
+}
+
 void MOUSE_press(uint8_t buttons) {
   MOUSE_report.buttons |= buttons;    // press button(s)
 }
@@ -42,15 +48,15 @@ void MOUSE_release(uint8_t buttons) {
 // Move mouse pointer
 void MOUSE_move(int8_t xrel, int8_t yrel) {
   INT_ATOMIC_BLOCK {
-    MOUSE_report.xmove += xrel;       // set relative x-movement
-    MOUSE_report.ymove += yrel;       // set relative y-movement
+    MOUSE_report.xmove = MOUSE_add(MOUSE_report.xmove, xrel); // add x-movement
+    MOUSE_report.ymove = MOUSE_add(MOUSE_report.ymove, yrel); // add y-movement
   }
 }
 
 // Move mouse wheel
 void MOUSE_wheel(int8_t rel) {
   INT_ATOMIC_BLOCK {
-    MOUSE_report.wmove += rel;        // set relative wheel movement
+    MOUSE_report.wmove = MOUSE_add(MOUSE_report.wmove, rel);  // add wheel movement
   }
 }
 

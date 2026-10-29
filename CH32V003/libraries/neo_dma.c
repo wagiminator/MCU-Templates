@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI and DMA for CH32V003           * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI and DMA for CH32V003           * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -9,7 +9,7 @@
 // SPI Parameters and Variables
 // ===================================================================================
 
-// Define SPI prescaler for 3 MHz SPI frequency -> 333.33us per bit, 750kHz byte freq
+// Define SPI prescaler for 3 MHz SPI frequency -> 333.33ns per bit, 750kHz byte freq
 #if F_CPU == 48000000
 #define SPI_PRESC   3
 #elif F_CPU == 24000000
@@ -50,7 +50,7 @@ void NEO_init(void) {
   DMA1_Channel3->PADDR = (uint32_t)&SPI1->DATAR;  // peripheral address
   DMA1_Channel3->MADDR = (uint32_t)NEO_buffer;    // memory address
   DMA1_Channel3->CFGR  = DMA_CFGR3_MINC           // increment memory address
-                       | DMA_CFGR3_DIR            // memory to I2C
+                       | DMA_CFGR3_DIR            // memory to SPI
                        | DMA_CFGR3_TCIE;          // transfer complete interrupt enable
   DMA1->INTFCR         = DMA_CGIF3;               // clear interrupt flags
   NVIC_EnableIRQ(DMA1_Channel3_IRQn);             // enable the DMA IRQ
@@ -61,11 +61,12 @@ void NEO_init(void) {
 // ===================================================================================
 void NEO_latch(void) {
   if(NEO_TX_flag) {
-    while(SPI1->STATR & SPI_STATR_BSY);       // wait for end of last transmission
+    while(DMA1_Channel3->CFGR & DMA_CFGR3_EN);    // wait for DMA transfer to finish (ISR)
+    while(SPI1->STATR & SPI_STATR_BSY);           // wait for end of last transmission
     while(((int32_t)(STK->CNT - NEO_latch_end)) < 0); // wait for end of latch
-    NEO_TX_flag = 0;                          // clear transmission flag
+    NEO_TX_flag = 0;                              // clear transmission flag
   }
-  else DLY_us(NEO_LATCH_TIME);                // or just delay the latch time
+  else DLY_us(NEO_LATCH_TIME);                    // or just delay the latch time
 }
 
 // ===================================================================================
@@ -94,7 +95,7 @@ void DMA1_Channel3_IRQHandler(void) {
 // Clear all Pixels
 // ===================================================================================
 void NEO_clearAll(void) {
-  uint8_t i;
+  uint16_t i;
   uint32_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0x44444444;
@@ -109,10 +110,10 @@ uint32_t NEO_SPI_mask(uint8_t data) {
   uint32_t result = 0;                        // bit mask for SPI transmission
   for(i=4; i; i--, data>>=2) {
     result <<= 8;
-    if(data & 0x01) result |= 0x06;           // 667us high for "1"-bit
-    else            result |= 0x04;           // 333us high for "0"-bit
-    if(data & 0x02) result |= 0x60;           // 667us high for "1"-bit
-    else            result |= 0x40;           // 333us high for "0"-bit
+    if(data & 0x01) result |= 0x06;           // 667ns high for "1"-bit
+    else            result |= 0x04;           // 333ns high for "0"-bit
+    if(data & 0x02) result |= 0x60;           // 667ns high for "1"-bit
+    else            result |= 0x40;           // 333ns high for "0"-bit
   }  
   return result;
 }

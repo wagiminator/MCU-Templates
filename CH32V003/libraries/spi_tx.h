@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions (TX only) for CH32V003                          * v1.0 *
+// Basic SPI Master Functions (TX only) for CH32V003                          * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -36,7 +36,7 @@ extern "C" {
 // SPI Parameters
 #define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC + 1)
 
-// I2C Functions and Macros
+// SPI Functions and Macros
 #define SPI_busy()          (SPI1->STATR & SPI_STATR_BSY)
 #define SPI_ready()         (SPI1->STATR & SPI_STATR_TXE)
 

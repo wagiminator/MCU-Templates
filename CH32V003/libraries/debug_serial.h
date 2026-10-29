@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic Serial Debug Functions for CH32V003                                  * v1.3 *
+// Basic Serial Debug Functions for CH32V003                                  * v1.4 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // DEBUG_init()             Init serial DEBUG on PD5 with default BAUD rate (115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_setBAUD(n)         Set BAUD rate
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string
@@ -62,7 +62,7 @@ extern "C" {
   #define DEBUG_printf(f, ...)
 #endif
 
-#define DEBUG_setBAUD(n)  USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+#define DEBUG_setBAUD(n)  USART1->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
 #define DEBUG_newline()   DEBUG_write('\n') // send newline
 #define DEBUG_printS      DEBUG_print       // alias for print
 #define DEBUG_out         DEBUG_println     // default DEBUG function

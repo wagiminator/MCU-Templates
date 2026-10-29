@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic UART Functions for CH32V003  (no buffer, no interrupt, no DMA)       * v1.1 *
+// Basic UART Functions for CH32V003  (no buffer, no interrupt, no DMA)       * v1.2 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART_init()              Init UART with 8N1 and default BAUD rate (115200)
-// UART_setBaud(n)          Set BAUD rate
+// UART_setBAUD(n)          Set BAUD rate
 // UART_setDataBits(n)      Set number of data bits (n = 8, 9)
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
 // UART_setNoParity()       Set no parity bit
@@ -71,9 +71,9 @@ extern "C" {
 #define UART_RX_enable()      USART1->CTLR1 |= USART_CTLR1_RE     // enable receiver
 #define UART_RX_disable()     USART1->CTLR1 &= ~USART_CTLR1_RE    // disable receiver
 
-#define UART_setBAUD(n)       USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
-#define UART_setDataBits(n)   (n==9 ? (USART1->CTLR1 |= USART_CTLR1_M) : (USART1->CTLR1 &= ~USART_CTLR1_M))
-#define UART_setStopBits(n)   (n==2 ? (USART1->CTLR2 |= ((uint32_t)1<<13) : (USART1->CTLR2 &= ~((uint32_t)1<<13)))
+#define UART_setBAUD(n)       USART1->BRR = ((2*F_CPU/(n))+1)/2   // set BAUD rate
+#define UART_setDataBits(n)   ((n)==9 ? (USART1->CTLR1 |= USART_CTLR1_M) : (USART1->CTLR1 &= ~USART_CTLR1_M))
+#define UART_setStopBits(n)   ((n)==2 ? (USART1->CTLR2 |= ((uint32_t)1<<13)) : (USART1->CTLR2 &= ~((uint32_t)1<<13)))
 #define UART_setEvenParity()  {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 &= ~USART_CTLR1_PS;}
 #define UART_setOddParity()   {USART1->CTLR1 |= USART_CTLR1_PCE; USART1->CTLR1 |=  USART_CTLR1_PS;}
 #define UART_setNoParity()    USART1->CTLR1 &= ~USART_CTLR1_PCE

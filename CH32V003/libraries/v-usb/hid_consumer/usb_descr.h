@@ -108,8 +108,8 @@ static const struct USB_CFG_DESCR_HID CfgDescr = {
     .bAlternateSetting  = 0,                      // value used to select alternative setting
     .bNumEndpoints      = 1,                      // number of endpoints used: 1
     .bInterfaceClass    = USB_DEV_CLASS_HID,      // interface class: HID (0x03)
-    .bInterfaceSubClass = 1,                      // boot interface
-    .bInterfaceProtocol = 1,                      // keyboard
+    .bInterfaceSubClass = 0,                      // no boot interface (report IDs used)
+    .bInterfaceProtocol = 0,                      // none
     .iInterface         = 0                       // interface string descriptor
   },
 

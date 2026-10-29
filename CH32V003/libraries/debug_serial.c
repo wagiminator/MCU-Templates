@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for CH32V003                                  * v1.3 *
+// Basic Serial Debug Functions for CH32V003                                  * v1.4 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -57,7 +57,7 @@ void DEBUG_println(const char* str) {
 }
 
 // For BCD conversion
-const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
+static const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
                             10000000, 100000000, 1000000000};
 
 // Print decimal value (BCD conversion by substraction method)
@@ -101,7 +101,7 @@ void DEBUG_printW(uint32_t value) {
 }
 
 // printf, supports %s, %c, %d, %u, %x, %b, %02d, %%
-void DEBUG_itoa(int32_t, int8_t, int8_t);
+void DEBUG_itoa(int32_t, int8_t, int32_t);
 static void DEBUG_vfprintf(const char *format, va_list arg);
 
 void DEBUG_printf(const char *format, ...) {
@@ -122,16 +122,16 @@ static void DEBUG_vfprintf(const char* str,  va_list arp) {
     }
     d = *str++;
     w = r = s = 0;
-    if(d == '%') {
+    if(d == '%') {                               // "%%" -> print '%'
       DEBUG_write(d);
-      d = *str++;
+      continue;
     }
     if(d == '0') {
       d = *str++;
       s = 1;
     }
     while((d >= '0') && (d <= '9')) {
-      w += w * 10 + (d - '0');
+      w = w * 10 + (d - '0');
       d = *str++;
     }
     if(s) w = -w;
@@ -156,9 +156,9 @@ static void DEBUG_vfprintf(const char* str,  va_list arp) {
   }
 }
 
-void DEBUG_itoa(int32_t val, int8_t rad, int8_t len) {
+void DEBUG_itoa(int32_t val, int8_t rad, int32_t len) {
   char c, sgn = 0, pad = ' ';
-  char s[20];
+  char s[34];                                     // 32 binary digits + sign
   uint8_t i = 0;
 
   if(rad < 0) {
@@ -172,7 +172,8 @@ void DEBUG_itoa(int32_t val, int8_t rad, int8_t len) {
     len = -len;
     pad = '0';
   }
-  if(len > 20) return;
+  if(len > 32) len = 32;
+  if(sgn && (pad == '0') && len) len--;           // sign is part of the field width
   do {
     c = (char)((uint32_t)val % rad);
     if (c >= 10) c += ('A' - 10);

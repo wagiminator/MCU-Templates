@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.1 *
+// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_dma.h"
+
+// I2C peripheral clock in MHz (FREQ[5:0], RM: 8..48)
+#define I2C_FREQ      ((F_CPU / 1000000) < 8 ? 8 : (F_CPU / 1000000) > 48 ? 48 : (F_CPU / 1000000))
 
 // Read/write flag
 uint8_t I2C_rwflag;
@@ -34,7 +37,7 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APB1PCENR |= RCC_I2C1EN;                   // enable I2C module clock
-  I2C1->CTLR2     = 4;                            // set input clock rate
+  I2C1->CTLR2     = I2C_FREQ;                            // set input clock rate
   #if I2C_CLKRATE > 100000                        // Fast mode ?
     I2C1->CKCFGR  = (F_CPU / (3 * I2C_CLKRATE))   // -> set clock division factor 1:2
                   | I2C_CKCFGR_FS;                // -> enable fast mode (400kHz)
@@ -43,7 +46,7 @@ void I2C_init(void) {
   #endif
   I2C1->CTLR1   = I2C_CTLR1_PE;                   // enable I2C
 
-  // Setup DMA Channel 5
+  // Setup DMA Channel 6 (I2C1_TX)
   RCC->AHBPCENR |= RCC_DMA1EN;                    // enable DMA module clock
   DMA1_Channel6->PADDR = (uint32_t)&I2C1->DATAR;  // peripheral address
   DMA1_Channel6->CFGR  = DMA_CFG6_MINC            // increment memory address
@@ -94,6 +97,10 @@ void I2C_stop(void) {
 
 // Send data buffer via I2C bus using DMA
 void I2C_writeBuffer(uint8_t* buf, uint16_t len) {
+  if(!len) {                                      // nothing to send?
+    I2C_stop();                                   // -> just stop
+    return;
+  }
   DMA1_Channel6->CNTR  = len;                     // number of bytes to be transfered
   DMA1_Channel6->MADDR = (uint32_t)buf;           // memory address
   DMA1_Channel6->CFGR |= DMA_CFG6_EN;             // enable DMA channel

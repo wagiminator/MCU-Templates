@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Composite Device Functions for CH32V003                            * v1.0 *
+// USB HID Composite Device Functions for CH32V003                            * v1.1 *
 // ===================================================================================
 
 #include "usb_composite.h"
@@ -114,17 +114,19 @@ void KBD_print(char* str) {
 // ===================================================================================
 
 // Press a consumer key on keyboard
-void CON_press(uint8_t key) {
-  CON_report[1] = key;
+void CON_press(uint16_t key) {
+  CON_report[1] = key & 0xff;
+  CON_report[2] = key >> 8;
 }
 
 // Release a consumer key on keyboard
 void CON_release(void) {
   CON_report[1] = 0;
+  CON_report[2] = 0;
 }
 
 // Press and release a consumer key on keyboard
-void CON_type(uint8_t key) {
+void CON_type(uint16_t key) {
   CON_press(key);
   DLY_ms(6);
   CON_release();
@@ -134,6 +136,12 @@ void CON_type(uint8_t key) {
 // ===================================================================================
 // Mouse Functions
 // ===================================================================================
+
+// Add relative movement with saturation (-127..127)
+static int8_t MOUSE_add(int8_t a, int8_t b) {
+  int16_t r = (int16_t)a + b;
+  return (r > 127) ? 127 : (r < -127) ? -127 : (int8_t)r;
+}
 
 // Press mouse button(s)
 void MOUSE_press(uint8_t buttons) {
@@ -148,15 +156,15 @@ void MOUSE_release(uint8_t buttons) {
 // Move mouse pointer
 void MOUSE_move(int8_t xrel, int8_t yrel) {
   INT_ATOMIC_BLOCK {
-    MOUSE_report[2] += (uint8_t)xrel;           // set relative x-movement
-    MOUSE_report[3] += (uint8_t)yrel;           // set relative y-movement
+    MOUSE_report[2] = (uint8_t)MOUSE_add((int8_t)MOUSE_report[2], xrel); // add x-movement
+    MOUSE_report[3] = (uint8_t)MOUSE_add((int8_t)MOUSE_report[3], yrel); // add y-movement
   }
 }
 
 // Move mouse wheel
 void MOUSE_wheel(int8_t rel) {
   INT_ATOMIC_BLOCK {
-    MOUSE_report[4] += (uint8_t)rel;            // set relative wheel movement
+    MOUSE_report[4] = (uint8_t)MOUSE_add((int8_t)MOUSE_report[4], rel);  // add wheel movement
   }
 }
 
@@ -184,5 +192,6 @@ void usb_handle_user_in_request(struct usb_endpoint * e, uint8_t * scratchpad, i
 }
 
 void usb_handle_user_data(struct usb_endpoint * e, int current_endpoint, uint8_t * data, int len, struct rv003usb_internal * ist) {
-  if(current_endpoint == 1) KBD_state = data[0];
+  // LED output report with report ID 1: [ID, LEDs]
+  if((current_endpoint == 1) && (len >= 2) && (data[0] == 1)) KBD_state = data[1];
 }

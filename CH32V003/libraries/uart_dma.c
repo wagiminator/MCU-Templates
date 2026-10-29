@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART with DMA RX Buffer for CH32V003                                       * v1.1 *
+// UART with DMA RX Buffer for CH32V003                                       * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,8 +7,8 @@
 
 // Circular RX buffer
 char UART_RX_buffer[UART_RX_BUF_SIZE];
-uint8_t UART_RX_tptr = 0;
-#define UART_RX_hptr (UART_RX_BUF_SIZE - DMA1_Channel5->CNTR)
+uint16_t UART_RX_tptr = 0;
+#define UART_RX_hptr ((uint16_t)((UART_RX_BUF_SIZE - DMA1_Channel5->CNTR) % UART_RX_BUF_SIZE))
 
 // Init UART
 void UART_init(void) {

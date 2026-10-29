@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Rotary Encoder Functions using Timer for CH32V003                    * v1.0 *
+// Basic Rotary Encoder Functions using Timer for CH32V003                    * v1.1 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -43,14 +43,14 @@ void ENC1_init(void) {
 
   // Setup timer
   TIM1->SMCFGR    = (uint16_t)0b011;        // set encoder mode 3
-  TIM1->CTLR1     = TIM_CEN;                // enable/start timer2
+  TIM1->CTLR1     = TIM_CEN;                // enable/start timer1
 }
 
 // Set rotary encoder 1 current and maximum count value
 void ENC1_set(uint16_t cur, uint16_t max) {
-  TIM1->CNT    = cur;                       // set current count value (timer2 counter)
-  TIM1->ATRLR  = max;                       // set max count value (timer2 auto-reload)
-  TIM1->SWEVGR = TIM_UG;                    // re-initialize timer
+  TIM1->ATRLR  = max;                       // set max count value (timer1 auto-reload)
+  TIM1->SWEVGR = TIM_UG;                    // re-initialize timer (clears counter)
+  TIM1->CNT    = cur;                       // set current count value (timer1 counter)
 }
 
 // Read rotary encoder 1 current count value
@@ -105,9 +105,9 @@ void ENC2_init(void) {
 
 // Set rotary encoder 2 current and maximum count value
 void ENC2_set(uint16_t cur, uint16_t max) {
-  TIM2->CNT    = cur;                       // set current count value (timer2 counter)
   TIM2->ATRLR  = max;                       // set max count value (timer2 auto-reload)
-  TIM2->SWEVGR = TIM_UG;                    // re-initialize timer
+  TIM2->SWEVGR = TIM_UG;                    // re-initialize timer (clears counter)
+  TIM2->CNT    = cur;                       // set current count value (timer2 counter)
 }
 
 // Read rotary encoder 2 current count value

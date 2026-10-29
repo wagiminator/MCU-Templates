@@ -1,9 +1,12 @@
 // ===================================================================================
-// Basic I2C Master Functions for CH32V003                                    * v1.2 *
+// Basic I2C Master Functions for CH32V003                                    * v1.3 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c.h"
+
+// I2C peripheral clock in MHz (FREQ[5:0], RM: 8..48)
+#define I2C_FREQ      ((F_CPU / 1000000) < 8 ? 8 : (F_CPU / 1000000) > 48 ? 48 : (F_CPU / 1000000))
 
 // Read/write flag
 uint8_t I2C_rwflag;
@@ -34,7 +37,7 @@ void I2C_init(void) {
 
   // Setup and enable I2C
   RCC->APB1PCENR |= RCC_I2C1EN;                   // enable I2C module clock
-  I2C1->CTLR2     = 4;                            // set input clock rate
+  I2C1->CTLR2     = I2C_FREQ;                            // set input clock rate
   #if I2C_CLKRATE > 100000                        // Fast mode ?
     I2C1->CKCFGR  = (F_CPU / (3 * I2C_CLKRATE))   // -> set clock division factor 1:2
                   | I2C_CKCFGR_FS;                // -> enable fast mode (400kHz)
@@ -77,7 +80,7 @@ uint8_t I2C_read(uint8_t ack) {
 
 // Stop I2C transmission
 void I2C_stop(void) {
-  if(!I2C_rwflag) {                               // for read operation only
+  if(!I2C_rwflag) {                               // for write operation only (read stops itself)
     while(!(I2C1->STAR1 & I2C_STAR1_BTF));        // wait for last byte transmitted
     I2C1->CTLR1 |= I2C_CTLR1_STOP;                // set STOP condition
   }

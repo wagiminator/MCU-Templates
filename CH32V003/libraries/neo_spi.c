@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for CH32V003                   * v1.1 *
+// Basic NeoPixel Functions using Hardware-SPI for CH32V003                   * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -9,7 +9,7 @@
 // SPI Parameters and Variables
 // ===================================================================================
 
-// Define SPI prescaler for 3 MHz SPI frequency -> 333.33us per bit, 750kHz byte freq
+// Define SPI prescaler for 3 MHz SPI frequency -> 333.33ns per bit, 750kHz byte freq
 #if F_CPU == 48000000
 #define SPI_PRESC   3
 #elif F_CPU == 24000000
@@ -50,10 +50,10 @@ void NEO_init(void) {
 void NEO_sendByte(uint8_t data) {
   uint8_t i, bits;
   for(i=4; i; i--, data<<=2) {              // 4x2 bits, MSB first
-    if(data & 0x80) bits  = 0x60;           // 667us high for "1"-bit
-    else            bits  = 0x40;           // 333us high for "0"-bit
-    if(data & 0x40) bits |= 0x06;           // 667us high for "1"-bit
-    else            bits |= 0x04;           // 333us high for "0"-bit
+    if(data & 0x80) bits  = 0x60;           // 667ns high for "1"-bit
+    else            bits  = 0x40;           // 333ns high for "0"-bit
+    if(data & 0x40) bits |= 0x06;           // 667ns high for "1"-bit
+    else            bits |= 0x04;           // 333ns high for "0"-bit
     while(!(SPI1->STATR & SPI_STATR_TXE));  // wait for transmit buffer empty
     SPI1->DATAR = bits;                     // send 2 bits
   }
@@ -63,7 +63,7 @@ void NEO_sendByte(uint8_t data) {
 // Write Buffer to Pixels
 // ===================================================================================
 void NEO_update(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) NEO_sendByte(*ptr++);
@@ -74,7 +74,7 @@ void NEO_update(void) {
 // Clear all Pixels
 // ===================================================================================
 void NEO_clearAll(void) {
-  uint8_t i;
+  uint16_t i;
   uint8_t *ptr;
   ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0;
