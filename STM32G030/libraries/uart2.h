@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic USART2 Functions for STM32G0xx  (no buffer, no interrupt, no DMA)    * v1.0 *
+// Basic USART2 Functions for STM32G0xx  (no buffer, no interrupt, no DMA)    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART2_init()             Init UART with 8N1 and default BAUD rate (115200)
-// UART2_setBaud(n)         Set BAUD rate
+// UART2_setBAUD(n)         Set BAUD rate
 // UART2_setDataBits(n)     Set number of data bits (n = 7, 8, 9)
 // UART2_setStopBits(n)     Set number of stop bits (n = 1, 2)
 // UART2_setNoParity()      Set no parity bit
@@ -43,6 +43,8 @@
 // UART2_MAP   0     1     2
 // TX-pin     PA2   PA14  No mapping
 // RX-pin     PA3   PA15  No mapping
+// (PA14 is also SWCLK!)
+// Note: USART2 has no FIFO and does not support wake-up from low-power modes.
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -64,21 +66,32 @@ extern "C" {
 #define UART2_available()     (USART2->ISR & USART_ISR_RXNE_RXFNE)  // ready to read
 #define UART2_completed()     (USART2->ISR & USART_ISR_TC)          // transmission completed
 
-#define UART2_enable()        USART2->CR1 |= USART_CR1_UE           // enable USART
-#define UART2_disable()       USART2->CR1 &= ~USART_CR1_UE          // disable USART
-#define UART2_TX_enable()     USART2->CR1 |= USART_CR1_TE           // enable transmitter
-#define UART2_TX_disable()    USART2->CR1 &= ~USART_CR1_TE          // disable transmitter
-#define UART2_RX_enable()     USART2->CR1 |= USART_CR1_RE           // enable receiver
-#define UART2_RX_disable()    USART2->CR1 &= ~USART_CR1_RE          // disable receiver
+// Write USART configuration register (BRR, M, PCE, PS, STOP and FIFOEN can only be
+// written while the USART is disabled; an ongoing transmission is completed first)
+static inline void UART2_config(volatile uint32_t* reg, uint32_t mask, uint32_t val) {
+  uint32_t cr1 = USART2->CR1;
+  if(cr1 & USART_CR1_UE) {
+    if(cr1 & USART_CR1_TE) while(!(USART2->ISR & USART_ISR_TC)); // wait for TX completed
+    USART2->CR1 = cr1 & ~USART_CR1_UE;                           // disable USART
+  }
+  *reg = (*reg & ~mask) | val;                                  // write configuration
+  if(cr1 & USART_CR1_UE) USART2->CR1 |= USART_CR1_UE;            // re-enable USART
+}
 
-#define UART2_setBAUD(n)      USART2->BRR = ((2*F_CPU/(n))+1)/2     // set BAUD rate
-#define UART2_setDataBits(n)  {USART2->CR1 &= ~(USART_CR1_M1 | USART_CR1_M0); \
-                              (n==9 ? (USART2->CR1 |= USART_CR1_M0) :         \
-                              (n==7 ? (USART2->CR1 |= USART_CR1_M1) : (0)));  }
-#define UART2_setStopBits(n)  (n==2 ? (USART2->CR2 |= ((uint32_t)1<<13) : (USART2->CR2 &= ~((uint32_t)1<<13)))
-#define UART2_setEvenParity() {USART2->CR1 |= USART_CR1_PCE; USART2->CR1 &= ~USART_CR1_PS;}
-#define UART2_setOddParity()  {USART2->CR1 |= USART_CR1_PCE; USART2->CR1 |=  USART_CR1_PS;}
-#define UART2_setNoParity()   USART2->CR1 &= ~USART_CR1_PCE
+#define UART2_enable()        (USART2->CR1 |=  USART_CR1_UE)        // enable USART
+#define UART2_disable()       (USART2->CR1 &= ~USART_CR1_UE)        // disable USART
+#define UART2_TX_enable()     (USART2->CR1 |=  USART_CR1_TE)        // enable transmitter
+#define UART2_TX_disable()    (USART2->CR1 &= ~USART_CR1_TE)        // disable transmitter
+#define UART2_RX_enable()     (USART2->CR1 |=  USART_CR1_RE)        // enable receiver
+#define UART2_RX_disable()    (USART2->CR1 &= ~USART_CR1_RE)        // disable receiver
+
+#define UART2_setBAUD(n)      UART2_config(&USART2->BRR, 0xffff, ((2*F_CPU/(n))+1)/2)
+#define UART2_setDataBits(n)  UART2_config(&USART2->CR1, USART_CR1_M1 | USART_CR1_M0, \
+                              ((n)==9 ? USART_CR1_M0 : ((n)==7 ? USART_CR1_M1 : 0)))
+#define UART2_setStopBits(n)  UART2_config(&USART2->CR2, USART_CR2_STOP, ((n)==2 ? USART_CR2_STOP_1 : 0))
+#define UART2_setEvenParity() UART2_config(&USART2->CR1, USART_CR1_PCE | USART_CR1_PS, USART_CR1_PCE)
+#define UART2_setOddParity()  UART2_config(&USART2->CR1, USART_CR1_PCE | USART_CR1_PS, USART_CR1_PCE | USART_CR1_PS)
+#define UART2_setNoParity()   UART2_config(&USART2->CR1, USART_CR1_PCE, 0)
 
 // UART functions
 void UART2_init(void);                    // init UART with default BAUD rate

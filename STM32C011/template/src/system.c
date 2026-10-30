@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for STM32C011 and STM32C031                         * v1.1 *
+// Basic System Functions for STM32C011 and STM32C031                         * v1.2 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -14,7 +14,10 @@ void SYS_init(void) {
   // Init system clock
   #if SYS_CLK_INIT > 0
   #if F_CPU > 24000000
-  FLASH->ACR |= 0b001;                          // FLASH latency: one wait state
+  FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY)
+             | FLASH_ACR_LATENCY_0              // FLASH latency: one wait state
+             | FLASH_ACR_PRFTEN;                // enable prefetch buffer
+  while((FLASH->ACR & FLASH_ACR_LATENCY) != FLASH_ACR_LATENCY_0); // wait until set (RM)
   #endif
   CLK_init();
   #endif
@@ -37,14 +40,19 @@ void SYS_init(void) {
 
 // Init internal oscillator as system clock source
 void CLK_init_HSI(void) {
-  RCC->CR = CLK_DIV | RCC_CR_HSION;                       // set HSI divisor
+  #if SYS_USE_HSE == 0
+  RCC->CR = (RCC->CR & ~RCC_CR_HSIDIV) | CLK_DIV;         // set HSI divisor (keep HSIKER)
+  #endif
 }
 
 // Init external crystal as system clock source
 void CLK_init_HSE(void) {
+  #if SYS_HSE_BYPASS > 0
+  RCC->CR |= RCC_CR_HSEBYP;                               // external clock signal
+  #endif
   RCC->CR |= RCC_CR_HSEON;                                // Turn on HSE
   while(!(RCC->CR & RCC_CR_HSERDY));                      // wait till HSE is ready
-  RCC->CFGR = 0b001;                                      // HSE as system clock source
+  RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_0; // HSE as system clock source
   while((RCC->CFGR & RCC_CFGR_SWS_Msk) != (0b001<<3));    // Wait for HSE
 }
 
@@ -55,7 +63,8 @@ void CLK_reset(void) {
   RCC->CFGR = 0x00000000;                                 // HSI as system clock source
   while(RCC->CFGR & RCC_CFGR_SWS_Msk);                    // wait until switched to HSI
   RCC->ICSCR = (RCC->ICSCR & ~RCC_ICSCR_HSITRIM) | 0x4000;// reset ICSCR register
-  RCC->CR      = 0x00001500;                              // keep only HSI on, 12MHz
+  RCC->CR      = 0x00001540;                              // keep only HSI on, 12MHz
+                                                          // HSIKER = 16MHz (reset value)
   RCC->CIER    = 0x00000000;                              // disable all interrupts
   RCC->CICR    = 0xffffffff;                              // clear all interrupt flags
   FLASH->ACR  &= ~(uint32_t)0b111;                        // reset flash latency
@@ -65,30 +74,38 @@ void CLK_reset(void) {
 // Real-Time Clock (RTC) Functions
 // ===================================================================================
 
-// Init RTC with LSI as clock source and 1s clock period
-void RTC_init(void) {
-  LSI_enable();                         // enable internal low-speed clock (LSI)
+// Unlock RTC registers and select RTC clock source (RTCSEL: 0b01 = LSE, 0b10 = LSI)
+// Note: RTCSEL can only be changed after an RTC domain reset (RCC_CSR1_RTCRST).
+static void RTC_unlock(uint32_t rtcsel) {
   RCC->APBENR1 |= RCC_APBENR1_RTCAPBEN; // enable RTC module clock
-  RCC->CSR1     = (0b10<<8)             // set LSI as clock source
+  RCC->CSR1     = (RCC->CSR1 & ~RCC_CSR1_RTCSEL)  // keep other bits (e.g. LSEON)
+                | (rtcsel << RCC_CSR1_RTCSEL_Pos) // set clock source
                 | RCC_CSR1_RTCEN;       // enable RTC
   RTC->WPR = 0xCA;                      // remove RTC register write protection
   RTC->WPR = 0x53;
 }
 
+// Init RTC with LSI as clock source and 1s clock period
+void RTC_init(void) {
+  LSI_enable();                         // enable internal low-speed clock (LSI)
+  while(!LSI_ready());                  // wait until LSI is stable
+  RTC_unlock(0b10);                     // set LSI as clock source and unlock RTC
+  RTC_setPrescaler(127, (LSI_VALUE / 128) - 1); // 32kHz / 128 / 250 = 1Hz
+}
+
 // Init RTC with LSE as clock source and 1s clock period
 void RTC_init_LSE(void) {
-  RCC->APBENR1 |= RCC_APBENR1_RTCAPBEN; // enable RTC module clock
-  RCC->CSR1     = RCC_CSR1_LSEON        // turn on LSE
-                | (0b01<<8)             // set LSE as clock source
-                | RCC_CSR1_RTCEN;       // enable RTC
-  RTC->WPR = 0xCA;                      // remove RTC register write protection
-  RTC->WPR = 0x53;
+  LSE_enable();                         // enable external low-speed clock (LSE)
+  while(!LSE_ready());                  // wait until LSE is stable
+  RTC_unlock(0b01);                     // set LSE as clock source and unlock RTC
+  RTC_setPrescaler(127, 255);           // 32768Hz / 128 / 256 = 1Hz
 }
 
 // Set RTC prescaler (default 127, 255)
 void RTC_setPrescaler(uint8_t async, uint16_t sync) {
   RTC->ICSR |= RTC_ICSR_INIT;           // enter initialization mode
   while(!(RTC->ICSR & RTC_ICSR_INITF)); // wait until init mode is entered
+  RTC->PRER = (uint32_t)sync;           // write sync first, then async (RM)
   RTC->PRER = ((uint32_t)async << 16)
             | sync;
   RTC->ICSR &= ~RTC_ICSR_INIT;          // exit initialization mode
@@ -101,7 +118,7 @@ void RTC_setTime(uint8_t hours, uint8_t minutes, uint8_t seconds) {
   RTC->TR = (uint32_t)hours   << 16     // set hours in BCD format
           | (uint32_t)minutes <<  8     // set minutes in BCD format
           | (uint32_t)seconds <<  0;    // set seconds in BCD format
-  RTC->CR |= RTC_CR_FMT;                // set time format to 24 hours
+  RTC->CR &= ~RTC_CR_FMT;               // set time format to 24 hours (FMT = 0)
   RTC->ICSR &= ~RTC_ICSR_INIT;          // exit initialization mode
 }
 
@@ -118,9 +135,12 @@ void RTC_setDate(uint8_t year, uint8_t weekday, uint8_t month, uint8_t day) {
 
 // Read time register
 uint32_t RTC_readTime(void) {
+  uint32_t time;
   while(!(RTC->ICSR & RTC_ICSR_RSF));   // wait for registers synchronized
   RTC->ICSR &= ~RTC_ICSR_RSF;           // clear synchronization flag
-  return RTC->TR;
+  time = RTC->TR;                       // read time (locks date shadow register)
+  (void)RTC->DR;                        // read date to unlock shadow registers (RM)
+  return time;
 }
 
 // Read date register
@@ -149,11 +169,15 @@ void RTC_setAlarm(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t secon
 // Delay (DLY) Functions
 // ===================================================================================
 
-// Wait n+1 counts of SysTick
+// Wait n+1 counts of SysTick (n = 0: no delay, long delays in 24-bit steps)
 void DLY_ticks(uint32_t n) {
-  SysTick->LOAD = n;
-  SysTick->VAL  = 0;
-  while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
+  while(n) {
+    uint32_t t = (n > SysTick_LOAD_RELOAD_Msk) ? SysTick_LOAD_RELOAD_Msk : n;
+    SysTick->LOAD = t;
+    SysTick->VAL  = 0;
+    while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
+    n -= t;
+  }
 }
 
 // ===================================================================================
@@ -164,6 +188,7 @@ void DLY_ticks(uint32_t n) {
 // Once the IWDG has been started, it cannot be disabled, only reloaded (feed).
 // It can be stopped by disabling the internal low-speed clock (LSI).
 void IWDG_start(uint16_t ms) {
+  if(ms > 8190) ms = 8190;              // limit to 12-bit reload value
   LSI_enable();                         // enable internal low-speed clock (LSI)
   IWDG->KR   = 0x5555;                  // allow register modification
   while(IWDG->SR & IWDG_SR_PVU);        // wait for prescaler register to be ready
@@ -176,6 +201,7 @@ void IWDG_start(uint16_t ms) {
 
 // Reload watchdog counter with n milliseconds, n<=8191
 void IWDG_reload(uint16_t ms) {
+  if(ms > 8190) ms = 8190;              // limit to 12-bit reload value
   IWDG->KR   = 0x5555;                  // allow register modification
   while(IWDG->SR & IWDG_SR_RVU);        // wait for reload register to be ready
   IWDG->RLR = ms >> 1;                  // set watchdog counter reload value
@@ -335,7 +361,7 @@ extern void _estack(void);
 // Prototypes
 int main(void)                __attribute__((section(".text.main"), used));
 void (*const vectors[])(void) __attribute__((section(".isr_vector"), used));
-void Reset_Handler(void)      __attribute__((section(".text.irq_handler"), naked, used, noreturn));
+void Reset_Handler(void)      __attribute__((section(".text.irq_handler"), used, noreturn));
 
 #if SYS_USE_VECTORS > 0
 // Unless a specific handler is overridden, it just spins forever
@@ -434,12 +460,9 @@ void (*const vectors[])(void) = {
 void Reset_Handler(void) {
   uint32_t *src, *dst;
 
-  // Set stack pointer
-  asm volatile(
-  " ldr r0, =_estack  \n\
-    mov sp, r0        \n"
-    : : : "r0", "memory"
-  );
+  // Set stack pointer (also loaded by hardware from the vector table on reset,
+  // but not necessarily when jumping from a bootloader)
+  asm volatile("mov sp, %0" : : "r" (&_estack) : "memory");
 
   // Configure vector table location
   SCB->VTOR = (uint32_t)vectors;

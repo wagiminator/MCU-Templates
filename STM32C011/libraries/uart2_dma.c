@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART2 with DMA RX Buffer for STM32C0xx                                    * v1.0 *
+// USART2 with DMA RX Buffer for STM32C0xx                                    * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,8 +7,8 @@
 
 // Circular RX buffer
 char UART2_RX_buffer[UART2_RX_BUF_SIZE];
-uint8_t UART2_RX_tptr = 0;
-#define UART2_RX_hptr (UART2_RX_BUF_SIZE - UART2_DMA_CHAN->CNDTR)
+uint16_t UART2_RX_tptr = 0;
+#define UART2_RX_hptr ((UART2_RX_BUF_SIZE - UART2_DMA_CHAN->CNDTR) % UART2_RX_BUF_SIZE)
 
 // Init UART
 void UART2_init(void) {
@@ -16,27 +16,37 @@ void UART2_init(void) {
   #if UART2_MAP == 0
     // Setup pin PA2 (TX) and pin PA3 (RX)
     RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
-    GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1)) ))
-                                     |  ( ((uint32_t)0b10<<(2<<1)) | ((uint32_t)0b10<<(3<<1)) );
-    GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(2<<0));
-    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                            ((uint32_t)0b11<<(3<<1)) ))
-                                     |  (                            ((uint32_t)0b01<<(3<<1)) );
-    GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~( ((uint32_t)0xf <<(2<<2)) | ((uint32_t)0xf <<(3<<2)) ))
-                                     |  ( ((uint32_t)0x1 <<(2<<2)) | ((uint32_t)0x1 <<(3<<2)) );
+    GPIOA->MODER    = (GPIOA->MODER  & ~(((uint32_t)0b11<<(2<<1)) | ((uint32_t)0b11<<(3<<1))))
+                      |  (((uint32_t)0b10<<(2<<1)) | ((uint32_t)0b10<<(3<<1)));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<2);
+    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~((uint32_t)0b11<<(3<<1)))
+                      |  ((uint32_t)0b01<<(3<<1));
+    GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~(((uint32_t)0xf<<(2<<2)) | ((uint32_t)0xf<<(3<<2))))
+                      |  (((uint32_t)0x1<<(2<<2)) | ((uint32_t)0x1<<(3<<2)));
   #elif UART2_MAP == 1
     // Setup pin PA14 (TX) and pin PA15 (RX)
     RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
-    GPIOA->MODER    = (GPIOA->MODER  & ~( ((uint32_t)0b11<<(14<<1)) | ((uint32_t)0b11<<(15<<1)) ))
-                                     |  ( ((uint32_t)0b10<<(14<<1)) | ((uint32_t)0b10<<(15<<1)) );
-    GPIOA->OTYPER  &=                  ~  ((uint32_t)0b1 <<(14<<0));
-    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~(                             ((uint32_t)0b11<<(15<<1)) ))
-                                     |  (                             ((uint32_t)0b01<<(15<<1)) );
-    GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~( ((uint32_t)0xf <<( 6<<2)) | ((uint32_t)0xf <<( 7<<2)) ))
-                                     |  ( ((uint32_t)0x1 <<( 6<<2)) | ((uint32_t)0x1 <<( 7<<2)) );
+    GPIOA->MODER    = (GPIOA->MODER  & ~(((uint32_t)0b11<<(14<<1)) | ((uint32_t)0b11<<(15<<1))))
+                      |  (((uint32_t)0b10<<(14<<1)) | ((uint32_t)0b10<<(15<<1)));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<14);
+    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~((uint32_t)0b11<<(15<<1)))
+                      |  ((uint32_t)0b01<<(15<<1));
+    GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~(((uint32_t)0xf<<(6<<2)) | ((uint32_t)0xf<<(7<<2))))
+                      |  (((uint32_t)0x1<<(6<<2)) | ((uint32_t)0x1<<(7<<2)));
+  #elif UART2_MAP == 2
+    // Setup pin PA4 (TX) and pin PA5 (RX)
+    RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
+    GPIOA->MODER    = (GPIOA->MODER  & ~(((uint32_t)0b11<<(4<<1)) | ((uint32_t)0b11<<(5<<1))))
+                      |  (((uint32_t)0b10<<(4<<1)) | ((uint32_t)0b10<<(5<<1)));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<4);
+    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~((uint32_t)0b11<<(5<<1)))
+                      |  ((uint32_t)0b01<<(5<<1));
+    GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~(((uint32_t)0xf<<(4<<2)) | ((uint32_t)0xf<<(5<<2))))
+                      |  (((uint32_t)0x1<<(4<<2)) | ((uint32_t)0x1<<(5<<2)));
   #else
     #warning No automatic pin mapping for USART2
   #endif
-	
+
   // Setup and start UART (8N1, RX/TX, default BAUD rate)
   RCC->APBENR1 |= RCC_APBENR1_USART2EN;
   USART2->BRR   = ((2 * F_CPU / UART2_BAUD) + 1) / 2;

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header file for STM32F030 and STM32F031                                    * v1.0 *
+// Header file for STM32F030 and STM32F031                                    * v1.1 *
 // ===================================================================================
 // This contains a copy of core_cm0.h and stm32f031x6.h.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -12,11 +12,11 @@ extern "C" {
 
 #include <stdint.h>
 
-// Configuration of the Cortex-M0+ Processor and Core Peripherals
+// Configuration of the Cortex-M0 Processor and Core Peripherals
 #define __CORTEX_M                0 /*!< Cortex-M Core                                 */
 #define __CM0_REV                 0 /*!< Core Revision r0p0                            */
 #define __MPU_PRESENT             0 /*!< STM32F0xx  provides no MPU                    */
-#define __NVIC_PRIO_BITS          2 /*!< STM32G0xx uses 2 Bits for the Priority Levels */
+#define __NVIC_PRIO_BITS          2 /*!< STM32F0xx uses 2 Bits for the Priority Levels */
 #define __Vendor_SysTickConfig    0 /*!< Set to 1 if different SysTick Config is used  */
 #define __FPU_USED                0 /*!< This core does not support an FPU at all      */
 
@@ -3716,6 +3716,12 @@ typedef struct
 
 /*!< Old ADC1 reset bit definition maintained for legacy purpose */
 #define  RCC_APB2RSTR_ADC1RST                RCC_APB2RSTR_ADCRST          
+#define RCC_APB2RSTR_TIM15RST_Pos                (16U)
+#define RCC_APB2RSTR_TIM15RST_Msk                (0x1UL << RCC_APB2RSTR_TIM15RST_Pos) /*!< 0x00010000 */
+#define RCC_APB2RSTR_TIM15RST                    RCC_APB2RSTR_TIM15RST_Msk     /*!< TIM15 reset */
+#define RCC_APB2RSTR_USART6RST_Pos               (5U)
+#define RCC_APB2RSTR_USART6RST_Msk               (0x1UL << RCC_APB2RSTR_USART6RST_Pos) /*!< 0x00000020 */
+#define RCC_APB2RSTR_USART6RST                   RCC_APB2RSTR_USART6RST_Msk    /*!< USART6 reset */
 
 /*****************  Bit definition for RCC_APB1RSTR register  ****************/
 #define RCC_APB1RSTR_TIM2RST_Pos                 (0U)                          
@@ -3736,6 +3742,30 @@ typedef struct
 #define RCC_APB1RSTR_PWRRST_Pos                  (28U)                         
 #define RCC_APB1RSTR_PWRRST_Msk                  (0x1UL << RCC_APB1RSTR_PWRRST_Pos) /*!< 0x10000000 */
 #define RCC_APB1RSTR_PWRRST                      RCC_APB1RSTR_PWRRST_Msk       /*!< PWR reset */
+#define RCC_APB1RSTR_I2C2RST_Pos                 (22U)
+#define RCC_APB1RSTR_I2C2RST_Msk                 (0x1UL << RCC_APB1RSTR_I2C2RST_Pos) /*!< 0x00400000 */
+#define RCC_APB1RSTR_I2C2RST                     RCC_APB1RSTR_I2C2RST_Msk      /*!< I2C 2 reset */
+#define RCC_APB1RSTR_SPI2RST_Pos                 (14U)
+#define RCC_APB1RSTR_SPI2RST_Msk                 (0x1UL << RCC_APB1RSTR_SPI2RST_Pos) /*!< 0x00004000 */
+#define RCC_APB1RSTR_SPI2RST                     RCC_APB1RSTR_SPI2RST_Msk      /*!< SPI2 reset */
+#define RCC_APB1RSTR_TIM6RST_Pos                 (4U)
+#define RCC_APB1RSTR_TIM6RST_Msk                 (0x1UL << RCC_APB1RSTR_TIM6RST_Pos) /*!< 0x00000010 */
+#define RCC_APB1RSTR_TIM6RST                     RCC_APB1RSTR_TIM6RST_Msk      /*!< Timer 6 reset */
+#define RCC_APB1RSTR_TIM7RST_Pos                 (5U)
+#define RCC_APB1RSTR_TIM7RST_Msk                 (0x1UL << RCC_APB1RSTR_TIM7RST_Pos) /*!< 0x00000020 */
+#define RCC_APB1RSTR_TIM7RST                     RCC_APB1RSTR_TIM7RST_Msk      /*!< Timer 7 reset */
+#define RCC_APB1RSTR_USART2RST_Pos               (17U)
+#define RCC_APB1RSTR_USART2RST_Msk               (0x1UL << RCC_APB1RSTR_USART2RST_Pos) /*!< 0x00020000 */
+#define RCC_APB1RSTR_USART2RST                   RCC_APB1RSTR_USART2RST_Msk    /*!< USART 2 reset */
+#define RCC_APB1RSTR_USART3RST_Pos               (18U)
+#define RCC_APB1RSTR_USART3RST_Msk               (0x1UL << RCC_APB1RSTR_USART3RST_Pos) /*!< 0x00040000 */
+#define RCC_APB1RSTR_USART3RST                   RCC_APB1RSTR_USART3RST_Msk    /*!< USART 3 reset */
+#define RCC_APB1RSTR_USART4RST_Pos               (19U)
+#define RCC_APB1RSTR_USART4RST_Msk               (0x1UL << RCC_APB1RSTR_USART4RST_Pos) /*!< 0x00080000 */
+#define RCC_APB1RSTR_USART4RST                   RCC_APB1RSTR_USART4RST_Msk    /*!< USART 4 reset */
+#define RCC_APB1RSTR_USART5RST_Pos               (20U)
+#define RCC_APB1RSTR_USART5RST_Msk               (0x1UL << RCC_APB1RSTR_USART5RST_Pos) /*!< 0x00100000 */
+#define RCC_APB1RSTR_USART5RST                   RCC_APB1RSTR_USART5RST_Msk    /*!< USART 5 reset */
 
 /******************  Bit definition for RCC_AHBENR register  *****************/
 #define RCC_AHBENR_DMAEN_Pos                     (0U)                          
@@ -3759,6 +3789,9 @@ typedef struct
 #define RCC_AHBENR_GPIOCEN_Pos                   (19U)                         
 #define RCC_AHBENR_GPIOCEN_Msk                   (0x1UL << RCC_AHBENR_GPIOCEN_Pos) /*!< 0x00080000 */
 #define RCC_AHBENR_GPIOCEN                       RCC_AHBENR_GPIOCEN_Msk        /*!< GPIOC clock enable */
+#define RCC_AHBENR_GPIODEN_Pos                   (20U)                         
+#define RCC_AHBENR_GPIODEN_Msk                   (0x1UL << RCC_AHBENR_GPIODEN_Pos) /*!< 0x00100000 */
+#define RCC_AHBENR_GPIODEN                       RCC_AHBENR_GPIODEN_Msk        /*!< GPIOD clock enable (STM32F030x8/xC) */
 #define RCC_AHBENR_GPIOFEN_Pos                   (22U)                         
 #define RCC_AHBENR_GPIOFEN_Msk                   (0x1UL << RCC_AHBENR_GPIOFEN_Pos) /*!< 0x00400000 */
 #define RCC_AHBENR_GPIOFEN                       RCC_AHBENR_GPIOFEN_Msk        /*!< GPIOF clock enable */
@@ -3796,6 +3829,12 @@ typedef struct
 /* Old Bit definition maintained for legacy purpose */
 #define  RCC_APB2ENR_SYSCFGEN                RCC_APB2ENR_SYSCFGCOMPEN        /*!< SYSCFG clock enable */
 #define  RCC_APB2ENR_ADC1EN                  RCC_APB2ENR_ADCEN               /*!< ADC1 clock enable */
+#define RCC_APB2ENR_TIM15EN_Pos                  (16U)
+#define RCC_APB2ENR_TIM15EN_Msk                  (0x1UL << RCC_APB2ENR_TIM15EN_Pos) /*!< 0x00010000 */
+#define RCC_APB2ENR_TIM15EN                      RCC_APB2ENR_TIM15EN_Msk       /*!< TIM15 clock enable */
+#define RCC_APB2ENR_USART6EN_Pos                 (5U)
+#define RCC_APB2ENR_USART6EN_Msk                 (0x1UL << RCC_APB2ENR_USART6EN_Pos) /*!< 0x00000020 */
+#define RCC_APB2ENR_USART6EN                     RCC_APB2ENR_USART6EN_Msk      /*!< USART6 clock enable */
 
 /*****************  Bit definition for RCC_APB1ENR register  *****************/
 #define RCC_APB1ENR_TIM2EN_Pos                   (0U)                          
@@ -3816,6 +3855,30 @@ typedef struct
 #define RCC_APB1ENR_PWREN_Pos                    (28U)                         
 #define RCC_APB1ENR_PWREN_Msk                    (0x1UL << RCC_APB1ENR_PWREN_Pos) /*!< 0x10000000 */
 #define RCC_APB1ENR_PWREN                        RCC_APB1ENR_PWREN_Msk         /*!< PWR clock enable */
+#define RCC_APB1ENR_I2C2EN_Pos                   (22U)
+#define RCC_APB1ENR_I2C2EN_Msk                   (0x1UL << RCC_APB1ENR_I2C2EN_Pos) /*!< 0x00400000 */
+#define RCC_APB1ENR_I2C2EN                       RCC_APB1ENR_I2C2EN_Msk        /*!< I2C2 clock enable */
+#define RCC_APB1ENR_SPI2EN_Pos                   (14U)
+#define RCC_APB1ENR_SPI2EN_Msk                   (0x1UL << RCC_APB1ENR_SPI2EN_Pos) /*!< 0x00004000 */
+#define RCC_APB1ENR_SPI2EN                       RCC_APB1ENR_SPI2EN_Msk        /*!< SPI2 clock enable */
+#define RCC_APB1ENR_TIM6EN_Pos                   (4U)
+#define RCC_APB1ENR_TIM6EN_Msk                   (0x1UL << RCC_APB1ENR_TIM6EN_Pos) /*!< 0x00000010 */
+#define RCC_APB1ENR_TIM6EN                       RCC_APB1ENR_TIM6EN_Msk        /*!< Timer 6 clock enable */
+#define RCC_APB1ENR_TIM7EN_Pos                   (5U)
+#define RCC_APB1ENR_TIM7EN_Msk                   (0x1UL << RCC_APB1ENR_TIM7EN_Pos) /*!< 0x00000020 */
+#define RCC_APB1ENR_TIM7EN                       RCC_APB1ENR_TIM7EN_Msk        /*!< Timer 7 clock enable */
+#define RCC_APB1ENR_USART2EN_Pos                 (17U)
+#define RCC_APB1ENR_USART2EN_Msk                 (0x1UL << RCC_APB1ENR_USART2EN_Pos) /*!< 0x00020000 */
+#define RCC_APB1ENR_USART2EN                     RCC_APB1ENR_USART2EN_Msk      /*!< USART2 clock enable */
+#define RCC_APB1ENR_USART3EN_Pos                 (18U)
+#define RCC_APB1ENR_USART3EN_Msk                 (0x1UL << RCC_APB1ENR_USART3EN_Pos) /*!< 0x00040000 */
+#define RCC_APB1ENR_USART3EN                     RCC_APB1ENR_USART3EN_Msk      /*!< USART3 clock enable */
+#define RCC_APB1ENR_USART4EN_Pos                 (19U)
+#define RCC_APB1ENR_USART4EN_Msk                 (0x1UL << RCC_APB1ENR_USART4EN_Pos) /*!< 0x00080000 */
+#define RCC_APB1ENR_USART4EN                     RCC_APB1ENR_USART4EN_Msk      /*!< USART4 clock enable */
+#define RCC_APB1ENR_USART5EN_Pos                 (20U)
+#define RCC_APB1ENR_USART5EN_Msk                 (0x1UL << RCC_APB1ENR_USART5EN_Pos) /*!< 0x00100000 */
+#define RCC_APB1ENR_USART5EN                     RCC_APB1ENR_USART5EN_Msk      /*!< USART5 clock enable */
 
 /*******************  Bit definition for RCC_BDCR register  ******************/
 #define RCC_BDCR_LSEON_Pos                       (0U)                          
@@ -3901,6 +3964,9 @@ typedef struct
 #define RCC_AHBRSTR_GPIOCRST_Pos                 (19U)                         
 #define RCC_AHBRSTR_GPIOCRST_Msk                 (0x1UL << RCC_AHBRSTR_GPIOCRST_Pos) /*!< 0x00080000 */
 #define RCC_AHBRSTR_GPIOCRST                     RCC_AHBRSTR_GPIOCRST_Msk      /*!< GPIOC reset */
+#define RCC_AHBRSTR_GPIODRST_Pos                 (20U)                         
+#define RCC_AHBRSTR_GPIODRST_Msk                 (0x1UL << RCC_AHBRSTR_GPIODRST_Pos) /*!< 0x00100000 */
+#define RCC_AHBRSTR_GPIODRST                     RCC_AHBRSTR_GPIODRST_Msk      /*!< GPIOD reset (STM32F030x8/xC) */
 #define RCC_AHBRSTR_GPIOFRST_Pos                 (22U)                         
 #define RCC_AHBRSTR_GPIOFRST_Msk                 (0x1UL << RCC_AHBRSTR_GPIOFRST_Pos) /*!< 0x00400000 */
 #define RCC_AHBRSTR_GPIOFRST                     RCC_AHBRSTR_GPIOFRST_Msk      /*!< GPIOF reset */

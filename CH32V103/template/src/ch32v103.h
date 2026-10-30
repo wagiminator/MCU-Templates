@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header File for CH32V103 Microcontrollers                                  * v1.0 *
+// Header File for CH32V103 Microcontrollers                                  * v1.1 *
 // ===================================================================================
 // This contains a copy of ch32v10x.h and core_riscv.h and other misc functions.
 // NOTE: This file includes modifications by Stefan Wagner.
@@ -2758,6 +2758,10 @@ typedef struct
 #define RCC_WWDGEN                              ((uint32_t)0x00000800) /* Window Watchdog clock enable */
 #define RCC_USART2EN                            ((uint32_t)0x00020000) /* USART 2 clock enable */
 #define RCC_I2C1EN                              ((uint32_t)0x00200000) /* I2C 1 clock enable */
+#define RCC_TIM4EN                              ((uint32_t)0x00000004) /* Timer 4 clock enable */
+#define RCC_SPI2EN                              ((uint32_t)0x00004000) /* SPI 2 clock enable */
+#define RCC_USART3EN                            ((uint32_t)0x00040000) /* USART 3 clock enable */
+#define RCC_I2C2EN                              ((uint32_t)0x00400000) /* I2C 2 clock enable */
 
 #define RCC_BKPEN                               ((uint32_t)0x08000000) /* Backup interface clock enable */
 #define RCC_PWREN                               ((uint32_t)0x10000000) /* Power interface clock enable */
@@ -3356,7 +3360,7 @@ typedef struct
 #define MASK_UC_SYS_CTRL                        ((uint8_t)0x30)        /* USB system configuration */
 #define UC_DEV_PU_EN                            ((uint8_t)0x20)        /* USB device and pull-up enable */
 #define UC_LOW_SPEED                            ((uint8_t)0x40)        /* 0: 12Mbps, 1: 1.5Mbps */
-#define UC_HOST_MODE                            ((uint8_t)0x80)        /* 0: Host mode, 1: Device mode */
+#define UC_HOST_MODE                            ((uint8_t)0x80)        /* 1: Host mode, 0: Device mode */
 
 /*****************************  INT_EN register  *****************************/
 #define UIE_DETECT                              ((uint8_t)0x01)        /* USB host: device (dis)connect interrupt */

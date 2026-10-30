@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for STM32G0xx                  * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI for STM32G0xx                  * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -24,7 +24,9 @@
 // - Connect MOSI-pin (define below) to DIN of the pixels string.
 // - Works with most 800kHz addressable LEDs (NeoPixels).
 // - Set number of pixels and pixel type in the parameters below!
-// - System clock frequency must be 64MHz, 32MHz, or 16MHz.
+// - System clock frequency must be 64MHz, 32MHz or 16MHz (HSI), or 48MHz, 24MHz
+//   or 12MHz (HSE crystal, see SYS_USE_HSE in system.h).
+// - Max. 255 pixels (8-bit pixel index).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

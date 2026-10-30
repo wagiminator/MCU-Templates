@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STM32C0xx                                 * v1.0 *
+// Basic Serial Debug Functions for STM32C0xx                                 * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -11,30 +11,50 @@
 // Init UART
 void DEBUG_init(void) {
   // Set GPIO pins
-  #if DEBUG_TX < 2
+  #if DEBUG_TX == 0
     // Setup pin PA9 (TX)
     RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
     GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(9<<1)))
-                                     |  ((uint32_t)0b10<<(9<<1));
-    GPIOA->OTYPER  &=                  ~((uint32_t)0b1 <<(9<<0));
-    GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~((uint32_t)0xf <<(1<<2)))
-                                     |  ((uint32_t)0x1 <<(1<<2));
-    #if DEBUG_TX == 1
-      // Remap pins PA11 to PA9
-      RCC->APBENR2  |= RCC_APBENR2_SYSCFGEN;
-      SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_RMP;
-    #endif
+                      |  ((uint32_t)0b10<<(9<<1));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<9);
+    GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~((uint32_t)0xf<<(1<<2)))
+                      |  ((uint32_t)0x1<<(1<<2));
+  #elif DEBUG_TX == 1
+    // Setup pin PA9 (TX), remapped to PA11 by SYSCFG
+    RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
+    GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(9<<1)))
+                      |  ((uint32_t)0b10<<(9<<1));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<9);
+    GPIOA->AFR[1]   = (GPIOA->AFR[1] & ~((uint32_t)0xf<<(1<<2)))
+                      |  ((uint32_t)0x1<<(1<<2));
+    RCC->APBENR2   |= RCC_APBENR2_SYSCFGEN;
+    SYSCFG->CFGR1  |= SYSCFG_CFGR1_PA11_RMP;
   #elif DEBUG_TX == 2
     // Setup pin PB6 (TX)
     RCC->IOPENR    |= RCC_IOPENR_GPIOBEN;
     GPIOB->MODER    = (GPIOB->MODER  & ~((uint32_t)0b11<<(6<<1)))
-                                     |  ((uint32_t)0b10<<(6<<1));
-    GPIOB->OTYPER  &=                  ~((uint32_t)0b1 <<(6<<0));
-    GPIOB->AFR[0]  &= ~((uint32_t)0xf <<(6<<2));
+                      |  ((uint32_t)0b10<<(6<<1));
+    GPIOB->OTYPER  &= ~((uint32_t)1<<6);
+    GPIOB->AFR[0]  &= ~((uint32_t)0xf<<(6<<2));
+  #elif DEBUG_TX == 3
+    // Setup pin PA0 (TX)
+    RCC->IOPENR    |= RCC_IOPENR_GPIOAEN;
+    GPIOA->MODER    = (GPIOA->MODER  & ~((uint32_t)0b11<<(0<<1)))
+                      |  ((uint32_t)0b10<<(0<<1));
+    GPIOA->OTYPER  &= ~((uint32_t)1<<0);
+    GPIOA->AFR[0]   = (GPIOA->AFR[0] & ~((uint32_t)0xf<<(0<<2)))
+                      |  ((uint32_t)0x4<<(0<<2));
+  #elif DEBUG_TX == 4
+    // Setup pin PC14 (TX)
+    RCC->IOPENR    |= RCC_IOPENR_GPIOCEN;
+    GPIOC->MODER    = (GPIOC->MODER  & ~((uint32_t)0b11<<(14<<1)))
+                      |  ((uint32_t)0b10<<(14<<1));
+    GPIOC->OTYPER  &= ~((uint32_t)1<<14);
+    GPIOC->AFR[1]  &= ~((uint32_t)0xf<<(6<<2));
   #else
     #warning No automatic pin mapping for USART1
   #endif
-	
+
   // Setup and start UART (8N1, TX, default BAUD rate)
   RCC->APBENR2 |= RCC_APBENR2_USART1EN;
   USART1->BRR = ((2 * F_CPU / DEBUG_BAUD) + 1) / 2;
@@ -62,23 +82,29 @@ void DEBUG_println(const char* str) {
   DEBUG_write('\n');
 }
 
+// For BCD conversion
+static const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
+                            10000000, 100000000, 1000000000};
+
 // Print decimal value (BCD conversion by substraction method)
 void DEBUG_printD(uint32_t value) {
-  uint8_t digitval;                               // current digit value
+  uint8_t digits   = 10;                          // print 10 digits
   uint8_t leadflag = 0;                           // flag for leading spaces
-  uint32_t divider = 1000000000;                  // current divider
-  while(divider) {                                // for all digits
-    digitval = value / divider;                   // calculate digit value
-    value    = value % divider;                   // set value to division remainder
-    divider /= 10;                                // calculate next divider
-    if(digitval) leadflag++;                      // end of leading spaces
-    if(!divider) leadflag++;                      // least digit has to be printed
+  while(digits--) {                               // for all digits digits
+    uint8_t digitval = 0;                         // start with digit value 0
+    uint32_t divider = DIVIDER[digits];           // read current divider
+    while(value >= divider) {                     // if current divider fits into the value
+      leadflag = 1;                               // end of leading spaces
+      digitval++;                                 // increase digit value
+      value -= divider;                           // decrease value by divider
+    }
+    if(!digits)  leadflag++;                      // least digit has to be printed
     if(leadflag) DEBUG_write(digitval + '0');     // print the digit
   }
 }
 
 // Convert 4-bit byte nibble into hex character and print it via UART
-void DEBUG_printN(uint8_t nibble) {
+static void DEBUG_printN(uint8_t nibble) {
   DEBUG_write((nibble <= 9) ? ('0' + nibble) : ('A' - 10 + nibble));
 }
 
@@ -101,7 +127,7 @@ void DEBUG_printW(uint32_t value) {
 }
 
 // printf, supports %s, %c, %d, %u, %x, %b, %02d, %%
-void DEBUG_itoa(int32_t, int8_t, int8_t);
+static void DEBUG_itoa(int32_t, int8_t, int32_t);
 static void DEBUG_vfprintf(const char *format, va_list arg);
 
 void DEBUG_printf(const char *format, ...) {
@@ -122,16 +148,16 @@ static void DEBUG_vfprintf(const char* str,  va_list arp) {
     }
     d = *str++;
     w = r = s = 0;
-    if(d == '%') {
+    if(d == '%') {                               // "%%" -> print '%'
       DEBUG_write(d);
-      d = *str++;
+      continue;
     }
     if(d == '0') {
       d = *str++;
       s = 1;
     }
     while((d >= '0') && (d <= '9')) {
-      w += w * 10 + (d - '0');
+      w = w * 10 + (d - '0');
       d = *str++;
     }
     if(s) w = -w;
@@ -156,9 +182,9 @@ static void DEBUG_vfprintf(const char* str,  va_list arp) {
   }
 }
 
-void DEBUG_itoa(int32_t val, int8_t rad, int8_t len) {
+static void DEBUG_itoa(int32_t val, int8_t rad, int32_t len) {
   char c, sgn = 0, pad = ' ';
-  char s[20];
+  char s[34];                                     // 32 binary digits + sign
   uint8_t i = 0;
 
   if(rad < 0) {
@@ -172,7 +198,8 @@ void DEBUG_itoa(int32_t val, int8_t rad, int8_t len) {
     len = -len;
     pad = '0';
   }
-  if(len > 20) return;
+  if(len > 32) len = 32;
+  if(sgn && (pad == '0') && len) len--;           // sign is part of the field width
   do {
     c = (char)((uint32_t)val % rad);
     if (c >= 10) c += ('A' - 10);

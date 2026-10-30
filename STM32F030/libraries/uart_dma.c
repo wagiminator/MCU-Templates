@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART1 with DMA RX Buffer for STM32F03x                              * v1.0 *
+// Basic USART1 with DMA RX Buffer for STM32F03x                              * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,8 +7,8 @@
 
 // Circular RX buffer
 char UART_RX_buffer[UART_RX_BUF_SIZE];
-uint8_t UART_RX_tptr = 0;
-#define UART_RX_hptr (UART_RX_BUF_SIZE - UART_DMA_CHAN->CNDTR)
+uint16_t UART_RX_tptr = 0;
+#define UART_RX_hptr ((UART_RX_BUF_SIZE - UART_DMA_CHAN->CNDTR) % UART_RX_BUF_SIZE)
 
 // Init UART
 void UART_init(void) {
@@ -55,7 +55,7 @@ void UART_init(void) {
   #else
     #warning No automatic pin mapping for USART1
   #endif
-	
+
   // Setup and start UART (8N1, RX/TX, default BAUD rate)
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
   USART1->BRR   = ((2 * F_CPU / UART_BAUD) + 1) / 2;
@@ -64,10 +64,10 @@ void UART_init(void) {
 
   // Setup DMA
   #if UART_DMA_CHANNEL == 5
-  RCC->APB2ENR  |= RCC_APB2ENR_SYSCFGCOMPEN;          // enable SYSCFG module clock
-  SYSCFG->CFGR1 |= SYSCFG_CFGR1_USART1_RX_DMA_RMP;    // remap to DMA channel 5
+  RCC->APB2ENR  |= RCC_APB2ENR_SYSCFGEN;              // enable SYSCFG module clock
+  SYSCFG->CFGR1 |= SYSCFG_CFGR1_USART1RX_DMA_RMP;     // remap to DMA channel 5
   #endif
-  RCC->AHBENR   |= RCC_AHBENR_DMAEN;                  // enable DMA module clock
+  RCC->AHBENR |= RCC_AHBENR_DMAEN;                    // enable DMA module clock
   UART_DMA_CHAN->CNDTR = (uint16_t)UART_RX_BUF_SIZE;  // ring buffer size
   UART_DMA_CHAN->CMAR  = (uint32_t)UART_RX_buffer;    // memory address
   UART_DMA_CHAN->CPAR  = (uint32_t)&USART1->RDR;      // peripheral address

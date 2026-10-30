@@ -1,23 +1,29 @@
 // ===================================================================================
-// Basic PRINT Functions                                                      * v1.1 *
+// Basic PRINT Functions                                                      * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #include <stdarg.h>
 #include "print.h"
 
-// Print decimal value
+// For BCD conversion
+static const uint32_t DIVIDER[] = {1, 10, 100, 1000, 10000, 100000, 1000000,
+                            10000000, 100000000, 1000000000};
+
+// Print decimal value (BCD conversion by substraction method)
 void printD(void (*putchar) (char c), uint32_t value) {
-  uint8_t digitval;                               // current digit value
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  uint32_t divider = 1000000000;                  // current divider
-  while(divider) {                                // for all digits
-    digitval = value / divider;                   // calculate digit value
-    value    = value % divider;                   // set value to division remainder
-    divider /= 10;                                // calculate next divider
-    if(digitval) leadflag++;                      // end of leading spaces
-    if(!divider) leadflag++;                      // least digit has to be printed
-    if(leadflag) putchar(digitval + '0');         // print the digit
+  uint8_t digits   = 10;                    // print 10 digits
+  uint8_t leadflag = 0;                     // flag for leading spaces
+  while(digits--) {                         // for all digits
+    uint8_t digitval = 0;                   // start with digit value 0
+    uint32_t divider = DIVIDER[digits];     // read current divider
+    while(value >= divider) {               // if current divider fits into the value
+      leadflag = 1;                         // end of leading spaces
+      digitval++;                           // increase digit value
+      value -= divider;                     // decrease value by divider
+    }
+    if(!digits)  leadflag++;                // least digit has to be printed
+    if(leadflag) putchar(digitval + '0');   // print the digit
   }
 }
 
@@ -56,7 +62,7 @@ void println(void (*putchar) (char c), const char* str) {
 }
 
 // printf, supports %s, %c, %d, %u, %x, %b, %02d, %%
-void _itoa(void (*putchar) (char c), int32_t, int8_t, int8_t);
+void _itoa(void (*putchar) (char c), int32_t, int8_t, int32_t);
 static void _vfprintf(void (*putchar) (char c), const char *format, va_list arg);
 
 void printF(void (*putchar) (char c), const char *format, ...) {
@@ -77,16 +83,16 @@ static void _vfprintf(void (*putchar) (char c), const char* str,  va_list arp) {
     }
     d = *str++;
     w = r = s = 0;
-    if(d == '%') {
+    if(d == '%') {                               // "%%" -> print '%'
       putchar(d);
-      d = *str++;
+      continue;
     }
     if(d == '0') {
       d = *str++;
       s = 1;
     }
     while((d >= '0') && (d <= '9')) {
-      w += w * 10 + (d - '0');
+      w = w * 10 + (d - '0');
       d = *str++;
     }
     if(s) w = -w;
@@ -111,9 +117,9 @@ static void _vfprintf(void (*putchar) (char c), const char* str,  va_list arp) {
   }
 }
 
-void _itoa(void (*putchar) (char c), int32_t val, int8_t rad, int8_t len) {
+void _itoa(void (*putchar) (char c), int32_t val, int8_t rad, int32_t len) {
   char c, sgn = 0, pad = ' ';
-  char s[20];
+  char s[34];                                     // 32 binary digits + sign
   uint8_t i = 0;
 
   if(rad < 0) {
@@ -127,7 +133,8 @@ void _itoa(void (*putchar) (char c), int32_t val, int8_t rad, int8_t len) {
     len = -len;
     pad = '0';
   }
-  if(len > 20) return;
+  if(len > 32) len = 32;
+  if(sgn && (pad == '0') && len) len--;           // sign is part of the field width
   do {
     c = (char)((uint32_t)val % rad);
     if (c >= 10) c += ('A' - 10);

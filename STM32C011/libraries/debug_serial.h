@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STM32C0xx                                 * v1.0 *
+// Basic Serial Debug Functions for STM32C0xx                                 * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // DEBUG_init()             Init serial DEBUG (8N1, BAUD: 115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_setBAUD(n)         Set BAUD rate
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string
@@ -20,8 +20,9 @@
 //
 // UART TX pin mapping (set below in DEBUG parameters):
 // ----------------------------------------------------
-// DEBUG_TX   0     1     2     3
-// TX-pin    PA9   PA11  PB6   No mapping
+// DEBUG_TX   0     1     2     3     4     5
+// TX-pin    PA9   PA11  PB6   PA0   PC14  No mapping
+// (PA11: PA9 is remapped to this pin by SYSCFG)
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -62,7 +63,14 @@ extern "C" {
   #define DEBUG_printf(f, ...)
 #endif
 
-#define DEBUG_setBAUD(n)  USART1->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+// Set BAUD rate (BRR can only be written while the USART is disabled)
+static inline void DEBUG_setBAUD(uint32_t baud) {
+  while(!(USART1->ISR & USART_ISR_TC));         // wait for transmission completed
+  USART1->CR1 &= ~USART_CR1_UE;                 // disable USART
+  USART1->BRR  = ((2 * F_CPU / baud) + 1) / 2;  // set BAUD rate
+  USART1->CR1 |=  USART_CR1_UE;                 // enable USART
+}
+
 #define DEBUG_newline()   DEBUG_write('\n')                   // send newline
 #define DEBUG_printS      DEBUG_print                         // alias for print
 

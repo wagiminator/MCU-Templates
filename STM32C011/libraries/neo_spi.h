@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for STM32C011/031              * v1.0 *
+// Basic NeoPixel Functions using Hardware-SPI for STM32C011/031              * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,13 +18,16 @@
 // --------------------------------------------------------
 // NEO_MAP    0     1     2     3     4
 // MOSI-pin  PA2   PA7   PA12  PB5   PB6
+// (PB5 is only available on STM32C031)
 //
 // Notes:
 // ------
 // - Connect MOSI-pin (define below) to DIN of the pixels string.
 // - Works with most 800kHz addressable LEDs (NeoPixels).
 // - Set number of pixels and pixel type in the parameters below!
-// - System clock frequency must be 48MHz, 24MHz, or 12MHz.
+// - System clock frequency must be 48MHz, 32MHz, 24MHz, 16MHz or 12MHz
+//   (32MHz and 16MHz require an HSE crystal, see SYS_USE_HSE in system.h).
+// - Max. 255 pixels (8-bit pixel index).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V103                                        * v1.2 *
+// Basic System Functions for CH32V103                                        * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -32,24 +32,28 @@
 // LSE_bypass_on()          enable LSE clock bypass
 // LSE_bypass_off()         disable LSE clock bypass
 //
+// BKP_unlock()             enable write access to backup domain (RTC, LSE, BKP)
+// BKP_lock()               disable write access to backup domain
+//
 // MCO_init()               init clock output to pin PA8
 // MCO_setSYS()             output SYS_CLK on pin PA8
 // MCO_setHSI()             output internal oscillator on pin PA8
 // MCO_setHSE()             output external crystal on pin PA8 (if available)
-// MCO_setPLL()             output PLL on pin PA8
+// MCO_setPLL()             output PLL/2 on pin PA8
+// MCO_stop()               stop clock output
 //
-// Real-Time Clock (RTC) functions available:
+// Real-Time Clock (RTC) functions available (1 second ticks):
 // ------------------------------------------
 // RTC_init_LSI()           init RTC with internal low-speed clock
 // RTC_init_LSE()           init RTC with external low-speed clock
-// RTC_set(n)               et RTC counter
+// RTC_set(n)               set RTC counter
 // RTC_get()                get RTC counter
 // RTC_ALARM_set(n)         set RTC ALARM value
 // RTC_ALARM_get()          get RTC ALARM value
 //
 // Delay (DLY) functions available:
 // --------------------------------
-// DLY_ticks(n)             delay n * 8 system clock cycles
+// DLY_ticks(n)             delay n SysTick ticks (= n * 8 system clock cycles)
 // DLY_us(n)                delay n microseconds
 // DLY_ms(n)                delay n milliseconds
 //
@@ -87,6 +91,14 @@
 // INT_disable()            global interrupt disable
 // INT_ATOMIC_BLOCK { }     execute block without being interrupted
 //
+// Notes:
+// ------
+// - The CH32V103 has a QingKe V3A core. It does not have the WCH specific CSRs of the
+//   V4 cores (e.g. 0x800). Interrupts are globally enabled/disabled via mstatus.MIE.
+// - SysTick runs with HCLK/8 (fixed on the V3A core). The counter and compare
+//   registers can only be written byte by byte (see QingKe V3 manual).
+// - USB requires F_CPU = 48MHz or 72MHz (PLL).
+//
 // References:
 // -----------
 // - WCH Nanjing Qinheng Microelectronics: http://wch.cn
@@ -122,6 +134,7 @@ extern "C" {
 // Calculate system clock settings
 #if   F_CPU ==   8000000
   #define CLK_NO_PLL
+  #define CLK_MUL         RCC_PLLMULL2    // (not used, PLL is off)
 #elif F_CPU ==  16000000
   #define CLK_MUL         RCC_PLLMULL2
 #elif F_CPU ==  24000000
@@ -170,35 +183,39 @@ void CLK_init_HSE(void);      // init external crystal (non PLL) as system clock
 void CLK_init_HSE_PLL(void);  // init external crystal (PLL) as system clock source
 
 // Internal 8MHz high-speed clock (HSI) functions
-#define HSI_enable()      RCC->CTLR |= RCC_HSION        // enable HSI
-#define HSI_disable()     RCC->CTLR &= ~RCC_HSION       // disable HSI
+#define HSI_enable()      (RCC->CTLR |= RCC_HSION)      // enable HSI
+#define HSI_disable()     (RCC->CTLR &= ~RCC_HSION)     // disable HSI
 #define HSI_ready()       (RCC->CTLR & RCC_HSIRDY)      // check if HSI is stable
 
 // External high-speed clock (HSE) functions
-#define HSE_enable()      RCC->CTLR |= RCC_HSEON        // enable HSE
-#define HSE_disable()     RCC->CTLR &= ~RCC_HSEON       // disable HSE
+#define HSE_enable()      (RCC->CTLR |= RCC_HSEON)      // enable HSE
+#define HSE_disable()     (RCC->CTLR &= ~RCC_HSEON)     // disable HSE
 #define HSE_ready()       (RCC->CTLR & RCC_HSERDY)      // check if HSE is stable
-#define HSE_bypass_on()   RCC->CTLR |= RCC_HSEBYP       // enable HSE clock bypass
-#define HSE_bypass_off()  RCC->CTLR &= ~RCC_HSEBYP      // disable HSE clock bypass
+#define HSE_bypass_on()   (RCC->CTLR |= RCC_HSEBYP)     // enable HSE clock bypass
+#define HSE_bypass_off()  (RCC->CTLR &= ~RCC_HSEBYP)    // disable HSE clock bypass
 
 // Internal 40kHz low-speed clock (LSI) functions
-#define LSI_enable()      RCC->RSTSCKR |= RCC_LSION     // enable LSI
-#define LSI_disable()     RCC->RSTSCKR &= ~RCC_LSION    // disable LSI
+#define LSI_enable()      (RCC->RSTSCKR |= RCC_LSION)   // enable LSI
+#define LSI_disable()     (RCC->RSTSCKR &= ~RCC_LSION)  // disable LSI
 #define LSI_ready()       (RCC->RSTSCKR & RCC_LSIRDY)   // check if LSI is stable
 
-// External 32.768kHz low-speed clock (LSE) functions
-#define LSE_enable()      RCC->BDCTLR |= RCC_LSEON      // enable LSE
-#define LSE_disable()     RCC->BDCTLR &= ~RCC_LSEON     // disable LSE
+// External 32.768kHz low-speed clock (LSE) functions (backup domain, see BKP_unlock)
+#define LSE_enable()      (BKP_unlock(), RCC->BDCTLR |= RCC_LSEON)  // enable LSE
+#define LSE_disable()     (BKP_unlock(), RCC->BDCTLR &= ~RCC_LSEON) // disable LSE
 #define LSE_ready()       (RCC->BDCTLR & RCC_LSERDY)    // check if LSE is stable
-#define LSE_bypass_on()   RCC->BDCTLR |= RCC_LSEBYP     // enable LSE clock bypass
-#define LSE_bypass_off()  RCC->BDCTLR &= ~RCC_LSEBYP    // disable LSE clock bypass
+#define LSE_bypass_on()   (BKP_unlock(), RCC->BDCTLR |= RCC_LSEBYP) // enable LSE bypass
+#define LSE_bypass_off()  (BKP_unlock(), RCC->BDCTLR &= ~RCC_LSEBYP)// disable LSE bypass
+
+// Enable write access to the backup domain (RCC_BDCTLR, RTC, BKP registers)
+#define BKP_unlock()      (RCC->APB1PCENR |= RCC_PWREN | RCC_BKPEN, PWR->CTLR |= PWR_CTLR_DBP)
+#define BKP_lock()        (PWR->CTLR &= ~PWR_CTLR_DBP)
 
 // Clock output functions (pin PA8)
-#define MCO_setSYS()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_SYSCLK
-#define MCO_setHSI()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSI
-#define MCO_setHSE()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSE
-#define MCO_setPLL()      RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_PLL
-#define MCO_stop()        RCC->CFGR0 &= ~RCC_CFGR0_MCO  // stop clock output to pin PA8
+#define MCO_setSYS()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_SYSCLK)
+#define MCO_setHSI()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSI)
+#define MCO_setHSE()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_HSE)
+#define MCO_setPLL()      (RCC->CFGR0 = (RCC->CFGR0 & ~RCC_CFGR0_MCO) | RCC_CFGR0_MCO_PLL)
+#define MCO_stop()        (RCC->CFGR0 &= ~RCC_CFGR0_MCO) // stop clock output to pin PA8
 void MCO_init(void);                                    // init clock output to pin PA8
 
 // ===================================================================================
@@ -208,8 +225,8 @@ void RTC_init_LSI(void);          // init RTC with internal low-speed clock
 void RTC_init_LSE(void);          // init RTC with external low-speed clock
 void RTC_set(uint32_t n);         // set RTC counter
 void RTC_ALARM_set(uint32_t n);   // set RTC ALARM
-#define RTC_get()         (((uint32_t)RTC->CNTH << 16) & RTC->CNTL)   // get RTC counter
-#define RTC_ALARM_get()   (((uint32_t)RTC->ALRMH << 16) & RTC->ALRML) // get RTC ALARM
+#define RTC_get()         (((uint32_t)RTC->CNTH << 16) | RTC->CNTL)   // get RTC counter
+#define RTC_ALARM_get()   (((uint32_t)RTC->ALRMH << 16) | RTC->ALRML) // get RTC ALARM
 
 // ===================================================================================
 // Delay (DLY) Functions
@@ -217,16 +234,21 @@ void RTC_ALARM_set(uint32_t n);   // set RTC ALARM
 #define STK_init()        STK->CTLR = STK_CTLR_STE      // init SYSTICK @ F_CPU / 8
 #define DLY_US_TIME       (F_CPU / 8000000)             // system ticks per us
 #define DLY_MS_TIME       (F_CPU / 8000)                // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n) * DLY_US_TIME)  // delay n microseconds
-#define DLY_ms(n)         DLY_ticks((n) * DLY_MS_TIME)  // delay n milliseconds
 #define DLY_cycles        DLY_ticks                     // alias
-void DLY_ticks(uint32_t n);                             // delay n system ticks
+void DLY_ticks(uint32_t n);                             // delay n SysTick ticks
+static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
+  while(ms--) DLY_ticks(DLY_MS_TIME);
+}
+static inline void DLY_us(uint32_t us) {                // delay n microseconds
+  while(us >= 1000) { DLY_ticks(DLY_MS_TIME); us -= 1000; } // (no 32-bit overflow)
+  DLY_ticks(us * DLY_US_TIME);
+}
 
 // ===================================================================================
 // Reset (RST) Functions
 // ===================================================================================
-#define RST_now()         PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3
-#define RST_clearFlags()  RCC->RSTSCKR |= RCC_RMVF
+#define RST_now()         (PFIC->CFGR    = PFIC_RESETSYS | PFIC_KEY3)
+#define RST_clearFlags()  (RCC->RSTSCKR |= RCC_RMVF)
 #define RST_wasLowPower() (RCC->RSTSCKR & RCC_LPWRRSTF)
 #define RST_wasWWDG()     (RCC->RSTSCKR & RCC_WWDGRSTF)
 #define RST_wasIWDG()     (RCC->RSTSCKR & RCC_IWDGRSTF)
@@ -241,7 +263,7 @@ void IWDG_start(uint16_t ticks);                           // start IWDG with n 
 void IWDG_reload(uint16_t ticks);                          // reload IWDG with n ticks
 #define IWDG_start_ms(n)  IWDG_start((n)*LSI_VALUE/64000)  // start IWDG timer with n ms
 #define IWDG_reload_ms(n) IWDG_reload((n)*LSI_VALUE/64000) // reload IWDG timer with n ms
-#define IWDG_feed()       IWDG->CTLR = 0xAAAA              // feed the dog (reload time)
+#define IWDG_feed()       (IWDG->CTLR = 0xAAAA)            // feed the dog (reload time)
 
 // ===================================================================================
 // Sleep Functions
@@ -261,27 +283,25 @@ void STDBY_WFE_now(void);   // put device into standby (deep sleep), wake up eve
 #define INT_ATOMIC_BLOCK      for(INT_ATOMIC_RESTORE, __ToDo = 1; __ToDo; __ToDo = 0)
 #define INT_ATOMIC_RESTORE    uint32_t __reg_save __attribute__((__cleanup__(__iRestore))) = __iSave()
 
-// Save interrupt status and disable interrupts
+// Save interrupt status and disable interrupts (mstatus.MIE, QingKe V3A)
 static inline uint32_t __iSave(void) {
   uint32_t result;
   __asm volatile(
     #if __GNUC__ > 10
     ".option arch, +zicsr \n"
     #endif
-    "csrr %0, 0x800       \n"
-    "csrw 0x800, %1       \n"
-    : "=&r" (result) : "r" (0x6000)
+    "csrrci %0, mstatus, 0x08" : "=r" (result) : : "memory"
   );
   return result;
 }
 
 // Restore interrupt status
 static inline void __iRestore(const uint32_t *__s) {
-  __asm volatile(
+  if(*__s & 0x08) __asm volatile(
     #if __GNUC__ > 10
     ".option arch, +zicsr \n"
     #endif
-    "csrw 0x800, %0" : : "r" (*__s)
+    "csrsi mstatus, 0x08" : : : "memory"
   );
 }
 
@@ -294,7 +314,7 @@ static inline void __enable_irq(void) {
     #if __GNUC__ > 10
     ".option arch, +zicsr \n"
     #endif
-    "csrw 0x800, %0" : : "r" (0x6088)
+    "csrs mstatus, %0" : : "r" (0x88) : "memory"
   );
 }
 
@@ -304,7 +324,7 @@ static inline void __disable_irq(void) {
     #if __GNUC__ > 10
     ".option arch, +zicsr \n"
     #endif
-    "csrw 0x800, %0" : : "r" (0x6000)
+    "csrc mstatus, %0" : : "r" (0x88) : "memory"
   );
 }
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART1 Functions for STM32F03x  (no buffer, no interrupt, no DMA)    * v1.0 *
+// Basic USART1 Functions for STM32F03x  (no buffer, no interrupt, no DMA)    * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -50,11 +50,11 @@ void UART_init(void) {
   #else
     #warning No automatic pin mapping for USART1
   #endif
-	
+
   // Setup and start UART (8N1, RX/TX, default BAUD rate)
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-  USART1->BRR = ((2 * F_CPU / UART_BAUD) + 1) / 2;
-  USART1->CR1 = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
+  USART1->BRR   = ((2 * F_CPU / UART_BAUD) + 1) / 2;
+  USART1->CR1   = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 }
 
 // Read byte via UART

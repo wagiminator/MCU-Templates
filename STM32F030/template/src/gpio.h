@@ -1,8 +1,8 @@
 // ===================================================================================
-// Basic GPIO Functions for STM32F030 and STM32F031                           * v0.1 *
+// Basic GPIO Functions for STM32F030 and STM32F031                           * v1.0 *
 // ===================================================================================
 //
-// Pins must be defined as PA0, PA1, .., PF14, PF15 - e.g.:
+// Pins must be defined as PA0, PA1, .., PF14, PF15 (no port E) - e.g.:
 // #define PIN_LED PC0      // LED on pin PC0
 //
 // PIN functions available:
@@ -29,6 +29,20 @@
 // PIN_read(PIN)            Read PIN input value
 // PIN_write(PIN, val)      Write PIN output value (0 = LOW / 1 = HIGH)
 //
+// PIN interrupt and event functions available:
+// --------------------------------------------
+// PIN_EVT_set(PIN,TYPE)    Setup PIN event TYPE:
+//                          PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH
+// PIN_INT_set(PIN,TYPE)    Setup PIN interrupt TYPE:
+//                          PIN_INT_OFF, PIN_INT_RISING, PIN_INT_FALLING, PIN_INT_BOTH
+// PIN_INT_enable(PIN)      Enable interrupt (NVIC) of the EXTI line of PIN
+// PIN_INT_disable(PIN)     Disable interrupt (NVIC) of the EXTI line of PIN
+// PIN_INTFLAG_read(PIN)    Read interrupt flag of PIN
+// PIN_INTFLAG_clear(PIN)   Clear interrupt flag of PIN
+// PIN_INT_ISR(handler) { } Interrupt service routine, handler must match the EXTI line:
+//                          EXTI0_1_IRQHandler (line 0, 1), EXTI2_3_IRQHandler (2, 3),
+//                          EXTI4_15_IRQHandler (line 4..15)
+//
 // PORT functions available:
 // -------------------------
 // PORT_enable(PIN)         Enable GPIO PORT of PIN
@@ -36,7 +50,6 @@
 // PORTB_enable()           Enable GPIO PORT B
 // PORTC_enable()           Enable GPIO PORT C
 // PORTD_enable()           Enable GPIO PORT D
-// PORTE_enable()           Enable GPIO PORT E
 // PORTF_enable()           Enable GPIO PORT F
 // PORTS_enable()           Enable all GPIO PORTS
 //
@@ -45,7 +58,6 @@
 // PORTB_disable()          Disable GPIO PORT B
 // PORTC_disable()          Disable GPIO PORT C
 // PORTD_disable()          Disable GPIO PORT D
-// PORTE_disable()          Disable GPIO PORT E
 // PORTF_disable()          Disable GPIO PORT F
 // PORTS_disable()          Disable all GPIO PORTS
 //
@@ -57,8 +69,8 @@
 // ADC_calibrate()          Calibrate ADC (ADC must be disabled)
 //
 // ADC_fast()               Set fast mode   (  1.5 ADC clock cycles, least accurate) (*)
-// ADC_medium()             Set medium mode ( 79.5 ADC clock cycles, medium accurate)
-// ADC_slow()               Set slow mode   (160.5 ADC clock cycles, most accurate)
+// ADC_medium()             Set medium mode ( 71.5 ADC clock cycles, medium accurate)
+// ADC_slow()               Set slow mode   (239.5 ADC clock cycles, most accurate)
 //
 // ADC_input(PIN)           Set PIN as ADC input
 // ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
@@ -72,7 +84,14 @@
 // ------
 // - (*) reset state
 // - Pins used for ADC must be set with PIN_input_AN beforehand. ADC input pins are:
-//   PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1.
+//   PA0..PA7 (IN0..IN7), PB0, PB1 (IN8, IN9), and on 64-pin packages PC0..PC5
+//   (IN10..IN15). TEMP is IN16, VREFINT is IN17.
+// - The ADC is clocked by the dedicated 14MHz oscillator (HSI14). TEMP and VREF are
+//   always sampled with 239.5 cycles (datasheet: tS_temp, tS_vrefint >= 4us).
+// - ADC_read_TEMP() uses the factory calibration TS_CAL1 (30°C) and the typical slope
+//   of 4.3mV/°C (datasheet), the STM32F030 has no second calibration point.
+// - For interrupts and events: each line number can only be used once at a time
+//   (e.g. PA1 and PB1 cannot be used simultaneously, but PA1 and PB2 can).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -108,11 +127,9 @@ enum{
                                GPIOC->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOD->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
-                               GPIOE->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOF->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 #define PIN_input_HI PIN_input
 #define PIN_input_FL PIN_input
 
@@ -136,15 +153,11 @@ enum{
                                GPIOD->PUPDR  =  (GPIOD->PUPDR                        \
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
-                               GPIOE->PUPDR  =  (GPIOE->PUPDR                        \
-                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
-                                             |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOF->PUPDR  =  (GPIOF->PUPDR                        \
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN as INPUT with internal PULLDOWN resistor
@@ -166,15 +179,11 @@ enum{
                                GPIOD->PUPDR  =  (GPIOD->PUPDR                        \
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
-                               GPIOE->PUPDR  =  (GPIOE->PUPDR                        \
-                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
-                                             |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOF->PUPDR  =  (GPIOF->PUPDR                        \
                                              & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                              |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN as INPUT for analog peripherals (e.g. ADC)
@@ -188,11 +197,9 @@ enum{
                                GPIOC->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->MODER |=  ((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOD->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER |=  ((uint32_t)0b11<<(((PIN)&15)<<1)),   \
-                               GPIOE->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER |=  ((uint32_t)0b11<<(((PIN)&15)<<1)),   \
                                GPIOF->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 #define PIN_input_AD  PIN_input_AN
 #define PIN_input_ADC PIN_input_AN
 
@@ -220,17 +227,12 @@ enum{
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOD->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
                                GPIOD->OTYPER &= ~((uint32_t)1<<((PIN)&15)))        : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER  =   (GPIOE->MODER                       \
-                                             &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
-                                             |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
-                               GPIOE->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
-                               GPIOE->OTYPER &= ~((uint32_t)1<<((PIN)&15)))        : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER  =   (GPIOF->MODER                       \
                                              &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOF->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
                                GPIOF->OTYPER &= ~((uint32_t)1<<((PIN)&15)))        : \
-(0)))))))
+(0))))))
 #define PIN_output_PP PIN_output
 
 // ===================================================================================
@@ -257,17 +259,12 @@ enum{
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOD->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
                                GPIOD->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER  =   (GPIOE->MODER                       \
-                                             &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
-                                             |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
-                               GPIOE->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
-                               GPIOE->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER  =   (GPIOF->MODER                       \
                                              &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOF->PUPDR  &= ~((uint32_t)0b11<<(((PIN)&15)<<1)),  \
                                GPIOF->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN as OUTPUT OPEN-DRAIN PULLUP
@@ -301,13 +298,6 @@ enum{
                                              &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOD->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->MODER  =   (GPIOE->MODER                       \
-                                             &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
-                                             |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
-                               GPIOE->PUPDR  =   (GPIOE->PUPDR                       \
-                                             &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
-                                             |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
-                               GPIOE->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->MODER  =   (GPIOF->MODER                       \
                                              &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
@@ -315,7 +305,7 @@ enum{
                                              &  ~((uint32_t)0b11<<(((PIN)&15)<<1)))  \
                                              |   ((uint32_t)0b01<<(((PIN)&15)<<1)),  \
                                GPIOF->OTYPER |=  ((uint32_t)1<<((PIN)&15)))        : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Enable PULLUP resistor on PIN
@@ -333,13 +323,10 @@ enum{
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->PUPDR =  (GPIOD->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->PUPDR =  (GPIOE->PUPDR                        \
-                                            & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
-                                            |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->PUPDR =  (GPIOF->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b01<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Enable PULLDOWN resistor on PIN
@@ -357,13 +344,10 @@ enum{
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->PUPDR =  (GPIOD->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->PUPDR =  (GPIOE->PUPDR                        \
-                                            & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
-                                            |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->PUPDR =  (GPIOF->PUPDR                        \
                                             & ~((uint32_t)0b11<<(((PIN)&15)<<1)))   \
                                             |  ((uint32_t)0b10<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Disable PULLUP/PULLDOWN resistor on PIN
@@ -373,9 +357,8 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1)) ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1)) ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1)) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1)) ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->PUPDR &= ~((uint32_t)0b11<<(((PIN)&15)<<1)) ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN output type to push-pull
@@ -385,9 +368,8 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->OTYPER &= ~((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->OTYPER &= ~((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->OTYPER &= ~((uint32_t)1<<((PIN)&15)) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->OTYPER &= ~((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->OTYPER &= ~((uint32_t)1<<((PIN)&15)) ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN output type to open-drain
@@ -397,9 +379,8 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->OTYPER |=  ((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->OTYPER |=  ((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->OTYPER |=  ((uint32_t)1<<((PIN)&15)) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->OTYPER |=  ((uint32_t)1<<((PIN)&15)) ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->OTYPER |=  ((uint32_t)1<<((PIN)&15)) ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN output SPEED (0: very low ... 3: very high)
@@ -417,13 +398,10 @@ enum{
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->OSPEEDR =  (GPIOD->OSPEEDR                         \
                                               & ~((uint32_t)   0b11<<(((PIN)&15)<<1)))   \
                                               |  ((uint32_t)((s)&3)<<(((PIN)&15)<<1))) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->OSPEEDR =  (GPIOE->OSPEEDR                         \
-                                              & ~((uint32_t)   0b11<<(((PIN)&15)<<1)))   \
-                                              |  ((uint32_t)((s)&3)<<(((PIN)&15)<<1))) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->OSPEEDR =  (GPIOF->OSPEEDR                         \
                                               & ~((uint32_t)   0b11<<(((PIN)&15)<<1)))   \
                                               |  ((uint32_t)((s)&3)<<(((PIN)&15)<<1))) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set alternate function AF (0..15) for PIN
@@ -453,19 +431,13 @@ enum{
   ((PIN>=PD8)&&(PIN<=PD15) ? ( GPIOD->AFR[1] =  (GPIOD->AFR[1]                           \
                                              & ~((uint32_t)   0b1111<<(((PIN)&7)<<2)))   \
                                              |  ((uint32_t)((AF)&15)<<(((PIN)&7)<<2))) : \
-  ((PIN>=PE0)&&(PIN<=PE7)  ? ( GPIOE->AFR[0] =  (GPIOE->AFR[0]                           \
-                                             & ~((uint32_t)   0b1111<<(((PIN)&7)<<2)))   \
-                                             |  ((uint32_t)((AF)&15)<<(((PIN)&7)<<2))) : \
-  ((PIN>=PE8)&&(PIN<=PE15) ? ( GPIOE->AFR[1] =  (GPIOE->AFR[1]                           \
-                                             & ~((uint32_t)   0b1111<<(((PIN)&7)<<2)))   \
-                                             |  ((uint32_t)((AF)&15)<<(((PIN)&7)<<2))) : \
   ((PIN>=PF0)&&(PIN<=PF7)  ? ( GPIOF->AFR[0] =  (GPIOF->AFR[0]                           \
                                              & ~((uint32_t)   0b1111<<(((PIN)&7)<<2)))   \
                                              |  ((uint32_t)((AF)&15)<<(((PIN)&7)<<2))) : \
   ((PIN>=PF8)&&(PIN<=PF15) ? ( GPIOF->AFR[1] =  (GPIOF->AFR[1]                           \
                                              & ~((uint32_t)   0b1111<<(((PIN)&7)<<2)))   \
                                              |  ((uint32_t)((AF)&15)<<(((PIN)&7)<<2))) : \
-(0)))))))))))))
+(0)))))))))))
 
 // ===================================================================================
 // Set PIN output value to LOW
@@ -475,9 +447,8 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->BRR = 1<<((PIN)&15) ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->BRR = 1<<((PIN)&15) ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->BRR = 1<<((PIN)&15) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->BRR = 1<<((PIN)&15) ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->BRR = 1<<((PIN)&15) ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Set PIN output value to HIGH
@@ -487,21 +458,24 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->BSRR = 1<<((PIN)&15) ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->BSRR = 1<<((PIN)&15) ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->BSRR = 1<<((PIN)&15) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->BSRR = 1<<((PIN)&15) ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->BSRR = 1<<((PIN)&15) ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
-// Toggle PIN output value
+// Toggle PIN output value (single write to BSRR, other pins are not affected)
 // ===================================================================================
 #define PIN_toggle(PIN) \
-  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->ODR ^= 1<<((PIN)&15) ) : \
-(0)))))))
+  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->BSRR = (GPIOA->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->BSRR = (GPIOB->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->BSRR = (GPIOC->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->BSRR = (GPIOD->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PF0)&&(PIN<=PF15) ? ( GPIOF->BSRR = (GPIOF->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+(0))))))
 
 // ===================================================================================
 // Read PIN input value (returns 0 for LOW, 1 for HIGH)
@@ -511,92 +485,143 @@ enum{
   ((PIN>=PB0)&&(PIN<=PB15) ? ( (GPIOB->IDR>>((PIN)&15))&1 ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( (GPIOC->IDR>>((PIN)&15))&1 ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( (GPIOD->IDR>>((PIN)&15))&1 ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( (GPIOE->IDR>>((PIN)&15))&1 ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( (GPIOF->IDR>>((PIN)&15))&1 ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Write PIN output value (0 = LOW / 1 = HIGH)
 // ===================================================================================
-#define PIN_write(PIN, val) (val)?(PIN_high(PIN)):(PIN_low(PIN))
+#define PIN_write(PIN, val) ((val)?(PIN_high(PIN)):(PIN_low(PIN)))
+
+// ===================================================================================
+// Setup PIN interrupt / event (EXTI)
+// ===================================================================================
+enum{PIN_INT_OFF, PIN_INT_RISING, PIN_INT_FALLING, PIN_INT_BOTH};
+enum{PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH};
+
+// Connect EXTI line (PIN&15) to the port of PIN (4 bits per line in SYSCFG_EXTICRx,
+// port codes PA:0, PB:1, PC:2, PD:3, PF:5 correspond to (PIN>>4))
+#define PIN_EXTI_set(PIN) \
+  (RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN, \
+   SYSCFG->EXTICR[((PIN)&15)>>2] = (SYSCFG->EXTICR[((PIN)&15)>>2]      \
+                                 & ~((uint32_t)0xf << (((PIN)&3)<<2))) \
+                                 |  ((uint32_t)((PIN)>>4) << (((PIN)&3)<<2)))
+
+#define PIN_INT_set(PIN, TYPE) \
+  (PIN_EXTI_set(PIN), \
+  ((TYPE) & 3) ? (EXTI->IMR  |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->IMR  &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 1) ? (EXTI->RTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->RTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 2) ? (EXTI->FTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->FTSR &= ~((uint32_t)1<<((PIN)&15))))
+
+#define PIN_EVT_set(PIN, TYPE) \
+  (PIN_EXTI_set(PIN), \
+  ((TYPE) & 3) ? (EXTI->EMR  |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->EMR  &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 1) ? (EXTI->RTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->RTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 2) ? (EXTI->FTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->FTSR &= ~((uint32_t)1<<((PIN)&15))))
+
+// NVIC interrupt number of the EXTI line of PIN
+#define PIN_IRQn(PIN) \
+  ((((PIN)&15) <= 1) ? EXTI0_1_IRQn : (((PIN)&15) <= 3) ? EXTI2_3_IRQn : EXTI4_15_IRQn)
+
+#define PIN_INT_enable(PIN)     NVIC_EnableIRQ(PIN_IRQn(PIN))
+#define PIN_INT_disable(PIN)    NVIC_DisableIRQ(PIN_IRQn(PIN))
+
+#define PIN_INTFLAG_read(PIN)   (EXTI->PR & ((uint32_t)1 << ((PIN) & 15)))
+#define PIN_INTFLAG_clear(PIN)  (EXTI->PR = ((uint32_t)1 << ((PIN) & 15)))
+
+#define PIN_INT_ISR(handler)    void handler(void) __attribute__((interrupt)); \
+                                void handler(void)
 
 // ===================================================================================
 // Enable GPIO PORTS
 // ===================================================================================
-#define PORTA_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOAEN
-#define PORTB_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOBEN
-#define PORTC_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOCEN
-#define PORTD_enable()    RCC->AHBENR |= RCC_AHBENR_GPIODEN
-#define PORTE_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOEEN
-#define PORTF_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOFEN
-#define PORTS_enable()    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN \
-                                       | RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIODEN \
-                                       | RCC_AHBENR_GPIOEEN | RCC_AHBENR_GPIOFEN
+#define PORTA_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIOAEN)
+#define PORTB_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIOBEN)
+#define PORTC_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIOCEN)
+#define PORTD_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIODEN)
+#define PORTF_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIOFEN)
+#define PORTS_enable()    (RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN \
+                                        | RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIODEN \
+                                        | RCC_AHBENR_GPIOFEN)
 
 #define PORT_enable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIOAEN ) : \
   ((PIN>=PB0)&&(PIN<=PB15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIOBEN ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIOCEN ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIODEN ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIOEEN ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( RCC->AHBENR |= RCC_AHBENR_GPIOFEN ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // Disable GPIO PORTS
 // ===================================================================================
-#define PORTA_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIOAEN
-#define PORTB_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIOBEN
-#define PORTC_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIOCEN
-#define PORTD_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIODEN
-#define PORTE_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIOEEN
-#define PORTF_disable()   RCC->AHBENR &= ~RCC_AHBENR_GPIOFEN
-#define PORTS_disable()   RCC->AHBENR &= ~(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN \
-                                         | RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIODEN \
-                                         | RCC_AHBENR_GPIOEEN | RCC_AHBENR_GPIOFEN)
+#define PORTA_disable()   (RCC->AHBENR &= ~RCC_AHBENR_GPIOAEN)
+#define PORTB_disable()   (RCC->AHBENR &= ~RCC_AHBENR_GPIOBEN)
+#define PORTC_disable()   (RCC->AHBENR &= ~RCC_AHBENR_GPIOCEN)
+#define PORTD_disable()   (RCC->AHBENR &= ~RCC_AHBENR_GPIODEN)
+#define PORTF_disable()   (RCC->AHBENR &= ~RCC_AHBENR_GPIOFEN)
+#define PORTS_disable()   (RCC->AHBENR &= ~(RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN \
+                                          | RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIODEN \
+                                          | RCC_AHBENR_GPIOFEN))
 
 #define PORT_disable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIOAEN ) : \
   ((PIN>=PB0)&&(PIN<=PB15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIOBEN ) : \
   ((PIN>=PC0)&&(PIN<=PC15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIOCEN ) : \
   ((PIN>=PD0)&&(PIN<=PD15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIODEN ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIOEEN ) : \
   ((PIN>=PF0)&&(PIN<=PF15) ? ( RCC->AHBENR &= ~RCC_AHBENR_GPIOFEN ) : \
-(0)))))))
+(0))))))
 
 // ===================================================================================
 // ADC Functions
 // ===================================================================================
 
-// ADC calibration registers
-#define ADC_VREFCAL         (*(__I uint16_t*)(0x1FFFF7BA))    // at 3300mV
-#define ADC_TSCAL1          (*(__I uint16_t*)(0x1FFFF7B8))    // at 30°C
-#define ADC_TSCAL2          (*(__I uint16_t*)(0x1FFFF7C2))    // at 110°C
+// ADC calibration registers (engineering bytes, see datasheet)
+#define ADC_VREFCAL         (*(__I uint16_t*)(0x1FFFF7BA))    // VREFINT at 3300mV, 30°C
+#define ADC_TSCAL1          (*(__I uint16_t*)(0x1FFFF7B8))    // TEMP at 30°C, 3300mV
 
 // ADC calibration values
-#define ADC_CVOLT           3300    // calibration voltage of VREF and TEMP sensor
-#define ADC_CTEMP1          30      // calibration temperature of TSCAL1
-#define ADC_CTEMP2          110     // calibration temperature of TSCAL2
+#define ADC_CVOLT           3300  // calibration voltage of VREF and TEMP sensor
+#define ADC_CTEMP1          30    // calibration temperature of TSCAL1
+#define ADC_SLOPE           5337  // temperature slope: 4.3mV/°C * 4096 / 3.3V * 1000
 
-// Set ADC sampling rate
-#define ADC_fast()          ADC1->SMPR &= ~ADC_SMPR_SMP
-#define ADC_medium()        ADC1->SMPR  = (ADC1->SMPR & ~ADC_SMPR_SMP) | 0b110
-#define ADC_slow()          ADC1->SMPR |=  ADC_SMPR_SMP
+// Set ADC sampling time (all channels). The internal channels TEMP (IN16) and VREF
+// (IN17) are automatically sampled with 239.5 cycles (datasheet: >= 4us).
+#define ADC_SMP_FAST        0b000 // 1.5 cycles
+#define ADC_SMP_MEDIUM      0b110 // 71.5 cycles
+#define ADC_SMP_SLOW        0b111 // 239.5 cycles
+#define ADC_fast()          (ADC1->SMPR = ADC_SMP_FAST)
+#define ADC_medium()        (ADC1->SMPR = ADC_SMP_MEDIUM)
+#define ADC_slow()          (ADC1->SMPR = ADC_SMP_SLOW)
 
-// Set ADC input
-#define ADC_input(PIN)                \
-  ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( ADC1->CHSELR = (uint32_t)1<<( (PIN)&7)     ) : \
-  ((PIN>=PB0 )&&(PIN<=PB1 ) ? ( ADC1->CHSELR = (uint32_t)1<<(((PIN)&7)+8)  ) : \
-  (0)))
-#define ADC_input_VREF()    ADC1->CHSELR = (uint16_t)1<<17  // VREF: channel 17
-#define ADC_input_TEMP()    ADC1->CHSELR = (uint16_t)1<<16  // TEMP: channel 16
+// Select ADC channel (0..17)
+#define ADC_setChannel(ch)  (ADC1->CHSELR = (uint32_t)1 << (ch))
+
+// Set GPIO pin as ADC input
+#define ADC_input(PIN) \
+  ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( ADC_setChannel( (PIN)&7     ) ) : \
+  ((PIN>=PB0 )&&(PIN<=PB1 ) ? ( ADC_setChannel(((PIN)&7)+8  ) ) : \
+  ((PIN>=PC0 )&&(PIN<=PC5 ) ? ( ADC_setChannel(((PIN)&7)+10 ) ) : \
+  (0))))
+
+// Set temperature sensor / VREF as ADC input
+#define ADC_input_TEMP()    ADC_setChannel(16)      // temperature sensor (IN16)
+#define ADC_input_VREF()    ADC_setChannel(17)      // internal reference (IN17)
 
 // Enable ADC
 static inline void ADC_enable(void) {
-  ADC->CCR  = ADC_CCR_VREFEN | ADC_CCR_TSEN;    // enable VREF and TEMP sensor
-  ADC1->ISR = 0xff;                             // clear all ADC flags
-  ADC1->CR |= ADC_CR_ADEN;                      // enable ADC
-  while(!(ADC1->ISR & ADC_ISR_ADRDY));          // wait until ready
+  ADC->CCR |= ADC_CCR_VREFEN | ADC_CCR_TSEN;    // enable VREF and TEMP sensor
+  ADC1->ISR = ADC_ISR_ADRDY;                    // clear ready flag
+  do {
+    ADC1->CR |= ADC_CR_ADEN;                    // enable ADC (cannot be set within
+  } while(!(ADC1->ISR & ADC_ISR_ADRDY));        // 4 ADC cycles after calibration)
+  DLY_us(10);                                   // TEMP sensor start-up time (max)
 }
 
 // Disable ADC
@@ -605,9 +630,11 @@ static inline void ADC_disable(void) {
     ADC1->CR |= ADC_CR_ADSTP;                   // stop conversion
     while(ADC1->CR & ADC_CR_ADSTP);             // wait until stopped
   }
-  ADC1->CR |= ADC_CR_ADDIS;                     // disable ADC
-  while(ADC1->CR & ADC_CR_ADEN);                // wait until disabled
-  ADC->CCR  = 0;                                // disable VREF
+  if(ADC1->CR & ADC_CR_ADEN) {                  // ADC enabled?
+    ADC1->CR |= ADC_CR_ADDIS;                   // disable ADC
+    while(ADC1->CR & ADC_CR_ADEN);              // wait until disabled
+  }
+  ADC->CCR &= ~(ADC_CCR_TSEN | ADC_CCR_VREFEN); // disable TEMP and VREF
 }
 
 // Calibrate ADC (ADC must be disabled)
@@ -616,10 +643,11 @@ static inline void ADC_calibrate(void) {
   while(ADC1->CR & ADC_CR_ADCAL);               // wait until finished
 }
 
-// Setup, calibrate and enable ADC
+// Setup, calibrate and enable ADC (ADC clock: HSI14, asynchronous)
 static inline void ADC_init(void) {
-  RCC->APB2ENR |= RCC_APB2ENR_ADCEN;            // enable ADC module clock
-  DLY_us(20);                                   // wait until stable
+  RCC->APB2ENR  |=  RCC_APB2ENR_ADCEN;          // enable ADC module clock
+  RCC->APB2RSTR |=  RCC_APB2RSTR_ADCRST;        // reset ADC module
+  RCC->APB2RSTR &= ~RCC_APB2RSTR_ADCRST;
   ADC_calibrate();                              // calibrate ADC
   ADC_enable();                                 // enable ADC
 }
@@ -627,22 +655,32 @@ static inline void ADC_init(void) {
 // Sample and read ADC value of current input
 static inline uint16_t ADC_read(void) {
   ADC1->CR |= ADC_CR_ADSTART;                   // start conversion
-  while(ADC1->CR & ADC_CR_ADSTART);             // wait until finished
-  return ADC1->DR;                              // return result
+  while(!(ADC1->ISR & ADC_ISR_EOC));            // wait until finished
+  return ADC1->DR;                              // return result (clears EOC)
+}
+
+// Sample and read internal channel with long sampling time
+static inline uint16_t ADC_read_internal(uint8_t ch) {
+  uint32_t smpr = ADC1->SMPR;                   // save sampling time
+  uint16_t val;
+  ADC1->SMPR = ADC_SMP_SLOW;                    // 239.5 cycles (>= 4us)
+  ADC_setChannel(ch);                           // set channel
+  val = ADC_read();                             // sample and read
+  ADC1->SMPR = smpr;                            // restore sampling time
+  return val;
 }
 
 // Sample and read supply voltage (VDD) in millivolts (mV)
 static inline uint16_t ADC_read_VDD(void) {
-  ADC_input_VREF();                             // set VREF as ADC input
-  return((uint32_t)ADC_CVOLT*ADC_VREFCAL/ADC_read()); // return VDD in mV
+  uint16_t val = ADC_read_internal(17);         // read VREFINT
+  return(val ? (uint32_t)ADC_CVOLT * ADC_VREFCAL / val : 0); // return VDD in mV
 }
 
 // Sample and read temperature sensor in °C
 static inline int8_t ADC_read_TEMP(void) {
-  int32_t vdd = ADC_read_VDD();                 // read current supply voltage
-  ADC_input_TEMP();                             // set temp sensor as ADC input
-  int32_t tdata = vdd*ADC_read()/ADC_CVOLT;     // get vdd-compensated temp sensor val
-  return((tdata-ADC_TSCAL1)*(ADC_CTEMP2-ADC_CTEMP1)/(ADC_TSCAL2-ADC_TSCAL1)+ADC_CTEMP1);
+  int32_t vdd   = ADC_read_VDD();               // read current supply voltage
+  int32_t tdata = vdd * ADC_read_internal(16) / ADC_CVOLT; // vdd-compensated value
+  return((ADC_TSCAL1 - tdata) * 1000 / ADC_SLOPE + ADC_CTEMP1); // negative slope
 }
 
 #ifdef __cplusplus

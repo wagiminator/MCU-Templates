@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for CH32V103                                        * v1.2 *
+// Basic System Functions for CH32V103                                        * v1.3 *
 // ===================================================================================
 //
 // This file must be included!!!!
@@ -81,6 +81,8 @@ void CLK_init_HSE(void) {
   FLASH->ACTLR = FLASH_ACTLR_PRFTBE|FLASH_ACTLR_LATENCY_2;// Enable prefetch buffer, delay 2
   #endif
 
+  RCC->APB2PCENR |= RCC_AFIOEN;                           // enable auxiliary clock module
+  AFIO->PCFR1 |= AFIO_PCFR1_PD01_REMAP;                   // Use PD0/PD1 for crystal
   RCC->INTR    = 0x009F0000;                              // Clear ready flags
   RCC->CTLR   |= RCC_HSEON;                               // Turn on HSE
   while(!(RCC->CTLR & RCC_HSERDY));                       // wait till HSE is ready
@@ -128,61 +130,67 @@ void MCO_init(void) {
 // Real-Time Clock (RTC) Functions
 // ===================================================================================
 
-// Init RTC with internal low-speed clock
-void RTC_init_LSI(void) {
-  //PWR->CTLR |= PWR_CTLR_DBP;          // enable access to backup domain
-  //RCC->APB1PCENR |= RCC_BKPEN;        // enable backup domain interface
-  RCC->RSTSCKR |= RCC_LSION;            // enable LSI
-  while(!(RCC->RSTSCKR & RCC_LSIRDY));  // wait till LSI is ready
-  RCC->BDCTLR |= RCC_RTCSEL_LSI;        // select LSI as RTC clock source
-  RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
+// Wait for last RTC write operation to finish and RTC registers synchronized
+static void RTC_ready(void) {
   RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
   while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+}
+
+// Set RTC prescaler (period = val + 1 RTC clock cycles)
+static void RTC_setPrescaler(uint32_t val) {
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->PSCRL  = LSI_VALUE;              // set prescaler for 1 second ticks
-  RTC->PSCRH  = 0;
+  RTC->PSCRH  = val >> 16;              // set prescaler
+  RTC->PSCRL  = val;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
+}
+
+// Init RTC with internal low-speed clock
+void RTC_init_LSI(void) {
+  BKP_unlock();                         // enable access to backup domain
+  RCC->RSTSCKR |= RCC_LSION;            // enable LSI
+  while(!(RCC->RSTSCKR & RCC_LSIRDY));  // wait till LSI is ready
+  RCC->BDCTLR = (RCC->BDCTLR & ~RCC_RTCSEL) | RCC_RTCSEL_LSI; // LSI as RTC clock
+  RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
+  RTC_setPrescaler(LSI_VALUE - 1);      // set prescaler for 1 second ticks
 }
 
 // Init RTC with external low-speed clock
 void RTC_init_LSE(void) {
+  BKP_unlock();                         // enable access to backup domain
   RCC->BDCTLR |= RCC_LSEON;             // enable LSE
   while(!(RCC->BDCTLR & RCC_LSERDY));   // wait till LSE is ready
-  RCC->BDCTLR |= RCC_RTCSEL_LSE;        // select LSE as RTC clock source
+  RCC->BDCTLR = (RCC->BDCTLR & ~RCC_RTCSEL) | RCC_RTCSEL_LSE; // LSE as RTC clock
   RCC->BDCTLR |= RCC_RTCEN;             // enable RTC
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
-  RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->PSCRL  = LSE_VALUE;              // set prescaler for 1 second ticks
-  RTC->PSCRH  = 0;
-  RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  RTC_setPrescaler(LSE_VALUE - 1);      // set prescaler for 1 second ticks
 }
 
 // Set RTC counter value
 void RTC_set(uint32_t n) {
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->CNTL   = n;                      // set counter value
-  RTC->CNTH   = n >> 16;
+  RTC->CNTH   = n >> 16;                // set counter value
+  RTC->CNTL   = n;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
 }
 
 // Set RTC ALARM value
 void RTC_ALARM_set(uint32_t n) {
-  RTC->CTLRL &= ~RTC_CTLRL_RSF;         // start synchronization
-  while((~RTC->CTLRL) & (RTC_CTLRL_RSF | RTC_CTLRL_RTOFF));   // wait ready
+  RTC_ready();                          // wait for RTC ready
   RTC->CTLRL |= RTC_CTLRL_CNF;          // enter configuration mode
-  RTC->ALRML  = n;                      // set ALARM value
-  RTC->ALRMH  = n >> 16;
+  RTC->ALRMH  = n >> 16;                // set ALARM value
+  RTC->ALRML  = n;
   RTC->CTLRL &= ~RTC_CTLRL_CNF;         // exit configuration mode
+  while(!(RTC->CTLRL & RTC_CTLRL_RTOFF)); // wait for write operation finished
 }
 
 // ===================================================================================
 // Delay Functions
 // ===================================================================================
 
-// Wait n counts of SysTick
+// Wait n counts of SysTick (SysTick must be running at F_CPU/8, n < 2^31)
 void DLY_ticks(uint32_t n) {
   uint32_t end = STK->CNTL + n;
   while(((int32_t)(STK->CNTL - end)) < 0);
@@ -221,18 +229,21 @@ void IWDG_reload(uint16_t ticks) {
 
 // Put device into sleep, wake up by interrupt
 void SLEEP_WFI_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR &= ~PWR_CTLR_PDDS;          // set power-down mode to SLEEP
   __WFI();                              // wait for interrupt
 }
 
 // Put device into sleep, wake up by event
 void SLEEP_WFE_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR &= ~PWR_CTLR_PDDS;          // set power-down mode to SLEEP
   __WFE();                              // wait for event
 }
 
 // Put device into stop, wake up interrupt
 void STOP_WFI_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   &= ~PWR_CTLR_PDDS;        // set power-down mode to STOP
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFI();                              // wait for interrupt
@@ -241,6 +252,7 @@ void STOP_WFI_now(void) {
 
 // Put device into stop, wake up event
 void STOP_WFE_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   &= ~PWR_CTLR_PDDS;        // set power-down mode to STOP
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFE();                              // wait for event
@@ -249,6 +261,7 @@ void STOP_WFE_now(void) {
 
 // Put device into standby (deep sleep), wake up interrupt
 void STDBY_WFI_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   |= PWR_CTLR_PDDS;         // set power-down mode to STANDBY
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFI();                              // wait for interrupt
@@ -257,6 +270,7 @@ void STDBY_WFI_now(void) {
 
 // Put device into standby (deep sleep), wake up event
 void STDBY_WFE_now(void) {
+  RCC->APB1PCENR |= RCC_PWREN;          // enable power control module
   PWR->CTLR   |= PWR_CTLR_PDDS;         // set power-down mode to STANDBY
   PFIC->SCTLR |= PFIC_SLEEPDEEP;
   __WFE();                              // wait for event
@@ -365,7 +379,10 @@ const uint32_t init_data[] = {
 // Interrupt vector table
 void vectors(void) {
   asm volatile(
-  
+  " .option push                \n"   // no compressed instructions in the table
+  " .option norvc               \n"   // (each entry must be 4 bytes)
+  " .option norelax             \n"
+
   // RISC-V handlers
   " j jump_reset                \n"   //  0 - Reset
   #if SYS_USE_VECTORS > 0
@@ -431,6 +448,7 @@ void vectors(void) {
   " j USBWakeUp_IRQHandler      \n"   // 58 - USB Wake up from suspend
   " j USBHD_IRQHandler          \n"   // 59 - USBHD
   #endif  // SYS_USE_VECTORS > 0
+  " .option pop                 \n"
   );
 }
 

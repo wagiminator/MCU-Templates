@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USB CDC Functions for CH32V103                                       * v1.0 *
+// Basic USB CDC Functions for CH32V103                                       * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -59,8 +59,8 @@ void CDC_write(char c);           // write single character to OUT buffer
 uint8_t CDC_available(void);      // check number of bytes in the IN buffer
 uint8_t CDC_ready(void);          // check if OUT buffer is ready to be written
 
-#define CDC_writeflush(c)         {CDC_write(c);CDC_flush();}     // write & flush char
-#define CDC_newline()             {CDC_write('\n'); CDC_flush();} // newline and flush
+#define CDC_writeflush(c)         (CDC_write(c), CDC_flush())     // write & flush char
+#define CDC_newline()             (CDC_write('\n'), CDC_flush()) // newline and flush
 
 // ===================================================================================
 // CDC Control Line State
@@ -74,7 +74,7 @@ extern volatile uint8_t CDC_controlLineState;               // control line stat
 // ===================================================================================
 // CDC Line Coding
 // ===================================================================================
-typedef struct {
+typedef struct __attribute__((packed)) {
   uint32_t baudrate;              // baud rate
   uint8_t  stopbits;              // number of stopbits (0:1bit,1:1.5bits,2:2bits)
   uint8_t  parity;                // parity (0:none,1:odd,2:even,3:mark,4:space)
@@ -97,9 +97,9 @@ extern CDC_LINE_CODING_TYPE CDC_lineCoding;
 #define CDC_printH(n)         printH(CDC_write, n)    // print half-word as string
 #define CDC_printB(n)         printB(CDC_write, n)    // print byte as string
 #define CDC_printS(s)         printS(CDC_write, s)    // print string
-#define CDC_println(s)        {println(CDC_write, s); CDC_flush();}
+#define CDC_println(s)        (println(CDC_write, s), CDC_flush())
 #define CDC_print             CDC_printS              // alias
-#define CDC_printf(f, ...)    {printF(CDC_write, f, ##__VA_ARGS__); CDC_flush();}
+#define CDC_printf(f, ...)    (printF(CDC_write, f, ##__VA_ARGS__), CDC_flush())
 #endif
 
 #ifdef __cplusplus

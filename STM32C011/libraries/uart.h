@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic USART1 Functions for STM32C0xx  (no buffer, no interrupt, no DMA)    * v1.0 *
+// Basic USART1 Functions for STM32C0xx  (no buffer, no interrupt, no DMA)    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART_init()              Init UART with 8N1 and default BAUD rate (115200)
-// UART_setBaud(n)          Set BAUD rate
+// UART_setBAUD(n)          Set BAUD rate
 // UART_setDataBits(n)      Set number of data bits (n = 7, 8, 9)
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
 // UART_setNoParity()       Set no parity bit
@@ -44,9 +44,10 @@
 //
 // USART1 pin mapping (set below in UART parameters):
 // --------------------------------------------------
-// UART_MAP   0     1     2     3
-// TX-pin    PA9   PA11  PB6   No mapping
-// RX-pin    PA10  PA12  PB7   No mapping
+// UART_MAP   0     1     2     3     4
+// TX-pin    PA9   PA11  PB6   PA0   No mapping
+// RX-pin    PA10  PA12  PB7   PA1   No mapping
+// (PA11/PA12: PA9/PA10 are remapped to these pins by SYSCFG)
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -69,25 +70,36 @@ extern "C" {
 #define UART_available()      (USART1->ISR & USART_ISR_RXNE_RXFNE)  // ready to read
 #define UART_completed()      (USART1->ISR & USART_ISR_TC)          // transmission completed
 
-#define UART_enable()         USART1->CR1 |= USART_CR1_UE           // enable USART
-#define UART_disable()        USART1->CR1 &= ~USART_CR1_UE          // disable USART
-#define UART_TX_enable()      USART1->CR1 |= USART_CR1_TE           // enable transmitter
-#define UART_TX_disable()     USART1->CR1 &= ~USART_CR1_TE          // disable transmitter
-#define UART_RX_enable()      USART1->CR1 |= USART_CR1_RE           // enable receiver
-#define UART_RX_disable()     USART1->CR1 &= ~USART_CR1_RE          // disable receiver
-#define UART_LP_enable()      USART1->CR1 |= USART_CR1_UESM         // enable wake from low-power
-#define UART_LP_disable()     USART1->CR1 &= ~USART_CR1_UESM        // disable wake from low-power
-#define UART_FIFO_enable()    USART1->CR1 |= USART_CR1_FIFOEN       // enable FIFO mode
-#define UART_FIFO_disable()   USART1->CR1 |= ~USART_CR1_FIFOEN      // disable FIFO mode
+// Write USART configuration register (BRR, M, PCE, PS, STOP and FIFOEN can only be
+// written while the USART is disabled; an ongoing transmission is completed first)
+static inline void UART_config(volatile uint32_t* reg, uint32_t mask, uint32_t val) {
+  uint32_t cr1 = USART1->CR1;
+  if(cr1 & USART_CR1_UE) {
+    if(cr1 & USART_CR1_TE) while(!(USART1->ISR & USART_ISR_TC)); // wait for TX completed
+    USART1->CR1 = cr1 & ~USART_CR1_UE;                           // disable USART
+  }
+  *reg = (*reg & ~mask) | val;                                  // write configuration
+  if(cr1 & USART_CR1_UE) USART1->CR1 |= USART_CR1_UE;            // re-enable USART
+}
 
-#define UART_setBAUD(n)       USART1->BRR = ((2*F_CPU/(n))+1)/2     // set BAUD rate
-#define UART_setDataBits(n)   {USART1->CR1 &= ~(USART_CR1_M1 | USART_CR1_M0); \
-                              (n==9 ? (USART1->CR1 |= USART_CR1_M0) :         \
-                              (n==7 ? (USART1->CR1 |= USART_CR1_M1) : (0)));  }
-#define UART_setStopBits(n)   (n==2 ? (USART1->CR2 |= ((uint32_t)1<<13) : (USART1->CR2 &= ~((uint32_t)1<<13)))
-#define UART_setEvenParity()  {USART1->CR1 |= USART_CR1_PCE; USART1->CR1 &= ~USART_CR1_PS;}
-#define UART_setOddParity()   {USART1->CR1 |= USART_CR1_PCE; USART1->CR1 |=  USART_CR1_PS;}
-#define UART_setNoParity()    USART1->CR1 &= ~USART_CR1_PCE
+#define UART_enable()         (USART1->CR1 |=  USART_CR1_UE)        // enable USART
+#define UART_disable()        (USART1->CR1 &= ~USART_CR1_UE)        // disable USART
+#define UART_TX_enable()      (USART1->CR1 |=  USART_CR1_TE)        // enable transmitter
+#define UART_TX_disable()     (USART1->CR1 &= ~USART_CR1_TE)        // disable transmitter
+#define UART_RX_enable()      (USART1->CR1 |=  USART_CR1_RE)        // enable receiver
+#define UART_RX_disable()     (USART1->CR1 &= ~USART_CR1_RE)        // disable receiver
+#define UART_LP_enable()      (USART1->CR1 |=  USART_CR1_UESM)      // enable wake from low-power
+#define UART_LP_disable()     (USART1->CR1 &= ~USART_CR1_UESM)      // disable wake from low-power
+#define UART_FIFO_enable()    UART_config(&USART1->CR1, USART_CR1_FIFOEN, USART_CR1_FIFOEN)
+#define UART_FIFO_disable()   UART_config(&USART1->CR1, USART_CR1_FIFOEN, 0)
+
+#define UART_setBAUD(n)       UART_config(&USART1->BRR, 0xffff, ((2*F_CPU/(n))+1)/2)
+#define UART_setDataBits(n)   UART_config(&USART1->CR1, USART_CR1_M1 | USART_CR1_M0, \
+                              ((n)==9 ? USART_CR1_M0 : ((n)==7 ? USART_CR1_M1 : 0)))
+#define UART_setStopBits(n)   UART_config(&USART1->CR2, USART_CR2_STOP, ((n)==2 ? USART_CR2_STOP_1 : 0))
+#define UART_setEvenParity()  UART_config(&USART1->CR1, USART_CR1_PCE | USART_CR1_PS, USART_CR1_PCE)
+#define UART_setOddParity()   UART_config(&USART1->CR1, USART_CR1_PCE | USART_CR1_PS, USART_CR1_PCE | USART_CR1_PS)
+#define UART_setNoParity()    UART_config(&USART1->CR1, USART_CR1_PCE, 0)
 
 // UART functions
 void UART_init(void);                     // init UART with default BAUD rate
