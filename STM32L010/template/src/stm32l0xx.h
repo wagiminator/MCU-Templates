@@ -1,8 +1,10 @@
 // ===================================================================================
-// Header file for STM32L010, STM32L011, STM32L021, STM32L031                 * v1.0 *
+// Header file for STM32L010, STM32L011, STM32L021, STM32L031                 * v1.1 *
 // ===================================================================================
 // This contains a copy of core_cm0plus.h and stm32l031xb.h.
 // NOTE: This file includes modifications by Stefan Wagner.
+// v1.1: GPIOD/GPIOE clock, reset and sleep-mode bits added (STM32L010x8/xB),
+//       DATA_EEPROM_END is the end of the largest EEPROM (L031: 1KB), see eeprom.h.
 
 #pragma once
 
@@ -17,7 +19,7 @@ extern "C" {
 #define __CM0PLUS_REV             0 /*!< Core Revision r0p0                            */
 #define __MPU_PRESENT             0 /*!< STM32L0xx  provides no MPU                    */
 #define __VTOR_PRESENT            1 /*!< Vector  Table  Register supported             */
-#define __NVIC_PRIO_BITS          2 /*!< STM32G0xx uses 2 Bits for the Priority Levels */
+#define __NVIC_PRIO_BITS          2 /*!< STM32L0xx uses 2 Bits for the Priority Levels */
 #define __Vendor_SysTickConfig    0 /*!< Set to 1 if different SysTick Config is used  */
 #define __FPU_USED                0 /*!< This core does not support an FPU at all      */
 
@@ -1048,7 +1050,7 @@ typedef struct
 #define FLASH_BASE             (0x08000000UL) /*!< FLASH base address in the alias region */
 
 #define DATA_EEPROM_BASE       (0x08080000UL) /*!< DATA_EEPROM base address in the alias region */
-#define DATA_EEPROM_END        (0x080803FFUL) /*!< DATA EEPROM end address in the alias region */
+#define DATA_EEPROM_END        (0x080803FFUL) /*!< DATA EEPROM end address in the alias region (largest device) */
 #define SRAM_BASE              (0x20000000UL) /*!< SRAM base address in the alias region */
 #define SRAM_SIZE_MAX          (0x00002000UL) /*!< maximum SRAM size (up to 8KBytes) */
 
@@ -4203,6 +4205,12 @@ typedef struct
 #define RCC_IOPRSTR_IOPCRST_Pos          (2U) 
 #define RCC_IOPRSTR_IOPCRST_Msk          (0x1UL << RCC_IOPRSTR_IOPCRST_Pos)     /*!< 0x00000004 */
 #define RCC_IOPRSTR_IOPCRST              RCC_IOPRSTR_IOPCRST_Msk               /*!< GPIO port C reset */
+#define RCC_IOPRSTR_IOPDRST_Pos          (3U) 
+#define RCC_IOPRSTR_IOPDRST_Msk          (0x1UL << RCC_IOPRSTR_IOPDRST_Pos)     /*!< 0x00000008 */
+#define RCC_IOPRSTR_IOPDRST              RCC_IOPRSTR_IOPDRST_Msk               /*!< GPIO port D reset */
+#define RCC_IOPRSTR_IOPERST_Pos          (4U) 
+#define RCC_IOPRSTR_IOPERST_Msk          (0x1UL << RCC_IOPRSTR_IOPERST_Pos)     /*!< 0x00000010 */
+#define RCC_IOPRSTR_IOPERST              RCC_IOPRSTR_IOPERST_Msk               /*!< GPIO port E reset */
 #define RCC_IOPRSTR_IOPHRST_Pos          (7U) 
 #define RCC_IOPRSTR_IOPHRST_Msk          (0x1UL << RCC_IOPRSTR_IOPHRST_Pos)     /*!< 0x00000080 */
 #define RCC_IOPRSTR_IOPHRST              RCC_IOPRSTR_IOPHRST_Msk               /*!< GPIO port H reset */
@@ -4211,6 +4219,8 @@ typedef struct
 #define RCC_IOPRSTR_GPIOARST                RCC_IOPRSTR_IOPARST        /*!< GPIO port A reset */
 #define RCC_IOPRSTR_GPIOBRST                RCC_IOPRSTR_IOPBRST        /*!< GPIO port B reset */
 #define RCC_IOPRSTR_GPIOCRST                RCC_IOPRSTR_IOPCRST        /*!< GPIO port C reset */
+#define RCC_IOPRSTR_GPIODRST                RCC_IOPRSTR_IOPDRST        /*!< GPIO port D reset */
+#define RCC_IOPRSTR_GPIOERST                RCC_IOPRSTR_IOPERST        /*!< GPIO port E reset */
 #define RCC_IOPRSTR_GPIOHRST                RCC_IOPRSTR_IOPHRST        /*!< GPIO port H reset */
 
 
@@ -4285,6 +4295,12 @@ typedef struct
 #define RCC_IOPENR_IOPCEN_Pos            (2U) 
 #define RCC_IOPENR_IOPCEN_Msk            (0x1UL << RCC_IOPENR_IOPCEN_Pos)       /*!< 0x00000004 */
 #define RCC_IOPENR_IOPCEN                RCC_IOPENR_IOPCEN_Msk                 /*!< GPIO port C clock enable */
+#define RCC_IOPENR_IOPDEN_Pos            (3U) 
+#define RCC_IOPENR_IOPDEN_Msk            (0x1UL << RCC_IOPENR_IOPDEN_Pos)       /*!< 0x00000008 */
+#define RCC_IOPENR_IOPDEN                RCC_IOPENR_IOPDEN_Msk                 /*!< GPIO port D clock enable */
+#define RCC_IOPENR_IOPEEN_Pos            (4U) 
+#define RCC_IOPENR_IOPEEN_Msk            (0x1UL << RCC_IOPENR_IOPEEN_Pos)       /*!< 0x00000010 */
+#define RCC_IOPENR_IOPEEN                RCC_IOPENR_IOPEEN_Msk                 /*!< GPIO port E clock enable */
 #define RCC_IOPENR_IOPHEN_Pos            (7U) 
 #define RCC_IOPENR_IOPHEN_Msk            (0x1UL << RCC_IOPENR_IOPHEN_Pos)       /*!< 0x00000080 */
 #define RCC_IOPENR_IOPHEN                RCC_IOPENR_IOPHEN_Msk                 /*!< GPIO port H clock enable */
@@ -4293,6 +4309,8 @@ typedef struct
 #define RCC_IOPENR_GPIOAEN                  RCC_IOPENR_IOPAEN        /*!< GPIO port A clock enable */
 #define RCC_IOPENR_GPIOBEN                  RCC_IOPENR_IOPBEN        /*!< GPIO port B clock enable */
 #define RCC_IOPENR_GPIOCEN                  RCC_IOPENR_IOPCEN        /*!< GPIO port C clock enable */
+#define RCC_IOPENR_GPIODEN                  RCC_IOPENR_IOPDEN        /*!< GPIO port D clock enable */
+#define RCC_IOPENR_GPIOEEN                  RCC_IOPENR_IOPEEN        /*!< GPIO port E clock enable */
 #define RCC_IOPENR_GPIOHEN                  RCC_IOPENR_IOPHEN        /*!< GPIO port H clock enable */
 
 /*****************  Bit definition for RCC_AHBENR register  ******************/
@@ -4371,6 +4389,12 @@ typedef struct
 #define RCC_IOPSMENR_IOPCSMEN_Pos        (2U) 
 #define RCC_IOPSMENR_IOPCSMEN_Msk        (0x1UL << RCC_IOPSMENR_IOPCSMEN_Pos)   /*!< 0x00000004 */
 #define RCC_IOPSMENR_IOPCSMEN            RCC_IOPSMENR_IOPCSMEN_Msk             /*!< GPIO port C clock enabled in sleep mode */
+#define RCC_IOPSMENR_IOPDSMEN_Pos        (3U) 
+#define RCC_IOPSMENR_IOPDSMEN_Msk        (0x1UL << RCC_IOPSMENR_IOPDSMEN_Pos)   /*!< 0x00000008 */
+#define RCC_IOPSMENR_IOPDSMEN            RCC_IOPSMENR_IOPDSMEN_Msk             /*!< GPIO port D clock enabled in sleep mode */
+#define RCC_IOPSMENR_IOPESMEN_Pos        (4U) 
+#define RCC_IOPSMENR_IOPESMEN_Msk        (0x1UL << RCC_IOPSMENR_IOPESMEN_Pos)   /*!< 0x00000010 */
+#define RCC_IOPSMENR_IOPESMEN            RCC_IOPSMENR_IOPESMEN_Msk             /*!< GPIO port E clock enabled in sleep mode */
 #define RCC_IOPSMENR_IOPHSMEN_Pos        (7U) 
 #define RCC_IOPSMENR_IOPHSMEN_Msk        (0x1UL << RCC_IOPSMENR_IOPHSMEN_Pos)   /*!< 0x00000080 */
 #define RCC_IOPSMENR_IOPHSMEN            RCC_IOPSMENR_IOPHSMEN_Msk             /*!< GPIO port H clock enabled in sleep mode */
@@ -4379,6 +4403,8 @@ typedef struct
 #define RCC_IOPSMENR_GPIOASMEN              RCC_IOPSMENR_IOPASMEN        /*!< GPIO port A clock enabled in sleep mode */
 #define RCC_IOPSMENR_GPIOBSMEN              RCC_IOPSMENR_IOPBSMEN        /*!< GPIO port B clock enabled in sleep mode */
 #define RCC_IOPSMENR_GPIOCSMEN              RCC_IOPSMENR_IOPCSMEN        /*!< GPIO port C clock enabled in sleep mode */
+#define RCC_IOPSMENR_GPIODSMEN              RCC_IOPSMENR_IOPDSMEN        /*!< GPIO port D clock enabled in sleep mode */
+#define RCC_IOPSMENR_GPIOESMEN              RCC_IOPSMENR_IOPESMEN        /*!< GPIO port E clock enabled in sleep mode */
 #define RCC_IOPSMENR_GPIOHSMEN              RCC_IOPSMENR_IOPHSMEN        /*!< GPIO port H clock enabled in sleep mode */
 
 /*****************  Bit definition for RCC_AHBSMENR register  ******************/

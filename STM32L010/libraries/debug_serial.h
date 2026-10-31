@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STM32L0xx                                 * v1.0 *
+// Basic Serial Debug Functions for STM32L0xx                                 * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // DEBUG_init()             Init serial DEBUG (8N1, BAUD: 115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_setBAUD(n)         Set BAUD rate
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string
@@ -18,10 +18,11 @@
 // DEBUG_newline()          Send newline
 // DEBUG_printf(s, ...)     Uses printf (supports %s, %c, %d, %u, %x, %b, %02d, %%)
 //
-// USART2 TX pin mapping (set below in DEBUG parameters):
-// ------------------------------------------------------
+// UART TX pin mapping (set below in DEBUG parameters):
+// ----------------------------------------------------
 // DEBUG_TX   0     1     2     3     4
-// TX-pin    PA2   PA9   PA14  PB6   no mapping
+// TX-pin    PA2   PA9   PA14  PB6   No mapping
+// (PA14 is also SWCLK! PB6 is not available on TSSOP20 packages)
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -37,6 +38,11 @@ extern "C" {
 #define DEBUG_ENABLE      1               // enable serial DEBUG (0:no, 1:yes)
 #define DEBUG_TX          1               // UART TX pin mapping (see above)
 #define DEBUG_BAUD        115200          // default UART baud rate
+
+// BAUD rate check (USART kernel clock = PCLK = F_CPU, BRR = F_CPU / BAUD >= 16)
+#if F_CPU / DEBUG_BAUD < 16
+  #warning DEBUG_BAUD too high for F_CPU
+#endif
 
 // DEBUG functions and macros
 #if DEBUG_ENABLE > 0
@@ -61,7 +67,14 @@ extern "C" {
   #define DEBUG_printf(f, ...)
 #endif
 
-#define DEBUG_setBAUD(n)  USART2->BRR = ((2*F_CPU/(n))+1)/2;  // set BAUD rate
+// Set BAUD rate (BRR can only be written while the USART is disabled)
+static inline void DEBUG_setBAUD(uint32_t baud) {
+  while(!(USART2->ISR & USART_ISR_TC));         // wait for transmission completed
+  USART2->CR1 &= ~USART_CR1_UE;                 // disable USART
+  USART2->BRR  = ((2 * F_CPU / baud) + 1) / 2;  // set BAUD rate
+  USART2->CR1 |=  USART_CR1_UE;                 // enable USART
+}
+
 #define DEBUG_newline()   DEBUG_write('\n')                   // send newline
 #define DEBUG_printS      DEBUG_print                         // alias for print
 

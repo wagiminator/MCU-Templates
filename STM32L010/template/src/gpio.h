@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for STM32L0xx                                         * v0.1 *
+// Basic GPIO Functions for STM32L0xx                                         * v1.0 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PH14, PH15 - e.g.:
@@ -29,6 +29,20 @@
 // PIN_read(PIN)            Read PIN input value
 // PIN_write(PIN, val)      Write PIN output value (0 = LOW / 1 = HIGH)
 //
+// PIN interrupt and event functions available:
+// --------------------------------------------
+// PIN_EVT_set(PIN,TYPE)    Setup PIN event TYPE:
+//                          PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH
+// PIN_INT_set(PIN,TYPE)    Setup PIN interrupt TYPE:
+//                          PIN_INT_OFF, PIN_INT_RISING, PIN_INT_FALLING, PIN_INT_BOTH
+// PIN_INT_enable(PIN)      Enable interrupt (NVIC) of the EXTI line of PIN
+// PIN_INT_disable(PIN)     Disable interrupt (NVIC) of the EXTI line of PIN
+// PIN_INTFLAG_read(PIN)    Read interrupt flag of PIN
+// PIN_INTFLAG_clear(PIN)   Clear interrupt flag of PIN
+// PIN_INT_ISR(handler) { } Interrupt service routine, handler must match the EXTI line:
+//                          EXTI0_1_IRQHandler (line 0, 1), EXTI2_3_IRQHandler (2, 3),
+//                          EXTI4_15_IRQHandler (line 4..15)
+//
 // PORT functions available:
 // -------------------------
 // PORT_enable(PIN)         Enable GPIO PORT of PIN
@@ -56,23 +70,29 @@
 // ADC_disable()            Disable ADC (power-down)
 // ADC_calibrate()          Calibrate ADC (ADC must be disabled)
 //
-// ADC_fast()               Set fast mode   (  1.5 ADC clock cycles, least accurate) (*)
-// ADC_medium()             Set medium mode ( 79.5 ADC clock cycles, medium accurate)
+// ADC_fast()               Set fast mode   (  1.5 ADC clock cycles, least accurate)
+// ADC_medium()             Set medium mode ( 79.5 ADC clock cycles, medium accurate) (*)
 // ADC_slow()               Set slow mode   (160.5 ADC clock cycles, most accurate)
 //
 // ADC_input(PIN)           Set PIN as ADC input
-// ADC_input_VREF()         Set internal voltage referece (Vref) as ADC input
-// ADC_input_TEMP()         Set internal temperature sensor as ADC input
+// ADC_input_VREF()         Set internal voltage reference (Vref) as ADC input
+// ADC_input_TEMP()         Set internal temperature sensor as ADC input (**)
 //
 // ADC_read()               Sample and read 12-bit ADC value (0..4095)
 // ADC_read_VDD()           Sample and calculate supply voltage (VDD) in millivolts (mV)
-// ADC_read_TEMP()          Sample and calculate internal temperature in °C
+// ADC_read_TEMP()          Sample and calculate internal temperature in °C (**)
 //
 // Notes:
 // ------
-// - (*) reset state
+// - (*) reset state; ADC_init() sets medium mode.
+// - (**) only STM32L011/L021/L031 (set ADC_TEMP below), the STM32L010 has no
+//   temperature sensor (RM0451, chapter 13).
 // - Pins used for ADC must be set with PIN_input_AN beforehand. ADC input pins are:
-//   PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1.
+//   PA0..PA7 (IN0..IN7), PB0, PB1 (IN8, IN9), PC0..PC5 (IN10..IN15, larger packages).
+//   VREFINT is IN17. The ADC clock is PCLK/2; VREF is sampled with 160.5 cycles.
+// - For interrupts and events: each line number can only be used once at a time
+//   (e.g. PA1 and PB1 cannot be used simultaneously, but PA1 and PB2 can).
+// - Ports D, E and H are only available on larger devices (category 2, 3 and 5).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -492,15 +512,21 @@ enum{
 (0)))))))
 
 // ===================================================================================
-// Toggle PIN output value
+// Toggle PIN output value (single write to BSRR, other pins are not affected)
 // ===================================================================================
 #define PIN_toggle(PIN) \
-  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->ODR ^= 1<<((PIN)&15) ) : \
-  ((PIN>=PH0)&&(PIN<=PH15) ? ( GPIOH->ODR ^= 1<<((PIN)&15) ) : \
+  ((PIN>=PA0)&&(PIN<=PA15) ? ( GPIOA->BSRR = (GPIOA->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PB0)&&(PIN<=PB15) ? ( GPIOB->BSRR = (GPIOB->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PC0)&&(PIN<=PC15) ? ( GPIOC->BSRR = (GPIOC->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PD0)&&(PIN<=PD15) ? ( GPIOD->BSRR = (GPIOD->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PE0)&&(PIN<=PE15) ? ( GPIOE->BSRR = (GPIOE->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
+  ((PIN>=PH0)&&(PIN<=PH15) ? ( GPIOH->BSRR = (GPIOH->ODR & ((uint32_t)1<<((PIN)&15))) \
+                                         ? ((uint32_t)1<<(((PIN)&15)+16)) : ((uint32_t)1<<((PIN)&15)) ) : \
 (0)))))))
 
 // ===================================================================================
@@ -518,20 +544,66 @@ enum{
 // ===================================================================================
 // Write PIN output value (0 = LOW / 1 = HIGH)
 // ===================================================================================
-#define PIN_write(PIN, val) (val)?(PIN_high(PIN)):(PIN_low(PIN))
+#define PIN_write(PIN, val) ((val)?(PIN_high(PIN)):(PIN_low(PIN)))
+
+// ===================================================================================
+// Setup PIN interrupt / event (EXTI)
+// ===================================================================================
+enum{PIN_INT_OFF, PIN_INT_RISING, PIN_INT_FALLING, PIN_INT_BOTH};
+enum{PIN_EVT_OFF, PIN_EVT_RISING, PIN_EVT_FALLING, PIN_EVT_BOTH};
+
+// Connect EXTI line (PIN&15) to the port of PIN (SYSCFG_EXTICRx, 4 bits per line,
+// port code PA:0, PB:1, PC:2, PD:3, PE:4, PH:5 = PIN>>4)
+#define PIN_EXTI_set(PIN) \
+  (RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN, \
+   SYSCFG->EXTICR[((PIN)&15)>>2] = (SYSCFG->EXTICR[((PIN)&15)>>2]      \
+                                 & ~((uint32_t)0xf << (((PIN)&3)<<2))) \
+                                 |  ((uint32_t)((PIN)>>4) << (((PIN)&3)<<2)))
+
+#define PIN_INT_set(PIN, TYPE) \
+  (PIN_EXTI_set(PIN), \
+  ((TYPE) & 1) ? (EXTI->RTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->RTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 2) ? (EXTI->FTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->FTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  EXTI->PR = (uint32_t)1<<((PIN)&15), \
+  ((TYPE) & 3) ? (EXTI->IMR  |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->IMR  &= ~((uint32_t)1<<((PIN)&15))))
+
+#define PIN_EVT_set(PIN, TYPE) \
+  (PIN_EXTI_set(PIN), \
+  ((TYPE) & 1) ? (EXTI->RTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->RTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 2) ? (EXTI->FTSR |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->FTSR &= ~((uint32_t)1<<((PIN)&15))), \
+  ((TYPE) & 3) ? (EXTI->EMR  |=  (uint32_t)1<<((PIN)&15)) : \
+                 (EXTI->EMR  &= ~((uint32_t)1<<((PIN)&15))))
+
+// NVIC interrupt number of the EXTI line of PIN
+#define PIN_IRQn(PIN) \
+  ((((PIN)&15) <= 1) ? EXTI0_1_IRQn : (((PIN)&15) <= 3) ? EXTI2_3_IRQn : EXTI4_15_IRQn)
+
+#define PIN_INT_enable(PIN)     NVIC_EnableIRQ(PIN_IRQn(PIN))
+#define PIN_INT_disable(PIN)    NVIC_DisableIRQ(PIN_IRQn(PIN))
+
+#define PIN_INTFLAG_read(PIN)   (EXTI->PR & ((uint32_t)1 << ((PIN) & 15)))
+#define PIN_INTFLAG_clear(PIN)  (EXTI->PR = ((uint32_t)1 << ((PIN) & 15)))
+
+#define PIN_INT_ISR(handler)    void handler(void) __attribute__((interrupt)); \
+                                void handler(void)
 
 // ===================================================================================
 // Enable GPIO PORTS
 // ===================================================================================
-#define PORTA_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOAEN
-#define PORTB_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOBEN
-#define PORTC_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOCEN
-#define PORTD_enable()    RCC->IOPENR |= RCC_IOPENR_GPIODEN
-#define PORTE_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOEEN
-#define PORTH_enable()    RCC->IOPENR |= RCC_IOPENR_GPIOHEN
-#define PORTS_enable()    RCC->IOPENR  = RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOBEN \
-                                       | RCC_IOPENR_GPIOCEN | RCC_IOPENR_GPIODEN \
-                                       | RCC_IOPENR_GPIOEEN | RCC_IOPENR_GPIOHEN
+#define PORTA_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIOAEN)
+#define PORTB_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIOBEN)
+#define PORTC_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIOCEN)
+#define PORTD_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIODEN)
+#define PORTE_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIOEEN)
+#define PORTH_enable()   (RCC->IOPENR |= RCC_IOPENR_GPIOHEN)
+#define PORTS_enable()    (RCC->IOPENR  = RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOBEN \
+                                        | RCC_IOPENR_GPIOCEN | RCC_IOPENR_GPIODEN \
+                                        | RCC_IOPENR_GPIOEEN | RCC_IOPENR_GPIOHEN)
 
 #define PORT_enable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->IOPENR |= RCC_IOPENR_GPIOAEN ) : \
@@ -545,13 +617,13 @@ enum{
 // ===================================================================================
 // Disable GPIO PORTS
 // ===================================================================================
-#define PORTA_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN
-#define PORTB_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOBEN
-#define PORTC_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOCEN
-#define PORTD_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIODEN
-#define PORTE_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOEEN
-#define PORTH_disable()   RCC->IOPENR &= ~RCC_IOPENR_GPIOHEN
-#define PORTS_disable()   RCC->IOPENR  = 0
+#define PORTA_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN)
+#define PORTB_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIOBEN)
+#define PORTC_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIOCEN)
+#define PORTD_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIODEN)
+#define PORTE_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIOEEN)
+#define PORTH_disable()  (RCC->IOPENR &= ~RCC_IOPENR_GPIOHEN)
+#define PORTS_disable()  (RCC->IOPENR  = 0)
 
 #define PORT_disable(PIN) \
   ((PIN>=PA0)&&(PIN<=PA15) ? ( RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN ) : \
@@ -566,35 +638,68 @@ enum{
 // ADC Functions
 // ===================================================================================
 
-// ADC calibration registers
-#define ADC_VREFCAL         (*(__I uint16_t*)(0x1FF80078))    // at 3000mV
-#define ADC_TSCAL1          (*(__I uint16_t*)(0x1FF8007A))    // at 30°C
-#define ADC_TSCAL2          (*(__I uint16_t*)(0x1FF8007E))    // at 130°C
+// ADC parameters
+#define ADC_TEMP            0     // 1: temperature sensor functions (only STM32L011,
+                                  //    STM32L021, STM32L031 - the STM32L010 has none!)
+
+// ADC calibration registers (factory calibration values, see datasheet)
+#define ADC_VREFCAL         (*(__I uint16_t*)(0x1FF80078))    // VREFINT at 3000mV, 25°C
+#define ADC_TSCAL1          (*(__I uint16_t*)(0x1FF8007A))    // TEMP at 30°C (L011/21/31)
+#define ADC_TSCAL2          (*(__I uint16_t*)(0x1FF8007E))    // TEMP at 130°C (L011/21/31)
 
 // ADC calibration values
 #define ADC_CVOLT           3000  // calibration voltage of VREF and TEMP sensor
 #define ADC_CTEMP1          30    // calibration temperature of TSCAL1
 #define ADC_CTEMP2          130   // calibration temperature of TSCAL2
 
-// Set ADC sampling rate
-#define ADC_fast()          ADC1->SMPR &= ~ADC_SMPR_SMP
-#define ADC_medium()        ADC1->SMPR  = (ADC1->SMPR & ~ADC_SMPR_SMP) | 0b110
-#define ADC_slow()          ADC1->SMPR |=  ADC_SMPR_SMP
+// ADC clock: PCLK/2 (synchronous, max. 16MHz in range 1, 8MHz in range 2), low
+// frequency mode below 3.5MHz (RM0451, chapter 13.3.5), min. 140kHz (datasheet)
+#define ADC_CKMODE          (0b01 << ADC_CFGR2_CKMODE_Pos)  // ADC clock = PCLK / 2
+#if F_CPU / 2 < 3500000
+  #define ADC_LFMEN         ADC_CCR_LFMEN                   // low frequency mode
+#else
+  #define ADC_LFMEN         0
+#endif
+// Note: the ADC needs fADC >= 140kHz, i.e. F_CPU >= 280kHz (datasheet)
 
-// Set ADC input
-#define ADC_input(PIN) \
-  ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( ADC1->CHSELR = (uint32_t)1<<( (PIN)&7)     ) : \
-  ((PIN>=PB0 )&&(PIN<=PB1 ) ? ( ADC1->CHSELR = (uint32_t)1<<(((PIN)&7)+8)  ) : \
-  (0)))
-#define ADC_input_VREF()    ADC1->CHSELR = (uint16_t)1<<17  // VREF: channel 17
-#define ADC_input_TEMP()    ADC1->CHSELR = (uint16_t)1<<18  // TEMP: channel 18
+// Set ADC sampling time (applies to all channels)
+#define ADC_fast()          (ADC1->SMPR =  ADC1->SMPR & ~ADC_SMPR_SMP)
+#define ADC_medium()        (ADC1->SMPR = (ADC1->SMPR & ~ADC_SMPR_SMP) | 0b110)
+#define ADC_slow()          (ADC1->SMPR =  ADC1->SMPR |  ADC_SMPR_SMP)
+
+// Select ADC channel (0..18)
+static inline void ADC_setChannel(uint8_t ch) {
+  if(ch > 18) return;                           // invalid channel
+  ADC1->CHSELR = (uint32_t)1 << ch;             // set ADC channel
+}
+
+// Set GPIO pin as ADC input
+#define ADC_input(PIN) ADC_setChannel( \
+  ((PIN>=PA0 )&&(PIN<=PA7 ) ? ( (PIN)&7      ) : \
+  ((PIN>=PB0 )&&(PIN<=PB1 ) ? (((PIN)&7)+8   ) : \
+  ((PIN>=PC0 )&&(PIN<=PC5 ) ? (((PIN)&7)+10  ) : \
+  (0xff)))))
+
+// Set VREF (and temperature sensor) as ADC input
+#define ADC_input_VREF()    ADC_setChannel(17)      // internal reference (IN17)
+#if ADC_TEMP > 0
+#define ADC_input_TEMP()    ADC_setChannel(18)      // temperature sensor (IN18)
+#endif
 
 // Enable ADC
 static inline void ADC_enable(void) {
-  ADC->CCR  = ADC_CCR_VREFEN | ADC_CCR_TSEN;    // enable VREF and TEMP sensor
-  ADC1->ISR = 0xffff;                           // clear all ADC flags
-  ADC1->CR |= ADC_CR_ADEN;                      // enable ADC
-  while(!(ADC1->ISR & ADC_ISR_ADRDY));          // wait until ready
+  #if ADC_TEMP > 0
+  ADC->CCR |= ADC_CCR_TSEN | ADC_CCR_VREFEN;    // enable TEMP and VREF
+  #else
+  ADC->CCR |= ADC_CCR_VREFEN;                   // enable VREF
+  #endif
+  ADC1->ISR = ADC_ISR_ADRDY;                    // clear ready flag
+  do {
+    ADC1->CR |= ADC_CR_ADEN;                    // enable ADC (may be ignored right
+  } while(!(ADC1->ISR & ADC_ISR_ADRDY));        // after calibration -> repeat)
+  #if ADC_TEMP > 0
+  DLY_us(10);                                   // TEMP sensor start-up time (max)
+  #endif
 }
 
 // Disable ADC
@@ -603,46 +708,67 @@ static inline void ADC_disable(void) {
     ADC1->CR |= ADC_CR_ADSTP;                   // stop conversion
     while(ADC1->CR & ADC_CR_ADSTP);             // wait until stopped
   }
-  ADC1->CR |= ADC_CR_ADDIS;                     // disable ADC
-  while(ADC1->CR & ADC_CR_ADEN);                // wait until disabled
-  ADC->CCR  = 0;                                // disable VREF
+  if(ADC1->CR & ADC_CR_ADEN) {                  // ADC enabled?
+    ADC1->CR |= ADC_CR_ADDIS;                   // disable ADC
+    while(ADC1->CR & ADC_CR_ADEN);              // wait until disabled
+  }
+  ADC->CCR &= ~(ADC_CCR_TSEN | ADC_CCR_VREFEN); // disable TEMP and VREF
+  ADC1->CR &= ~ADC_CR_ADVREGEN;                 // disable ADC voltage regulator
 }
 
 // Calibrate ADC (ADC must be disabled)
 static inline void ADC_calibrate(void) {
-  ADC1->CR |= ADC_CR_ADCAL;                     // start calibration
-  while(!(ADC1->ISR & ADC_ISR_EOCAL));          // wait until finished
-  ADC1->ISR |= ADC_ISR_EOCAL;                   // clear flag
+  ADC1->CR |= ADC_CR_ADCAL;                     // start calibration (sets ADVREGEN)
+  while(ADC1->CR & ADC_CR_ADCAL);               // wait until finished
+  ADC1->ISR = ADC_ISR_EOCAL;                    // clear flag
 }
 
 // Setup, calibrate and enable ADC
 static inline void ADC_init(void) {
-  RCC->APB2ENR |= RCC_APB2ENR_ADCEN;            // enable ADC module clock
-  DLY_us(20);                                   // wait until stable
-  ADC_calibrate();                              // calibrate ADC
+  RCC->APB2ENR  |=  RCC_APB2ENR_ADCEN;          // enable ADC module clock
+  RCC->APB2RSTR |=  RCC_APB2RSTR_ADCRST;        // reset ADC module
+  RCC->APB2RSTR &= ~RCC_APB2RSTR_ADCRST;
+  ADC1->CFGR2 = ADC_CKMODE;                     // set ADC clock (ADEN must be 0)
+  ADC->CCR    = ADC_LFMEN;                      // low frequency mode if fADC < 3.5MHz
+  ADC_calibrate();                              // calibrate ADC (enables regulator)
+  ADC1->SMPR  = 0b110;                          // medium sampling time (79.5 cycles)
   ADC_enable();                                 // enable ADC
 }
 
 // Sample and read ADC value of current input
 static inline uint16_t ADC_read(void) {
   ADC1->CR |= ADC_CR_ADSTART;                   // start conversion
-  while(ADC1->CR & ADC_CR_ADSTART);             // wait until finished
-  return ADC1->DR;                              // return result
+  while(!(ADC1->ISR & ADC_ISR_EOC));            // wait until finished
+  return ADC1->DR;                              // return result (clears EOC)
+}
+
+// Sample internal channel with longest sampling time (VREF/TEMP: >= 10us, datasheet)
+static inline uint16_t ADC_read_slow(void) {
+  uint32_t smpr = ADC1->SMPR;                   // save sampling time
+  uint16_t val;
+  ADC1->SMPR = smpr | ADC_SMPR_SMP;             // 160.5 ADC clock cycles
+  val = ADC_read();                             // sample and read
+  ADC1->SMPR = smpr;                            // restore sampling time
+  return val;
 }
 
 // Sample and read supply voltage (VDD) in millivolts (mV)
 static inline uint16_t ADC_read_VDD(void) {
+  uint16_t val;
   ADC_input_VREF();                             // set VREF as ADC input
-  return((uint32_t)ADC_CVOLT*ADC_VREFCAL/ADC_read()); // return VDD in mV
+  val = ADC_read_slow();
+  return(val ? (uint32_t)ADC_CVOLT * ADC_VREFCAL / val : 0); // return VDD in mV
 }
 
-// Sample and read temperature sensor in °C
+#if ADC_TEMP > 0
+// Sample and read temperature sensor in °C (only STM32L011/L021/L031)
 static inline int8_t ADC_read_TEMP(void) {
   int32_t vdd = ADC_read_VDD();                 // read current supply voltage
   ADC_input_TEMP();                             // set temp sensor as ADC input
-  int32_t tdata = vdd*ADC_read()/ADC_CVOLT;     // get vdd-compensated temp sensor val
-  return((tdata-ADC_TSCAL1)*(ADC_CTEMP2-ADC_CTEMP1)/(ADC_TSCAL2-ADC_TSCAL1)+ADC_CTEMP1);
+  int32_t tdata = vdd * ADC_read_slow() / ADC_CVOLT; // vdd-compensated temp sensor val
+  return((tdata - ADC_TSCAL1) * (ADC_CTEMP2 - ADC_CTEMP1) / (ADC_TSCAL2 - ADC_TSCAL1) + ADC_CTEMP1);
 }
+#endif
 
 #ifdef __cplusplus
 };

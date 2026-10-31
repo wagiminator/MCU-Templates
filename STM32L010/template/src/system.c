@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v1.0 *
+// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v1.1 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -13,9 +13,18 @@
 void SYS_init(void) {
   // Init system clock
   #if SYS_CLK_INIT > 0
-  #if F_CPU > 16000000
+  #if CLK_VOS_RANGE == 1
+  RCC->APB1ENR |= RCC_APB1ENR_PWREN;        // enable power control clock
+  while(PWR->CSR & PWR_CSR_VOSF);           // wait until regulator is ready
+  PWR->CR = (PWR->CR & ~PWR_CR_VOS)         // select voltage range 1 (1.8V)
+          | PWR_CR_VOS_0;                   // (needed for F_CPU > 16MHz, RM0451)
+  while(PWR->CSR & PWR_CSR_VOSF);           // wait until voltage range is applied
+  RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;       // disable power control clock
+  #endif
+  #if CLK_LATENCY > 0
   FLASH->ACR |= FLASH_ACR_LATENCY;          // FLASH latency: one wait state
   while(!(FLASH->ACR & FLASH_ACR_LATENCY)); // wait until applied
+  FLASH->ACR |= FLASH_ACR_PRFTEN;           // enable prefetch (compensates wait state)
   #endif
   CLK_init();                               // Init clock according to settings
   #endif
@@ -48,9 +57,13 @@ void CLK_init_HSI(void) {
           | RCC_CR_HSION                                  // enable HSI
           | CLK_HSI_DIV;                                  // set HSI divider
   while(!(RCC->CR & RCC_CR_HSIRDY));                      // wait for HSI ready
-  RCC->CFGR = 0b01;                                       // HSI as system clock source
+  #if CLK_HSI_DIV > 0
+  while(!(RCC->CR & RCC_CR_HSIDIVF));                     // wait for HSI divider applied
+  #endif
+  RCC->CFGR = CLK_AHB_DIV                                 // set AHB prescaler
+            | RCC_CFGR_STOPWUCK                           // HSI for wake-up from STOP
+            | 0b01;                                       // HSI as system clock source
   while((RCC->CFGR & RCC_CFGR_SWS_Msk) != (0b01<<2));     // wait until switched to HSI
-  RCC->CFGR |= RCC_CFGR_STOPWUCK;                         // HSI for wake-up from STOP
 }
 
 // Init internal oscillator with PLL as system clock source
@@ -58,17 +71,21 @@ void CLK_init_HSI_PLL(void) {
   RCC->CR = RCC_CR_MSION                                  // keep MSI on
           | RCC_CR_HSION;                                 // enable HSI
   while(!(RCC->CR & RCC_CR_HSIRDY));                      // wait for HSI ready
-  RCC->CFGR = CLK_PLL_MUL | CLK_PLL_DIV;                  // set PLL factor and divider
+  RCC->CFGR = (RCC->CFGR & RCC_CFGR_SW)                   // keep current clock source
+            | CLK_PLL_MUL | CLK_PLL_DIV                   // set PLL factor and divider
+            | RCC_CFGR_STOPWUCK;                          // HSI for wake-up from STOP
   RCC->CR |= RCC_CR_PLLON;                                // enable PLL
   while(!(RCC->CR & RCC_CR_PLLRDY));                      // wait for PLL ready    
   RCC->CFGR |= 0b11;                                      // PLL as system clock source
   while((RCC->CFGR & RCC_CFGR_SWS_Msk) != (0b11<<2));     // wait until switched to PLL
-  RCC->CFGR |= RCC_CFGR_STOPWUCK;                         // HSI for wake-up from STOP
 }
 
 // Init external crystal (non PLL) as system clock source
 void CLK_init_HSE(void) {
   RCC->CR = RCC_CR_MSION                                  // keep MSI on
+          #if SYS_HSE_BYPASS > 0
+          | RCC_CR_HSEBYP                                 // external clock signal
+          #endif
           | RCC_CR_HSEON;                                 // enable HSE
   while(!(RCC->CR & RCC_CR_HSERDY));                      // wait for HSE ready
   RCC->CFGR = 0b10;                                       // HSE as system clock source
@@ -78,9 +95,13 @@ void CLK_init_HSE(void) {
 // Init external crystal with PLL as system clock source
 void CLK_init_HSE_PLL(void) {
   RCC->CR = RCC_CR_MSION                                  // keep MSI on
+          #if SYS_HSE_BYPASS > 0
+          | RCC_CR_HSEBYP                                 // external clock signal
+          #endif
           | RCC_CR_HSEON;                                 // enable HSE
   while(!(RCC->CR & RCC_CR_HSERDY));                      // wait for HSE ready
-  RCC->CFGR = CLK_PLL_MUL | CLK_PLL_DIV                   // set PLL factor and divider
+  RCC->CFGR = (RCC->CFGR & RCC_CFGR_SW)                   // keep current clock source
+            | CLK_PLL_MUL | CLK_PLL_DIV                   // set PLL factor and divider
             | RCC_CFGR_PLLSRC;                            // set HSE as PLL source
   RCC->CR |= RCC_CR_PLLON;                                // enable PLL
   while(!(RCC->CR & RCC_CR_PLLRDY));                      // wait for PLL ready    
@@ -98,80 +119,106 @@ void CLK_reset(void) {
   RCC->CR     = 0x00000100;                               // keep only MSI on
   RCC->CIER   = 0x00000000;                               // disable all interrupts
   RCC->CICR   = 0x000001ff;                               // clear all interrupt flags
-  FLASH->ACR &= 0xfffffffe;                               // reset flash latency
+  FLASH->ACR &= ~(FLASH_ACR_LATENCY | FLASH_ACR_PRFTEN);  // reset flash latency
 }
 
 // ===================================================================================
 // Real-Time Clock (RTC) Functions
 // ===================================================================================
 
-// Init RTC with LSI as clock source and 1s clock period
-void RTC_init(void) {
+// Select RTC clock source (RTCSEL can only be changed after an RTC domain reset)
+// and remove RTC register write protection
+static void RTC_unlock(uint32_t rtcsel) {
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;    // enable low power control block clock
-  PWR->CR  |= PWR_CR_DBP;               // enable access to RTC domain
-  RCC->CSR |= RCC_CSR_LSION             // enable internal low-speed clock (LSI)
-            | (0b10<<16)                // set LSI as clock source
-            | RCC_CSR_RTCEN;            // enable RTC module clock
-  RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
+  PWR->CR      |= PWR_CR_DBP;           // enable access to RTC domain
+  if((RCC->CSR & RCC_CSR_RTCSEL) != (rtcsel << RCC_CSR_RTCSEL_Pos)) {
+    if(RCC->CSR & RCC_CSR_RTCSEL) {     // other clock source already selected?
+      uint32_t lse = RCC->CSR & (RCC_CSR_LSEON | RCC_CSR_LSEBYP | RCC_CSR_LSEDRV);
+      RCC->CSR |=  RCC_CSR_RTCRST;      // -> reset RTC domain (clears LSE settings)
+      RCC->CSR &= ~RCC_CSR_RTCRST;
+      RCC->CSR |=  lse;                 // -> restore LSE settings
+      if(lse & RCC_CSR_LSEON) while(!(RCC->CSR & RCC_CSR_LSERDY));
+    }
+    RCC->CSR |= rtcsel << RCC_CSR_RTCSEL_Pos; // set clock source
+  }
+  RCC->CSR |= RCC_CSR_RTCEN;            // enable RTC
+  RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;   // disable low power control block clock
   RTC->WPR = 0xCA;                      // remove RTC register write protection
   RTC->WPR = 0x53;
-  RTC_setPrescaler(73, 499);            // set prescaler (37kHz -> 1Hz)
+}
+
+// Init RTC with LSI as clock source and 1s clock period
+void RTC_init(void) {
+  LSI_enable();                         // enable internal low-speed clock (LSI)
+  while(!LSI_ready());                  // wait until LSI is stable
+  RTC_unlock(0b10);                     // set LSI as clock source and unlock RTC
+  RTC_setPrescaler(73, 499);            // 37kHz / 74 / 500 = 1Hz (LSI is not precise)
 }
 
 // Init RTC with LSE as clock source and 1s clock period
 void RTC_init_LSE(void) {
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;    // enable low power control block clock
-  PWR->CR  |= PWR_CR_DBP;               // enable access to RTC domain
-  RCC->CSR |= RCC_CSR_LSEON             // enable external low-speed clock (LSE)
-            | (0b01<<16)                // set LSE as clock source
-            | RCC_CSR_RTCEN;            // enable RTC module clock
-  RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
-  RTC->WPR = 0xCA;                      // remove RTC register write protection
-  RTC->WPR = 0x53;
+  PWR->CR      |= PWR_CR_DBP;           // enable access to RTC domain
+  LSE_enable();                         // enable external low-speed clock (LSE)
+  while(!LSE_ready());                  // wait until LSE is stable
+  RTC_unlock(0b01);                     // set LSE as clock source and unlock RTC
+  RTC_setPrescaler(127, 255);           // 32768Hz / 128 / 256 = 1Hz
+}
+
+// Enter/exit RTC initialization mode
+static void RTC_enterInit(void) {
+  RTC->ISR = 0xffffffff;                // enter initialization mode (rc_w0 flags unchanged)
+  while(!(RTC->ISR & RTC_ISR_INITF));   // wait until init mode is entered
+}
+static void RTC_exitInit(void) {
+  RTC->ISR = ~(uint32_t)RTC_ISR_INIT;   // exit initialization mode (rc_w0 flags unchanged)
 }
 
 // Set RTC prescaler (default 127, 255)
 void RTC_setPrescaler(uint8_t async, uint16_t sync) {
-  RTC->ISR |= RTC_ISR_INIT;             // enter initialization mode
-  while(!(RTC->ISR & RTC_ISR_INITF));   // wait until init mode is entered
-  RTC->PRER = ((uint32_t)async << 16)
+  RTC_enterInit();                      // enter initialization mode
+  RTC->PRER = (uint32_t)sync;           // write sync first, then async (two writes, RM)
+  RTC->PRER = ((uint32_t)(async & 0x7f) << 16)
             | sync;
-  RTC->ISR &= ~RTC_ISR_INIT;            // exit initialization mode
+  RTC_exitInit();                       // exit initialization mode
 }
 
-// Set time in BC format
+// Set time in BCD format (24-hour format)
 void RTC_setTime(uint8_t hours, uint8_t minutes, uint8_t seconds) {
-  RTC->ISR |= RTC_ISR_INIT;             // enter initialization mode
-  while(!(RTC->ISR & RTC_ISR_INITF));   // wait until init mode is entered
+  RTC_enterInit();                      // enter initialization mode
+  RTC->CR &= ~RTC_CR_FMT;               // set time format to 24 hours (FMT = 0)
   RTC->TR = (uint32_t)hours   << 16     // set hours in BCD format
           | (uint32_t)minutes <<  8     // set minutes in BCD format
           | (uint32_t)seconds <<  0;    // set seconds in BCD format
-  RTC->CR |= RTC_CR_FMT;                // set time format to 24 hours
-  RTC->ISR &= ~RTC_ISR_INIT;            // exit initialization mode
+  RTC_exitInit();                       // exit initialization mode
+  RTC_clearFlag(RTC_ISR_RSF);           // wait for new synchronization before read
 }
 
 // Set Date in BCD format
 void RTC_setDate(uint8_t year, uint8_t weekday, uint8_t month, uint8_t day) {
-  RTC->ISR |= RTC_ISR_INIT;             // enter initialization mode
-  while(!(RTC->ISR & RTC_ISR_INITF));   // wait until init mode is entered
+  RTC_enterInit();                      // enter initialization mode
   RTC->DR = (uint32_t)year    << 16     // set year in BCD format
           | (uint32_t)weekday << 13     // set day of the week (1:Monday - 7:Sunday)
           | (uint32_t)month   <<  8     // set month in BCD format
           | (uint32_t)day     <<  0;    // set day in BCD format
-  RTC->ISR &= ~RTC_ISR_INIT;            // exit initialization mode
+  RTC_exitInit();                       // exit initialization mode
+  RTC_clearFlag(RTC_ISR_RSF);           // wait for new synchronization before read
 }
 
 // Read time register
 uint32_t RTC_readTime(void) {
+  uint32_t time;
   while(!(RTC->ISR & RTC_ISR_RSF));     // wait for registers synchronized
-  RTC->ISR &= ~RTC_ISR_RSF;             // clear synchronization flag
-  return RTC->TR;
+  RTC_clearFlag(RTC_ISR_RSF);           // clear synchronization flag
+  time = RTC->TR;                       // read time (locks date shadow register)
+  (void)RTC->DR;                        // read date to unlock shadow registers (RM)
+  return time;
 }
 
 // Read date register
 uint32_t RTC_readDate(void) {
   while(!(RTC->ISR & RTC_ISR_RSF));     // wait for registers synchronized
-  RTC->ISR &= ~RTC_ISR_RSF;             // clear synchronization flag
+  RTC_clearFlag(RTC_ISR_RSF);           // clear synchronization flag
   return RTC->DR;
 }
 
@@ -186,8 +233,8 @@ void RTC_setAlarmA(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t seco
               | (uint32_t)minutes <<  8 // set minutes in BCD format
               | (uint32_t)seconds <<  0 // set seconds in BCD format
               | RTC_ALRMAR_WDSEL;       // select week day mode
-  RTC->ISR   &= ~RTC_ISR_ALRAF;         // clear alarm flag
-  RTC->CR    |=  RTC_CR_ALRAE;          // enable Alarm A
+  RTC_clearFlag(RTC_ISR_ALRAF);         // clear alarm flag
+  RTC->CR |= RTC_CR_ALRAE;              // enable Alarm A
 }
 
 // Set Alarm B
@@ -201,17 +248,22 @@ void RTC_setAlarmB(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t seco
               | (uint32_t)minutes <<  8 // set minutes in BCD format
               | (uint32_t)seconds <<  0 // set seconds in BCD format
               | RTC_ALRMBR_WDSEL;       // select week day mode
-  RTC->ISR   &= ~RTC_ISR_ALRBF;         // clear alarm flag
+  RTC_clearFlag(RTC_ISR_ALRBF);         // clear alarm flag
   RTC->CR |= RTC_CR_ALRBE;              // enable Alarm B
 }
 
-// Start wakeup timer
+// Start wakeup timer (ms = 1..28000 with LSI, 1..32000 with LSE)
 void RTC_startWakeupTimer(uint16_t ms) {
+  uint32_t rtcclk = ((RCC->CSR & RCC_CSR_RTCSEL) == (0b10 << RCC_CSR_RTCSEL_Pos)) ? LSI_VALUE : LSE_VALUE;
+  uint32_t ticks  = ((uint32_t)ms * rtcclk + 8000) / 16000;  // RTCCLK / 16 ticks
+  if(ticks < 1) ticks = 1;
+  if(ticks > 0x10000) ticks = 0x10000;  // 16-bit counter
   RTC->CR &= ~RTC_CR_WUTE;              // disable wakeup timer
   while(!(RTC->ISR & RTC_ISR_WUTWF));   // wait to gain access
-  RTC->WUTR = ms << 1;                  // set timer (base 32kHz / 16 = 2kHz)
-  RTC->ISR &= RTC_ISR_WUTF;             // clear wakup timer flag
-  RTC->CR  |= RTC_CR_WUTE;              // enable wakeup timer
+  RTC->CR &= ~RTC_CR_WUCKSEL;           // clock: RTCCLK / 16 (LSI: 2.3kHz, LSE: 2048Hz)
+  RTC->WUTR = ticks - 1;                // set timer (period = WUT + 1 ticks)
+  RTC_clearFlag(RTC_ISR_WUTF);          // clear wakeup timer flag
+  RTC->CR |= RTC_CR_WUTE;               // enable wakeup timer
 }
 
 // ===================================================================================
@@ -220,6 +272,13 @@ void RTC_startWakeupTimer(uint16_t ms) {
 
 // Wait n+1 counts of SysTick
 void DLY_ticks(uint32_t n) {
+  while(n > 0xFFFFFF) {                 // SysTick has only 24 bits
+    SysTick->LOAD = 0xFFFFFF;
+    SysTick->VAL  = 0;
+    while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
+    n -= 0x1000000;
+  }
+  if(!n) return;                        // LOAD = 0 would stop the SysTick
   SysTick->LOAD = n;
   SysTick->VAL  = 0;
   while(!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG));
@@ -229,24 +288,31 @@ void DLY_ticks(uint32_t n) {
 // Independent Watchdog Timer (IWDG) Functions
 // ===================================================================================
 
-// Start independent watchdog timer (IWDG) with given time in milliseconds (max 8191).
+// IWDG counter clock: LSI / 64 (~578Hz with LSI = 37kHz, 4095 counts max ~7s)
+#define IWDG_COUNTS(ms)   (((uint32_t)(ms) * (LSI_VALUE / 1000) + 32) / 64)
+
+// Start independent watchdog timer (IWDG) with given time in milliseconds (max 7000).
 // Once the IWDG has been started, it cannot be disabled, only reloaded (feed).
-// It can be stopped by disabling the internal low-speed clock (LSI).
+// The LSI has a large tolerance (26..56kHz, datasheet), plan a safety margin!
 void IWDG_start(uint16_t ms) {
-  LSI_enable();                         // enable internal low-speed clock (LSI)
-  IWDG->KR   = 0xCCCC;                  // enable IWDG
+  uint32_t cnt = IWDG_COUNTS(ms);
+  if(cnt > 4095) cnt = 4095;            // limit to max value
+  IWDG->KR   = 0xCCCC;                  // enable IWDG (also starts LSI), see RM
   IWDG->KR   = 0x5555;                  // allow register modification
-  IWDG->PR   = 0b100;                   // set LSI clock prescaler 64 (~0.5kHz)
-  IWDG->RLR  = ms >> 1;                 // set watchdog counter reload value
-  while(IWDG->SR);                      // wait for register to be updated
+  IWDG->PR   = 0b100;                   // set LSI clock prescaler 64
+  IWDG->RLR  = cnt;                     // set watchdog counter reload value
+  while(IWDG->SR);                      // wait for registers to be updated
   IWDG->KR   = 0xAAAA;                  // load reload value into watchdog counter
 }
 
-// Reload watchdog counter with n milliseconds, n<=8191
+// Reload watchdog counter with n milliseconds, n<=7000
 void IWDG_reload(uint16_t ms) {
+  uint32_t cnt = IWDG_COUNTS(ms);
+  if(cnt > 4095) cnt = 4095;            // limit to max value
   IWDG->KR   = 0x5555;                  // allow register modification
-  IWDG->RLR = ms >> 1;                  // set watchdog counter reload value
-  while(IWDG->SR);                      // wait for register to be updated
+  while(IWDG->SR & IWDG_SR_RVU);        // wait for reload register to be ready
+  IWDG->RLR  = cnt;                     // set watchdog counter reload value
+  while(IWDG->SR & IWDG_SR_RVU);        // wait for reload value to be updated
   IWDG->KR   = 0xAAAA;                  // load reload value into watchdog counter
 }
 
@@ -254,38 +320,68 @@ void IWDG_reload(uint16_t ms) {
 // Low Power Timer (LPT) Functions
 // ===================================================================================
 
-// Init and enable low-power timer
+// Init and enable low-power timer (LSI / 32 = ~1.16kHz, 1 count = ~0.86ms)
+// CFGR and IER must only be written while the LPTIM is disabled (RM0451)
 void LPT_init(void) {
   LSI_enable();                         // enable internal low-speed clock (LSI)
+  while(!LSI_ready());                  // wait until LSI is stable
   RCC->APB1ENR |= RCC_APB1ENR_LPTIM1EN; // enable LPT module clock
-  RCC->CCIPR   |= (uint32_t)0b01<<18;   // set LSI as LPT clock source
+  RCC->CCIPR    = (RCC->CCIPR & ~RCC_CCIPR_LPTIM1SEL)
+                | (uint32_t)0b01<<18;   // set LSI as LPT clock source
+  LPTIM1->CR    = 0;                    // disable timer
   LPTIM1->CFGR  = (uint32_t)0b101<<9;   // set prescaler to 32 (~1kHz)
   LPTIM1->CR    = LPTIM_CR_ENABLE;      // enable timer
 }
 
+// Set auto reload value (ARR must be > 0, write is completed when ARROK is set)
+static void LPT_setARR(uint16_t ms) {
+  if(!ms) ms = 1;                       // ARR must be greater than CMP (0)
+  LPTIM1->ICR = LPTIM_ICR_ARROKCF;      // clear ARROK flag
+  LPTIM1->ARR = ms;                     // set interval
+  while(!(LPTIM1->ISR & LPTIM_ISR_ARROK)); // wait until written
+}
+
 // Start low-power timer single shot with period in ms
 void LPT_shot(uint16_t ms) {
-  DLY_ms(2);                            // wait two LPT clock cycles
-  LPTIM1->ARR = ms;                     // set interval
+  LPT_setARR(ms);                       // set interval
+  LPTIM1->ICR = LPTIM_ICR_ARRMCF;       // clear auto reload flag
   LPTIM1->CR |= LPTIM_CR_SNGSTRT;       // start timer in single mode
 }
 
 // Start low-power timer in continuous mode with period in ms
 void LPT_start(uint16_t ms) {
-  DLY_ms(2);                            // wait two LPT clock cycles
-  LPTIM1->ARR = ms;                     // set interval
-  LPTIM1->CR |= LPTIM_CR_CNTSTRT;       // start timer in single mode
+  LPT_setARR(ms);                       // set interval
+  LPTIM1->ICR = LPTIM_ICR_ARRMCF;       // clear auto reload flag
+  LPTIM1->CR |= LPTIM_CR_CNTSTRT;       // start timer in continuous mode
 }
 
-// Put device in to SLEEP and wake-up after LPT period in ms
+// Enable/disable auto reload interrupt (IER can only be written when disabled)
+void LPT_enableReloadInt(void) {
+  uint32_t cr = LPTIM1->CR & LPTIM_CR_ENABLE;
+  LPTIM1->CR   = 0;                     // disable timer (stops counting!)
+  LPTIM1->IER |= LPTIM_IER_ARRMIE;      // enable auto reload interrupt
+  LPTIM1->CR   = cr;                    // re-enable timer
+}
+void LPT_disableReloadInt(void) {
+  uint32_t cr = LPTIM1->CR & LPTIM_CR_ENABLE;
+  LPTIM1->CR   = 0;                     // disable timer (stops counting!)
+  LPTIM1->IER &= ~LPTIM_IER_ARRMIE;     // disable auto reload interrupt
+  LPTIM1->CR   = cr;                    // re-enable timer
+}
+
+// Put device in to SLEEP and wake-up after LPT period in ms (LPT_init() first)
 void LPT_sleep(uint16_t ms) {
-  LPT_shot(ms);                        // start low-power timer (LPT) single shot
-  LPTIM1->IER  =  LPTIM_IER_ARRMIE;    // enable auto reload interrupt
-  EXTI->EMR   |=  (uint32_t)1 << 29;   // enable wake up with event
-  SLEEP_WFE_now();                     // put device into sleep, wake up by LPT event
-  LPTIM1->ICR  =  LPTIM_ICR_ARRMCF;    // clear auto reload interrupt flag
-  LPTIM1->IER &= ~LPTIM_IER_ARRMIE;    // disable auto reload interrupt
-  EXTI->EMR   &= ~((uint32_t)1 << 29); // disable wake up with event
+  LPTIM1->CR   = 0;                     // disable timer to write IER
+  LPTIM1->IER  = LPTIM_IER_ARRMIE;      // enable auto reload interrupt (event)
+  LPTIM1->CR   = LPTIM_CR_ENABLE;       // enable timer
+  EXTI->EMR   |= (uint32_t)1 << 29;     // enable wake up with event
+  LPT_shot(ms);                         // start low-power timer (LPT) single shot
+  while(!(LPTIM1->ISR & LPTIM_ISR_ARRM)) SLEEP_WFE_now(); // sleep until LPT event
+  LPTIM1->ICR  = LPTIM_ICR_ARRMCF;      // clear auto reload flag
+  EXTI->EMR   &= ~((uint32_t)1 << 29);  // disable wake up with event
+  LPTIM1->CR   = 0;                     // disable timer to write IER
+  LPTIM1->IER  = 0;                     // disable auto reload interrupt
+  LPTIM1->CR   = LPTIM_CR_ENABLE;       // enable timer
 }
 
 // ===================================================================================
@@ -309,10 +405,14 @@ void STOP_WFI_now(void) {
   NVIC->ICPR[0] = 0xffffffff;           // clear pending interrupts
   EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
   PWR->CR = (PWR->CR & ~PWR_CR_PDDS)    // select STOP mode
+          | PWR_CR_LPSDSR               // low-power regulator in STOP mode
           | PWR_CR_CWUF;                // clear wakup flag
   __WFI();                              // wait for interrupt
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
   RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
+  #if SYS_CLK_INIT > 0
+  CLK_init();                           // restore system clock (MSI/HSI after wake-up)
+  #endif
 }
 
 // Put device into STOP, wake up event
@@ -322,10 +422,14 @@ void STOP_WFE_now(void) {
   NVIC->ICPR[0] = 0xffffffff;           // clear pending interrupts
   EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
   PWR->CR = (PWR->CR & ~PWR_CR_PDDS)    // select STOP mode
+          | PWR_CR_LPSDSR               // low-power regulator in STOP mode
           | PWR_CR_CWUF;                // clear wakup flag
   __WFE();                              // wait for event
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
   RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
+  #if SYS_CLK_INIT > 0
+  CLK_init();                           // restore system clock (MSI/HSI after wake-up)
+  #endif
 }
 
 // Put device into STANDBY, wake up interrupt
@@ -333,9 +437,10 @@ void STDBY_WFI_now(void) {
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;    // enable low power control block clock
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;    // set deep sleep mode
   NVIC->ICPR[0] = 0xffffffff;           // clear pending interrupts
+  EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
   PWR->CR |= PWR_CR_PDDS                // select STANDBY mode
            | PWR_CR_CWUF;               // clear wakup flag
-  RTC->ISR &= ~((uint32_t)0xff<<8);     // clear RTC interrupt flags
+  RTC_clearFlag((uint32_t)0xff<<8);     // clear RTC interrupt flags
   __WFI();                              // wait for interrupt
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
   RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
@@ -349,7 +454,7 @@ void STDBY_WFE_now(void) {
   EXTI->PR = 0xffffffff;                // clear all EXTI pending flags
   PWR->CR |= PWR_CR_PDDS                // select STANDBY mode
            | PWR_CR_CWUF;               // clear wakup flag
-  RTC->ISR &= ~((uint32_t)0xff<<8);     // clear RTC interrupt flags
+  RTC_clearFlag((uint32_t)0xff<<8);     // clear RTC interrupt flags
   __WFE();                              // wait for event
   SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;   // unset deep sleep mode
   RCC->APB1ENR &=~ RCC_APB1ENR_PWREN;   // disable low power control block clock
@@ -365,6 +470,9 @@ void BOOT_now(void) {
   CLK_reset();                          // reset system clock settings
   NVIC->ICER[0]=0xffffffff;             // clear interrupt enable register
   NVIC->ICPR[0]=0xffffffff;             // clear interrupt pending register
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; // enable SYSCFG clock
+  SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE)
+                | SYSCFG_CFGR1_MEM_MODE_0;  // map system memory to 0x00000000
   __enable_irq();                       // re-enable all interrupts
   SysMemBootJump = (void (*)(void)) (*((uint32_t *) ((BOOT_ADDR + 4))));
   __set_MSP(*(uint32_t *)BOOT_ADDR);    // set main stack pointer for bootloader
@@ -392,7 +500,7 @@ void __libc_init_array(void) {
 #endif
 
 // ===================================================================================
-// C version of STM32L010xb.s Startup File
+// C version of startup_stm32l010xb.s Startup File
 // ===================================================================================
 extern uint32_t _sbss, _ebss, _sdata, _edata, _sidata;
 extern void _estack(void);
@@ -400,7 +508,7 @@ extern void _estack(void);
 // Prototypes
 int main(void)                __attribute__((section(".text.main"), used));
 void (*const vectors[])(void) __attribute__((section(".isr_vector"), used));
-void Reset_Handler(void)      __attribute__((section(".text.irq_handler"), naked, used, noreturn));
+void Reset_Handler(void)      __attribute__((section(".text.irq_handler"), used, noreturn));
 
 #if SYS_USE_VECTORS > 0
 // Unless a specific handler is overridden, it just spins forever
@@ -424,7 +532,7 @@ DUMMY_HANDLER void EXTI2_3_IRQHandler(void);
 DUMMY_HANDLER void EXTI4_15_IRQHandler(void);
 DUMMY_HANDLER void DMA1_Channel1_IRQHandler(void);
 DUMMY_HANDLER void DMA1_Channel2_3_IRQHandler(void);
-DUMMY_HANDLER void DMA1_Channel4_5_IRQHandler(void);
+DUMMY_HANDLER void DMA1_Channel4_5_IRQHandler(void);  // DMA1 channel 4..7
 DUMMY_HANDLER void ADC1_IRQHandler(void);
 DUMMY_HANDLER void LPTIM1_IRQHandler(void);
 DUMMY_HANDLER void TIM2_IRQHandler(void);
@@ -498,22 +606,16 @@ void (*const vectors[])(void) = {
 void Reset_Handler(void) {
   uint32_t *src, *dst;
 
-  // Set stack pointer
-  asm volatile(
-  " ldr r0, =_estack  \n\
-    mov sp, r0        \n"
-  : : : "r0", "memory");
+  // Set stack pointer (no literal pool, works with large programs)
+  asm volatile("mov sp, %0" : : "r" (&_estack) : "memory");
 
   // Configure vector table location
   SCB->VTOR = (uint32_t)vectors;
 
-  // Init system
-  SYS_init();
-
-  // Check if boot space corresponds to system memory
+  // Check if boot space corresponds to system memory (started by bootloader)
   if(((*(uint32_t*)0x00000004) >> 24) == 0x1f) {
     RCC->APB2ENR  = RCC_APB2ENR_SYSCFGEN;
-    SYSCFG->CFGR1 = (uint32_t)0;
+    SYSCFG->CFGR1 = (uint32_t)0;        // map main flash to 0x00000000
   }
 
   // Copy data from FLASH to RAM
@@ -526,6 +628,9 @@ void Reset_Handler(void) {
   dst = &_sbss;
   while(dst < &_ebss) *dst++ = 0;
   #endif
+
+  // Init system
+  SYS_init();
 
   // C++ Support
   #ifdef __cplusplus

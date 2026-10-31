@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v1.0 *
+// Basic System Functions for STM32L010, STM32L011, STM32L021, STM32L031      * v1.1 *
 // ===================================================================================
 //
 // This file must be included!!! The system configuration and the system clock are 
@@ -17,7 +17,7 @@
 // MSI_enable()             enable internal multi-speed clock (MSI)
 // MSI_disable()            disable MSI
 // MSI_ready()              check if MSI is stable
-// MSI_range(n)             set MSI clock range F_MSI = 2^(n+16)
+// MSI_range(n)             set MSI clock range F_MSI = 2^(n+16) Hz (n = 0..6)
 //
 // HSI_enable()             enable internal 16MHz high-speed clock (HSI)
 // HSI_disable()            disable HSI
@@ -25,7 +25,7 @@
 // HSI_DIV_enable()         enable HSI division by 4
 // HSI_DIV_disable()        disable HSI division by 4
 //
-// HSE_enable()             enable external high-speed clock (HSE)
+// HSE_enable()             enable external high-speed clock (HSE, cat. 1: bypass only)
 // HSE_disable()            disable HSE
 // HSE_ready()              check if HSE is stable
 // HSE_bypass_on()          enable HSE clock bypass
@@ -33,7 +33,7 @@
 // HSE_CSS_on()             enable HSE clock security system
 // HSE_CSS_off()            disable HSE clock security system
 //
-// LSI_enable()             enable internal 37kHz low-speed clock (LSI)
+// LSI_enable()             enable internal ~37kHz low-speed clock (LSI)
 // LSI_disable()            disable LSI
 // LSI_ready()              check if LSI is stable
 //
@@ -55,12 +55,12 @@
 //
 // MCO_setSYS()             enable output system clock (SYS_CLK) on MCO
 // MCO_setHSI()             enable output internal high-speed clock (HSI) on MCO
-// MCO_setMSI()             enable output internal multi-speed clock (HSI) on MCO
+// MCO_setMSI()             enable output internal multi-speed clock (MSI) on MCO
 // MCO_setHSE()             enable output external high-speed clock (HSE) on MCO
 // MCO_setPLL()             enable output PLL on MCO
 // MCO_setLSI()             enable output internal low-speed clock (LSI) on MCO
 // MCO_setLSE()             enable output external low-speed clock (LSE) on MCO
-// MCO_setPRE(n)            set MCO prescaler to 2^n (set before enabling MCO)
+// MCO_setPRE(n)            set MCO prescaler to 2^n (n = 0..4, set before enabling MCO)
 // MCO_stop()               disable clock output (MCO)
 //
 // Real-Time Clock (RTC) functions available:
@@ -70,11 +70,11 @@
 // RTC_setPrescaler(a,s)    set RTC prescaler (async, sync)
 // RTC_setTime(h,m,s)       set time (hours, minutes, seconds) in BCD format
 // RTC_setDate(y,w,m,d)     set date (year, week day, month, day) in BCD format
-// RTC_readTime()           read time register (must be post-processed)
-// RTC_readDate()           read date register (must be post-processed)
+// RTC_readTime()           read time register (BCD: 0x00HHMMSS)
+// RTC_readDate()           read date register (BCD: 0x00YYWMDD, W in bits 15:13)
 // RTC_isInit()             check if RTC time/date were initialized (e.g. after reset)
 //
-// RTC_startWakeupTimer(n)  set wakeup timer with period of n milliseconds
+// RTC_startWakeupTimer(n)  set wakeup timer with period of n milliseconds (1..28000)
 // RTC_stopWakeupTimer()    stop wakeup timer
 // RTC_readWakeupFlag()     check wakeup flag (set after each period, must be cleared)
 // RTC_clearWakeupFlag()    clear wakeup flag
@@ -84,22 +84,22 @@
 // RTC_setAlarmA(w,h,m,s)   set alarm A (week day, hours, minutes, seconds) in BCD
 // RTC_setAlarmB(w,h,m,s)   set alarm B (week day, hours, minutes, seconds) in BCD
 // RTC_readAlarmAFlag()     check alarm A flag
-// RTC_readAlarmAFlag()     check alarm B flag
+// RTC_readAlarmBFlag()     check alarm B flag
 // RTC_clearAlarmAFlag()    clear alarm A flag
 // RTC_clearAlarmBFlag()    clear alarm B flag
 // RTC_enableAlarmAInt()    enable alarm A interrupt
 // RTC_disableAlarmAInt()   disable alarm A interrupt
 // RTC_enableAlarmBInt()    enable alarm B interrupt
-// RTC_disableAlarmBInt()   disabele alarm B interrupt
+// RTC_disableAlarmBInt()   disable alarm B interrupt
 //
-// RTC_enableWakeEvent()    enable CPU wakeup with RTC event
+// RTC_enableWakeEvent()    enable CPU wakeup with RTC event (alarm and wakeup timer)
 // RTC_disableWakeEvent()   disable CPU wakeup with RTC event
-// RTC_enableWakeInt()      enable CPU wakeup with RTC interrupt
+// RTC_enableWakeInt()      enable CPU wakeup with RTC interrupt (EXTI line 17 and 20)
 // RTC_disableWakeInt()     disable CPU wakeup with RTC interrupt
 //
 // Delay (DLY) and SysTick (STK) functions available:
 // --------------------------------------------------
-// DLY_ticks(n)             delay n+1 clock cycles
+// DLY_ticks(n)             delay n+1 clock cycles (n = 0: no delay)
 // DLY_us(n)                delay n microseconds
 // DLY_ms(n)                delay n milliseconds
 //
@@ -108,8 +108,8 @@
 //
 // Independent Watchdog Timer (IWDG) functions available:
 // ------------------------------------------------------
-// IWDG_start(n)            start independent watchdog timer, n milliseconds, n<=8191
-// IWDG_reload(n)           reload watchdog counter with n milliseconds, n<=8191
+// IWDG_start(n)            start independent watchdog timer, n milliseconds, n<=7000
+// IWDG_reload(n)           reload watchdog counter with n milliseconds, n<=7000
 // IWDG_feed()              feed the dog (reload last time)
 //
 // Low-Power Timer (LPT) functions available:
@@ -129,15 +129,17 @@
 // LPT_enableWakeInt()      enable CPU wakeup with LPT interrupt
 // LPT_disableWakeInt()     disable CPU wakeup with LPT interrupt
 // LPT_sleep(n)             put device in to SLEEP,  wake-up after n milliseconds
+// SLEEP_ms(n)              init LPT and put device into SLEEP for n milliseconds
 //
 // Sleep functions available:
 // --------------------------
 // SLEEP_WFI_now()          put device into SLEEP,   wake up by interrupt
 // SLEEP_WFE_now()          put device into SLEEP,   wake up by event
-// STOP_WFI_now()           put device into STOP,    wake up by interrupt
-// STOP_WFE_now()           put device into STOP,    wake up by event
+// STOP_WFI_now()           put device into STOP,    wake up by interrupt (*)
+// STOP_WFE_now()           put device into STOP,    wake up by event     (*)
 // STDBY_WFI_now()          put device into STANDBY, wake up by interrupt
 // STDBY_WFE_now()          put device into STANDBY, wake up by event
+// (*) the system clock is restored after wake-up (CLK_init())
 //
 // Reset (RST) and Bootloader (BOOT) functions available:
 // ------------------------------------------------------
@@ -150,6 +152,8 @@
 // RST_wasPower()           check if last reset was caused by BOR/POR/PDR
 // RST_wasPin()             check if last reset was caused by RST pin low
 // RST_wasOption()          check if last reset was caused by OPTION byte loader
+// RST_wasLowPower()        check if last reset was caused by illegal low-power mode entry
+// RST_wasFirewall()        check if last reset was caused by firewall
 //
 // Cyclic Redundancy Check (CRC) functions available:
 // --------------------------------------------------
@@ -167,11 +171,26 @@
 // CRC_setInit(n)           set initial CRC value (default: 0xffffffff)
 // CRC_setPoly(n)           set polynomial (default: 0x04c11db7)
 //
+// Device Electronic Signature (ESIG) available:
+// -----------------------------------------------
+// ESIG_FLASHSIZE           flash memory size in KB
+// ESIG_UID1 .. ESIG_UID3   96-bit unique device ID
+//
 // Interrupt (INT) functions available:
 // ------------------------------------
 // INT_enable()             global interrupt enable
 // INT_disable()            global interrupt disable
 // INT_ATOMIC_BLOCK { }     execute block without being interrupted
+//
+// Notes:
+// ------
+// - F_CPU > 16MHz selects voltage range 1 (1.8V core) with one flash wait state,
+//   F_CPU > 8MHz uses range 2 with one wait state, otherwise range 2 without wait
+//   state (RM0451, Table 29). HSI16 and PLL are not available in range 3.
+// - Below VDD = 2.0V the CPU frequency may only be increased by a factor of 4 at a
+//   time (RM0451, chapter 6.1.4), e.g. from MSI (2MHz) to 8MHz to 32MHz.
+// - The STM32L010 has no temperature sensor and no HSE crystal on category 1 devices
+//   (external clock on PA0-CK_IN only).
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -192,7 +211,8 @@ extern "C" {
 #define SYS_GPIO_EN       1         // 1: enable GPIO ports A-C on startup
 #define SYS_CLEAR_BSS     1         // 1: clear uninitialized variables
 #define SYS_USE_VECTORS   1         // 1: create interrupt vector table
-#define SYS_USE_HSE       0         // 1: use external crystal
+#define SYS_USE_HSE       0         // 1: use external clock (F_CPU = HSE frequency)
+#define SYS_HSE_BYPASS    1         // 1: external clock signal (always on cat. 1 devices)
 
 // ===================================================================================
 // Sytem Clock Defines
@@ -221,13 +241,13 @@ extern "C" {
     #define CLK_PLL_MUL   (0b0000<<18)      // *3
     #define CLK_PLL_DIV   (0b11<<22)        // /4 = 12MHz
   #elif F_CPU ==  8000000
-    #define CLK_init      CLK_init_HSI_PLL  // 16MHz
-    #define CLK_PLL_MUL   (0b0010<<18)      // *6
-    #define CLK_PLL_DIV   (0b10<<22)        // /3 = 8MHz
+    #define CLK_init      CLK_init_HSI      // 16MHz
+    #define CLK_HSI_DIV   0                 // /1 = 16MHz
+    #define CLK_AHB_DIV   (0b1000<<4)       // AHB prescaler /2 = 8MHz
   #elif F_CPU ==  4000000
     #define CLK_init      CLK_init_HSI      // 16MHz
     #define CLK_HSI_DIV   (1<<3)            // /4 = 4MHz
-  #elif F_CPU ==  4194302
+  #elif F_CPU ==  4194304
     #define CLK_init      CLK_init_MSI
     #define CLK_MSI_DIV   (0b110<<13)
   #elif F_CPU ==  2097152
@@ -272,6 +292,24 @@ extern "C" {
 #ifndef CLK_PLL_MUL
   #define CLK_PLL_MUL     0
 #endif
+#ifndef CLK_AHB_DIV
+  #define CLK_AHB_DIV     0
+#endif
+
+// Voltage range and flash wait states (RM0451, Table 29)
+#if   F_CPU > 16000000
+  #define CLK_VOS_RANGE   1                 // range 1 (1.8V), 1 wait state
+  #define CLK_LATENCY     1
+#elif F_CPU >  8000000
+  #define CLK_VOS_RANGE   2                 // range 2 (1.5V, default), 1 wait state
+  #define CLK_LATENCY     1
+#else
+  #define CLK_VOS_RANGE   2                 // range 2 (1.5V, default), no wait state
+  #define CLK_LATENCY     0
+#endif
+#if F_CPU > 32000000
+  #error F_CPU must not exceed 32MHz!
+#endif
 
 // ===================================================================================
 // System Clock Functions
@@ -286,65 +324,66 @@ void CLK_init_HSE_PLL(void);  // init external crystal with PLL as system clock 
 void CLK_reset(void);         // reset system clock to default state
 
 // Internal high-speed clock (HSI) functions
-#define HSI_enable()      RCC->CR |=  RCC_CR_HSION        // enable HSI
-#define HSI_disable()     RCC->CR &= ~RCC_CR_HSION        // disable HSI
+#define HSI_enable()      (RCC->CR |=  RCC_CR_HSION)      // enable HSI
+#define HSI_disable()     (RCC->CR &= ~RCC_CR_HSION)      // disable HSI
 #define HSI_ready()       (RCC->CR & RCC_CR_HSIRDY)       // check if HSI is stable
-#define HSI_DIV_enable()  RCC->CR |=  RCC_CR_HSIDIVEN     // enable HSI division by 4
-#define HSI_DIV_disable() RCC->CR &= ~RCC_CR_HSIDIVEN     // disable HSI division by 4
+#define HSI_DIV_enable()  (RCC->CR |=  RCC_CR_HSIDIVEN)   // enable HSI division by 4
+#define HSI_DIV_disable() (RCC->CR &= ~RCC_CR_HSIDIVEN)   // disable HSI division by 4
 
 // External high-speed clock (HSE) functions
-#define HSE_enable()      RCC->CR |=  RCC_CR_HSEON        // enable HSE
-#define HSE_disable()     RCC->CR &= ~RCC_CR_HSEON        // disable HSE
+#define HSE_enable()      (RCC->CR |=  RCC_CR_HSEON)      // enable HSE
+#define HSE_disable()     (RCC->CR &= ~RCC_CR_HSEON)      // disable HSE
 #define HSE_ready()       (RCC->CR & RCC_CR_HSERDY)       // check if HSE is stable
-#define HSE_bypass_on()   RCC->CR |=  RCC_CR_HSEBYP       // enable HSE clock bypass
-#define HSE_bypass_off()  RCC->CR &= ~RCC_CR_HSEBYP       // disable HSE clock bypass
-#define HSE_CSS_on()      RCC->CR |=  RCC_CR_CSSHSEON     // enable HSE clock security
-#define HSE_CSS_off()     RCC->CR &= ~RCC_CR_CSSHSEON     // enable HSE clock security
+#define HSE_bypass_on()   (RCC->CR |=  RCC_CR_HSEBYP)     // enable HSE clock bypass
+#define HSE_bypass_off()  (RCC->CR &= ~RCC_CR_HSEBYP)     // disable HSE clock bypass
+#define HSE_CSS_on()      (RCC->CR |=  RCC_CR_CSSHSEON)   // enable HSE clock security
+#define HSE_CSS_off()     (RCC->CR &= ~RCC_CR_CSSHSEON)   // disable HSE clock security
 
 // Internal multi-speed clock (MSI) functions
-#define MSI_enable()      RCC->CR |=  RCC_CR_MSION        // enable MSI
-#define MSI_disable()     RCC->CR &= ~RCC_CR_MSION        // disable MSI
+#define MSI_enable()      (RCC->CR |=  RCC_CR_MSION)      // enable MSI
+#define MSI_disable()     (RCC->CR &= ~RCC_CR_MSION)      // disable MSI
 #define MSI_ready()       (RCC->CR & RCC_CR_MSIRDY)       // check if MSI is stable
-#define MSI_range(n)      (RCC->ICSCR & ~RCC_ICSCR_MSIRANGE) | (((n)&7) << 13)
+#define MSI_range(n)      (RCC->ICSCR = (RCC->ICSCR & ~RCC_ICSCR_MSIRANGE) | (((uint32_t)(n)&7) << 13))
 
 // Internal 37kHz low-speed clock (LSI) functions
-#define LSI_enable()      RCC->CSR |=  RCC_CSR_LSION      // enable LSI
-#define LSI_disable()     RCC->CSR &= ~RCC_CSR_LSION      // disable LSI
+#define LSI_enable()      (RCC->CSR |=  RCC_CSR_LSION)    // enable LSI
+#define LSI_disable()     (RCC->CSR &= ~RCC_CSR_LSION)    // disable LSI
 #define LSI_ready()       (RCC->CSR & RCC_CSR_LSIRDY)     // check if LSI is stable
 
 // External 32.768kHz low-speed clock (LSE) functions
-#define LSE_enable()      RCC->CSR |=  RCC_CSR_LSEON      // enable LSE
-#define LSE_disable()     RCC->CSR &= ~RCC_CSR_LSEON      // disable LSE
+#define LSE_enable()      (RCC->CSR |=  RCC_CSR_LSEON)    // enable LSE
+#define LSE_disable()     (RCC->CSR &= ~RCC_CSR_LSEON)    // disable LSE
 #define LSE_ready()       (RCC->CSR & RCC_CSR_LSERDY)     // check if LSE is stable
-#define LSE_bypass_on()   RCC->CSR |=  RCC_CSR_LSEBYP     // enable LSE clock bypass
-#define LSE_bypass_off()  RCC->CSR &= ~RCC_CSR_LSEBYP     // disable LSE clock bypass
-#define LSE_CSS_on()      RCC->CSR |=  RCC_CSR_CSSLSEON   // enable LSE clock security
-#define LSE_CSS_off()     RCC->CSR &= ~RCC_CSR_CSSLSEON   // enable LSE clock security
+#define LSE_bypass_on()   (RCC->CSR |=  RCC_CSR_LSEBYP)   // enable LSE clock bypass
+#define LSE_bypass_off()  (RCC->CSR &= ~RCC_CSR_LSEBYP)   // disable LSE clock bypass
+#define LSE_CSS_on()      (RCC->CSR |=  RCC_CSR_LSECSSON) // enable LSE clock security
+#define LSE_CSS_off()     (RCC->CSR &= ~RCC_CSR_LSECSSON) // disable LSE clock security
 
 // PLL functions
-#define PLL_enable()      RCC->CR |=  RCC_CR_PLLON        // enable PLL
-#define PLL_disable()     RCC->CR &= ~RCC_CR_PLLON        // disable PLL
+#define PLL_enable()      (RCC->CR |=  RCC_CR_PLLON)      // enable PLL
+#define PLL_disable()     (RCC->CR &= ~RCC_CR_PLLON)      // disable PLL
 #define PLL_ready()       (RCC->CR & RCC_CR_PLLRDY)       // check if PLL is stable
-#define PLL_factor(n)     (RCC->CFGR & RCC_CFGR_PLLMUL) | (((n)&15) << 18)
-#define PLL_divider(n)    (RCC->CFGR & ~RCC_CFGR_PLLDIV) | (((n-1)&3) << 4) // 2-4
-#define PLL_setHSI()      RCC->CFGR &= ~RCC_CFGR_PLLSRC   // set HSI as PLL input
-#define PLL_setHSE()      RCC->CFGR |=  RCC_CFGR_PLLSRC   // set HSE as PLL input
+// PLL_factor(n): n = PLLMUL code (0:x3, 1:x4, 2:x6, 3:x8, 4:x12, 5:x16, 6:x24, 7:x32, 8:x48)
+#define PLL_factor(n)     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_PLLMUL) | (((uint32_t)(n)&15) << 18))
+#define PLL_divider(n)    (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_PLLDIV) | ((((uint32_t)(n)-1)&3) << 22)) // 2-4
+#define PLL_setHSI()      (RCC->CFGR &= ~RCC_CFGR_PLLSRC) // set HSI as PLL input
+#define PLL_setHSE()      (RCC->CFGR |=  RCC_CFGR_PLLSRC) // set HSE as PLL input
 
 // Clock output functions (MCO)
-#define MCO_setSYS()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0001 << 24)
-#define MCO_setHSI()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0010 << 24)
-#define MCO_setMSI()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0011 << 24)
-#define MCO_setHSE()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0100 << 24)
-#define MCO_setPLL()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0101 << 24)
-#define MCO_setLSI()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0110 << 24)
-#define MCO_setLSE()      RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0111 << 24)
-#define MCO_setPRE(n)     RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOPRE) | (((n)&7) << 28)
-#define MCO_stop()        RCC->CFGR &= ~RCC_CFGR_MCOSEL
+#define MCO_setSYS()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0001 << 24))
+#define MCO_setHSI()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0010 << 24))
+#define MCO_setMSI()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0011 << 24))
+#define MCO_setHSE()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0100 << 24))
+#define MCO_setPLL()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0101 << 24))
+#define MCO_setLSI()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0110 << 24))
+#define MCO_setLSE()     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOSEL) | (0b0111 << 24))
+#define MCO_setPRE(n)     (RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_MCOPRE) | (((uint32_t)(n)&7) << 28))
+#define MCO_stop()        (RCC->CFGR &= ~RCC_CFGR_MCOSEL)
 
 // ===================================================================================
 // Real-Time Clock (RTC) Functions
 // ===================================================================================
-void RTC_init(void);      // init RTC with LSI as clock source and 1s clock period
+void RTC_init(void);      // init RTC with LSI as clock source and ~1s clock period
 void RTC_init_LSE(void);  // init RTC with LSE as clock source and 1s clock period
 void RTC_setPrescaler(uint8_t async, uint16_t sync);
 void RTC_setTime(uint8_t hours, uint8_t minutes, uint8_t seconds);
@@ -355,40 +394,51 @@ void RTC_setAlarmA(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t seco
 void RTC_setAlarmB(uint8_t weekday, uint8_t hours, uint8_t minutes, uint8_t seconds);
 void RTC_startWakeupTimer(uint16_t ms);
 
+// Clear RTC flags (rc_w0) without changing other flags and the INIT bit (RM0451)
+#define RTC_clearFlag(f)        (RTC->ISR = ~((uint32_t)(f) | RTC_ISR_INIT) | (RTC->ISR & RTC_ISR_INIT))
+
+// EXTI lines of the RTC: 17 = alarm A/B, 20 = wakeup timer (rising edge, RM0451)
+#define RTC_EXTI_LINES          (((uint32_t)1 << 17) | ((uint32_t)1 << 20))
+
 #define RTC_isInit()            (RTC->ISR & RTC_ISR_INITS)
-#define RTC_stopWakeupTimer()   RTC->CR &= ~RTC_CR_WUTE
+#define RTC_stopWakeupTimer()   (RTC->CR &= ~RTC_CR_WUTE)
 #define RTC_readWakeupFlag()    (RTC->ISR & RTC_ISR_WUTF)
 #define RTC_readAlarmAFlag()    (RTC->ISR & RTC_ISR_ALRAF)
 #define RTC_readAlarmBFlag()    (RTC->ISR & RTC_ISR_ALRBF)
-#define RTC_clearWakeupFlag()   RTC->ISR &= ~RTC_ISR_WUTF
-#define RTC_clearAlarmAFlag()   RTC->ISR &= ~RTC_ISR_ALRAF
-#define RTC_clearAlarmBFlag()   RTC->ISR &= ~RTC_ISR_ALRBF
-#define RTC_enableWakeupInt()   RTC->CR |=  RTC_CR_WUTIE
-#define RTC_disableWakeupInt()  RTC->CR &= ~RTC_CR_WUTIE
-#define RTC_enableAlarmAInt()   RTC->CR |=  RTC_CR_ALRAIE
-#define RTC_disableAlarmAInt()  RTC->CR &= ~RTC_CR_ALRAIE
-#define RTC_enableAlarmBInt()   RTC->CR |=  RTC_CR_ALRBIE
-#define RTC_disableAlarmBInt()  RTC->CR &= ~RTC_CR_ALRBIE
-#define RTC_enableWakeEvent()   EXTI->EMR |=  ((uint32_t)1 << 20)
-#define RTC_disableWakeEvent()  EXTI->EMR &= ~((uint32_t)1 << 20)
-#define RTC_enableWakeInt()     EXTI->IMR |=  ((uint32_t)1 << 20)
-#define RTC_disableWakeInt()    EXTI->IMR &= ~((uint32_t)1 << 20)
+#define RTC_clearWakeupFlag()   (RTC_clearFlag(RTC_ISR_WUTF), EXTI->PR = (uint32_t)1 << 20)
+#define RTC_clearAlarmAFlag()   (RTC_clearFlag(RTC_ISR_ALRAF), EXTI->PR = (uint32_t)1 << 17)
+#define RTC_clearAlarmBFlag()   (RTC_clearFlag(RTC_ISR_ALRBF), EXTI->PR = (uint32_t)1 << 17)
+#define RTC_enableWakeupInt()   (RTC->CR |=  RTC_CR_WUTIE)
+#define RTC_disableWakeupInt()  (RTC->CR &= ~RTC_CR_WUTIE)
+#define RTC_enableAlarmAInt()   (RTC->CR |=  RTC_CR_ALRAIE)
+#define RTC_disableAlarmAInt()  (RTC->CR &= ~RTC_CR_ALRAIE)
+#define RTC_enableAlarmBInt()   (RTC->CR |=  RTC_CR_ALRBIE)
+#define RTC_disableAlarmBInt()  (RTC->CR &= ~RTC_CR_ALRBIE)
+#define RTC_enableWakeEvent()   (EXTI->RTSR |= RTC_EXTI_LINES, EXTI->EMR |=  RTC_EXTI_LINES)
+#define RTC_disableWakeEvent()  (EXTI->EMR  &= ~RTC_EXTI_LINES)
+#define RTC_enableWakeInt()     (EXTI->RTSR |= RTC_EXTI_LINES, EXTI->IMR |=  RTC_EXTI_LINES)
+#define RTC_disableWakeInt()    (EXTI->IMR  &= ~RTC_EXTI_LINES)
 
 // ===================================================================================
 // SYSTICK Functions
 // ===================================================================================
-#define STK_enable()      SysTick->CTRL = SysTick_CTRL_ENABLE | SysTick_CTRL_CLKSOURCE
-#define STK_disable()     SysTick->CTRL = 0
+#define STK_enable()      (SysTick->CTRL = SysTick_CTRL_ENABLE | SysTick_CTRL_CLKSOURCE)
+#define STK_disable()     (SysTick->CTRL = 0)
 
 // ===================================================================================
 // Delay (DLY) Functions (using SYSTICK)
 // ===================================================================================
-#define DLY_US_TIME       (F_CPU / 1000000)                 // system ticks per us
-#define DLY_MS_TIME       (F_CPU / 1000)                    // system ticks per ms
-#define DLY_us(n)         DLY_ticks((n)*DLY_MS_TIME/1000-1) // delay n microseconds
-void DLY_ticks(uint32_t n);                                 // delay n+1 clock cycles
-static inline void DLY_ms(uint32_t ms) {                    // delay n milliseconds
-  while(ms--) DLY_us(1000);
+#define DLY_US_TIME       (F_CPU / 1000000)             // system ticks per us
+#define DLY_MS_TIME       (F_CPU / 1000)                // system ticks per ms
+void DLY_ticks(uint32_t n);                             // delay n+1 clock cycles
+static inline void DLY_us(uint32_t us) {                // delay n microseconds
+  uint32_t t;
+  while(us >= 1000) { DLY_ticks(DLY_MS_TIME - 1); us -= 1000; } // no 32-bit overflow
+  t = us * DLY_MS_TIME / 1000;                          // works also for F_CPU < 1MHz
+  if(t) DLY_ticks(t - 1);
+}
+static inline void DLY_ms(uint32_t ms) {                // delay n milliseconds
+  while(ms--) DLY_ticks(DLY_MS_TIME - 1);
 }
 
 // ===================================================================================
@@ -396,7 +446,7 @@ static inline void DLY_ms(uint32_t ms) {                    // delay n milliseco
 // ===================================================================================
 void IWDG_start(uint16_t ms);                           // start IWDG with time in ms
 void IWDG_reload(uint16_t ms);                          // reload IWDG with time in ms
-#define IWDG_feed()       IWDG->KR = 0xAAAA             // feed the dog (reload time)
+#define IWDG_feed()       (IWDG->KR = 0xAAAA)           // feed the dog (reload time)
 
 // ===================================================================================
 // Low Power Timer (LPTIM) Functions
@@ -405,17 +455,17 @@ void LPT_init(void);            // init and enable low-power timer (LPT)
 void LPT_shot(uint16_t ms);     // start low-power timer single shot with period in ms
 void LPT_start(uint16_t ms);    // start LPT in continuous mode with period in ms
 void LPT_sleep(uint16_t ms);    // put device in to SLEEP,  wake-up after period in ms
+void LPT_enableReloadInt(void); // enable auto reload interrupt (IER: LPTIM disabled)
+void LPT_disableReloadInt(void);// disable auto reload interrupt
 
-#define LPT_enable()            LPTIM1->CR  |=  LPTIM_CR_ENABLE
-#define LPT_disable()           LPTIM1->CR  &= ~LPTIM_CR_ENABLE
+#define LPT_enable()            (LPTIM1->CR  |=  LPTIM_CR_ENABLE)
+#define LPT_disable()           (LPTIM1->CR  &= ~LPTIM_CR_ENABLE)
 #define LPT_readReloadFlag()    (LPTIM1->ISR &  LPTIM_ISR_ARRM)
-#define LPT_clearReloadFlag()   LPTIM1->ICR  =  LPTIM_ICR_ARRMCF
-#define LPT_enableReloadInt()   LPTIM1->IER |=  LPTIM_IER_ARRMIE
-#define LPT_disableReloadInt()  LPTIM1->IER &= ~LPTIM_IER_ARRMIE
-#define LPT_enableWakeEvent()   EXTI->EMR   |=  ((uint32_t)1 << 29)
-#define LPT_disableWakeEvent()  EXTI->EMR   &= ~((uint32_t)1 << 29)
-#define LPT_enableWakeInt()     EXTI->IMR   |=  ((uint32_t)1 << 29)
-#define LPT_disableWakeInt()    EXTI->IMR   &= ~((uint32_t)1 << 29)
+#define LPT_clearReloadFlag()   (LPTIM1->ICR  =  LPTIM_ICR_ARRMCF)
+#define LPT_enableWakeEvent()   (EXTI->EMR   |=  ((uint32_t)1 << 29))
+#define LPT_disableWakeEvent()  (EXTI->EMR   &= ~((uint32_t)1 << 29))
+#define LPT_enableWakeInt()     (EXTI->IMR   |=  ((uint32_t)1 << 29))
+#define LPT_disableWakeInt()    (EXTI->IMR   &= ~((uint32_t)1 << 29))
 
 // ===================================================================================
 // Sleep Functions
@@ -427,13 +477,13 @@ void STOP_WFE_now(void);        // put device into STOP,    wake up event
 void STDBY_WFI_now(void);       // put device into STANDBY, wake up interrupt
 void STDBY_WFE_now(void);       // put device into STANDBY, wake up event
 
-#define SLEEP_ms(ms)        {LPT_init(); LPT_sleep(ms);}
+#define SLEEP_ms(ms)        (LPT_init(), LPT_sleep(ms))
 
 // ===================================================================================
 // Reset (RST) Functions
 // ===================================================================================
 #define RST_now()           NVIC_SystemReset()
-#define RST_clearFlags()    RCC->CSR |= RCC_CSR_RMVF
+#define RST_clearFlags()    (RCC->CSR |= RCC_CSR_RMVF)
 #define RST_wasLowPower()   (RCC->CSR & RCC_CSR_LPWRRSTF)
 #define RST_wasWWDG()       (RCC->CSR & RCC_CSR_WWDGRSTF)
 #define RST_wasIWDG()       (RCC->CSR & RCC_CSR_IWDGRSTF)
@@ -452,19 +502,19 @@ void BOOT_now(void);        // jump to bootloader
 // ===================================================================================
 // Cyclic Redundancy Check (CRC) Functions
 // ===================================================================================
-#define CRC_enable()        RCC->AHBENR |=  RCC_AHBENR_CRCEN
-#define CRC_disable         RCC->AHBENR &= ~RCC_AHBENR_CRCEN
-#define CRC_write(w)        CRC->DR = (uint32_t)(w)   // add new word for calculation
+#define CRC_enable()        (RCC->AHBENR |=  RCC_AHBENR_CRCEN)
+#define CRC_disable()       (RCC->AHBENR &= ~RCC_AHBENR_CRCEN)
+#define CRC_write(w)        (CRC->DR = (uint32_t)(w)) // add new word for calculation
 #define CRC_read()          (CRC->DR)                 // read last calculation
-#define CRC_reset()         CRC->CR |= 1              // reset calculation
-#define CRC_setInit(n)      CRC->INIT = (n)           // set initial CRC value
-#define CRC_setPoly(n)      CRC->POL = (n)            // set polynomial
+#define CRC_reset()         (CRC->CR |= CRC_CR_RESET) // reset calculation
+#define CRC_setInit(n)      (CRC->INIT = (n))         // set initial CRC value
+#define CRC_setPoly(n)      (CRC->POL = (n))          // set polynomial
 #define CRC_data32          (*(__IO uint32_t*)CRC_BASE)
 #define CRC_data16          (*(__IO uint16_t*)CRC_BASE)
 #define CRC_data8           (*(__IO uint8_t*)CRC_BASE)
-#define CRC_write32(w)      CRC_data32 = (uint32_t)(w)
-#define CRC_write16(h)      CRC_data16 = (uint16_t)(h)
-#define CRC_write8(b)       CRC_data8  = (uint8_t)(b)
+#define CRC_write32(w)      (CRC_data32 = (uint32_t)(w))
+#define CRC_write16(h)      (CRC_data16 = (uint16_t)(h))
+#define CRC_write8(b)       (CRC_data8  = (uint8_t)(b))
 #define CRC_read32()        CRC_data32
 #define CRC_read16()        CRC_data16
 #define CRC_read8()         CRC_data8
@@ -583,7 +633,7 @@ __attribute__( ( always_inline ) ) __STATIC_INLINE uint32_t __get_PSP(void) {
 
 // Set Process Stack Pointer
 __attribute__( ( always_inline ) ) __STATIC_INLINE void __set_PSP(uint32_t topOfProcStack) {
-  __ASM volatile ("MSR psp, %0\n" : : "r" (topOfProcStack) : "sp");
+  __ASM volatile ("MSR psp, %0\n" : : "r" (topOfProcStack) : );
 }
 
 // Get Main Stack Pointer
@@ -595,7 +645,7 @@ __attribute__( ( always_inline ) ) __STATIC_INLINE uint32_t __get_MSP(void) {
 
 // Set Main Stack Pointer
 __attribute__( ( always_inline ) ) __STATIC_INLINE void __set_MSP(uint32_t topOfMainStack) {
-  __ASM volatile ("MSR msp, %0\n" : : "r" (topOfMainStack) : "sp");
+  __ASM volatile ("MSR msp, %0\n" : : "r" (topOfMainStack) : );
 }
 
 // Get Priority Mask
