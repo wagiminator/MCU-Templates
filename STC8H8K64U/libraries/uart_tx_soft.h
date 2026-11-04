@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software-UART (TX only) for STC8H Microcontrollers                         * v1.0 *
+// Software-UART (TX only) for STC8H Microcontrollers                         * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -22,5 +22,5 @@
 // ===================================================================================
 // SUART Functions and Macros
 // ===================================================================================
-#define SUART_init()  PIN_bidirect(PIN_TXD);
+#define SUART_init()  {PIN_high(PIN_TXD); PIN_bidirect(PIN_TXD);}
 void SUART_write(uint8_t data);

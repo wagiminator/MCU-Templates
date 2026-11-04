@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for STC8H Microcontrollers                      * v1.0 *
+// Basic SPI Master Functions for STC8H Microcontrollers                      * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -11,7 +11,7 @@
 // SPI_enable()             Enable SPI module
 // SPI_disable()            Disable SPI module
 // SPI_MSB_first()          The MSB of the data byte is transmitted firstly
-// SPI_LSB_first()          The MSB of the data byte is transmitted firstly
+// SPI_LSB_first()          The LSB of the data byte is transmitted firstly
 // SPI_setPRESC(n)          Set SPI clock prescaler (see below)
 // SPI_setCPOL(n)           0: SCK low in idle, 1: SCK high in idle
 // SPI_setCPHA(n)           Start sampling from 0: first clock edge, 1: second clock edge
@@ -49,14 +49,14 @@
 #define SPI_disable()     SPCTL &= ~0x40
 #define SPI_LSB_first()   SPCTL |=  0x20
 #define SPI_MSB_first()   SPCTL &= ~0x20
-#define SPI_setCPOL(n)    (n)?(SPCTL |= 0x08):(SPCTL &= ~0x08)
-#define SPI_setCPHA(n)    (n)?(SPCTL |= 0x04):(SPCTL &= ~0x04)
+#define SPI_setCPOL(n)    ((n)?(SPCTL |= 0x08):(SPCTL &= ~0x08))
+#define SPI_setCPHA(n)    ((n)?(SPCTL |= 0x04):(SPCTL &= ~0x04))
 #define SPI_setPRESC(n)   SPCTL = (SPCTL & 0xfc) | ((n) & 3)
 
 // SPI init
 inline void SPI_init(void) {
   #if SPI_MAP > 0
-    P_SW1 |= SPI_MAP << 2;              // set SPI pin mapping
+    P_SW1 = (P_SW1 & 0xf3) | (SPI_MAP << 2);              // set SPI pin mapping
   #endif
   #if SPI_MAP == 0
     P1M0  &= ~((1<<3) | (1<<4) | (1<<5));

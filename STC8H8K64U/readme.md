@@ -5,10 +5,49 @@ The 'template' directory includes a makefile, an illustrative program, a linker 
 
 Furthermore, inside the 'libraries' directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the 'include' folder within the 'template' directory.
 
+# Libraries
+|Library|Description|
+|:-|:-|
+|debug_serial|Basic serial debug output via UART1 or UART2 with a simple printf|
+|eeprom|Read, write and erase the data flash (EEPROM/IAP)|
+|i2c|Basic I2C master functions using the hardware I2C module|
+|neo|Control of addressable LEDs (NeoPixel/WS2812), timing is calculated from F_CPU|
+|spi|Basic SPI master functions using the hardware SPI module|
+|uart|Basic functions for UART1 - UART4 (polling)|
+|uart1_int|UART1 with RX interrupt and ring buffer|
+|uart_tx_soft|Software UART (TX only) on any pin|
+|usb/usb_cdc|USB CDC (virtual serial port)|
+|usb/hid_keyboard|USB HID keyboard|
+|usb/hid_mouse|USB HID mouse|
+|usb/hid_composite|USB HID composite device (keyboard, consumer keys and mouse)|
+|usb/hid_multitouch|USB HID multitouch digitizer|
+|usb/hid_data|USB HID raw data transfer (64-byte reports)|
+
+## USB Libraries
+Each USB library consists of the class driver, the USB descriptors (*usb_descr.c/h*), the device configuration (*config.h*) and the USB handler (*usb_handler.c/h*), which is identical for all libraries. All accesses to the USB peripheral (the SIE registers are accessed indirectly via USBADR/USBDAT) take place exclusively within the USB handler; the class drivers only use the endpoint functions *USB_EP_init()*, *USB_EP_send()* and *USB_EP_receive()*. Copy all files of the selected library into the 'include' folder and adjust the *config.h* according to your needs.
+
+Since SDCC requires the interrupt service routine to be visible in the file containing *main()*, the USB interrupt service routine must be defined in *main.c*:
+
+```c
+#include "usb_cdc.h"                      // or any other USB library
+
+void USB_ISR(void) __interrupt(INT_NO_USB) {
+  USB_interrupt();
+}
+
+void main(void) {
+  P_SW2 |= 0x80;                          // enable access to extended registers
+  CDC_init();                             // init USB (also starts IRC48M)
+  ...
+}
+```
+
+The USB peripheral is clocked by the internal 48MHz oscillator (IRC48M), which is enabled by the USB init function. The system clock (F_CPU) can be selected independently. Since the shared VID/PID pairs used by default are not suitable for commercial products, you need to use your own VID/PID for these.
+
 # Using the Makefile
 To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
 
-## Install SDCC Ttoolchain for Compiling
+## Install SDCC Toolchain for Compiling
 ```
 sudo apt install build-essential sdcc
 ```
@@ -36,7 +75,7 @@ make flash     compile, build and upload to MCU
 make clean     remove all build files
 ```
 
-# Factory built-in USB Bootlader
+# Factory built-in USB Bootloader
 The MCU has an embedded bootloader with USB interface, which can be used to upload firmware. The open-source platform-independent Python tool [stc8usb](https://pypi.org/project/stc8usb/) can be used for this purpose.
 
 To initiate new uploads, the bootloader needs to be manually started. Begin by unplugging the board from the USB port and disconnecting all power sources. Then, short pin P3.2 to ground while reconnecting the board to your PC's USB port. This action triggers the chip to enter bootloader mode. Once in this mode, you can release the pin P3.2 and proceed to upload new firmware via USB by running the following command (example):

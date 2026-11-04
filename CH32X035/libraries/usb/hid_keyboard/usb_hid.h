@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Functions for CH32X035/X034/X033                                   * v1.0 *
+// USB HID Functions for CH32X035/X034/X033                                   * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -25,9 +25,7 @@ extern "C" {
 #define HID_init        USB_init                  // setup USB-HID
 void HID_sendReport(uint8_t* buf, uint8_t len);   // send HID report
 
-#ifdef EP2_SIZE
-extern volatile uint8_t HID_status;               // status byte returned from host
-#endif
+extern volatile uint8_t HID_status;               // status byte returned from host (LEDs)
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.0 *
+// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -51,14 +51,17 @@
     #endif
     SCON = 0x42;                        // TX only, 8 bits, variable baudrate, TI flag
     #if DEBUG_TIMER == 1
-    AUXR = 0x40;                        // timer1 in 1T mode as baudrate generator
-    TL1  = DEBUG_BAUD_SET & 0xff;       // initial timer value according to BAUD
-    TH1  = DEBUG_BAUD_SET >> 8;         // initial timer value according to BAUD
-    TR1  = 1;                           // timer1 start run
+    TR1   = 0;                          // stop timer1
+    TMOD &= 0x0f;                       // timer1 16-bit auto-reload mode
+    AUXR  = (AUXR & 0xfe) | 0x40;       // timer1 in 1T mode as baudrate generator
+    TL1   = DEBUG_BAUD_SET & 0xff;      // initial timer value according to BAUD
+    TH1   = DEBUG_BAUD_SET >> 8;        // initial timer value according to BAUD
+    TR1   = 1;                          // timer1 start run
     #elif DEBUG_TIMER == 2
-    AUXR = 0x15;                        // timer2 in 1T mode as baudrate generator
-    T2L  = DEBUG_BAUD_SET & 0xff;       // initial timer value according to BAUD
-    T2H  = DEBUG_BAUD_SET >> 8;         // initial timer value according to BAUD
+    AUXR &= ~0x10;                      // stop timer2
+    T2L   = DEBUG_BAUD_SET & 0xff;      // initial timer value according to BAUD
+    T2H   = DEBUG_BAUD_SET >> 8;        // initial timer value according to BAUD
+    AUXR |= 0x15;                       // timer2 in 1T mode as baudrate generator, start
     #endif
   #elif DEBUG_PORT == 2
     #if   DEBUG_MAP == 0                // UART2 set alternate pins
@@ -70,9 +73,10 @@
     P4M1  &= ~(1<<7);
     #endif
     S2CON = 0x02;                       // TX only, 8 bits, set transmit complete flag
-    AUXR |= 0x14;                       // timer2 in 1T mode as baudrate generator
-    T2L   = DEBUG_BAUD_SET & 0xff;       // initial timer value according to BAUD
+    AUXR &= ~0x10;                      // stop timer2
+    T2L   = DEBUG_BAUD_SET & 0xff;      // initial timer value according to BAUD
     T2H   = DEBUG_BAUD_SET >> 8;        // initial timer value according to BAUD
+    AUXR |= 0x14;                       // timer2 in 1T mode as baudrate generator, start
   #endif
   }
 

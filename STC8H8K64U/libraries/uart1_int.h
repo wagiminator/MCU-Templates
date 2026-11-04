@@ -1,15 +1,20 @@
 // ===================================================================================
-// UART1 with RX Interrupt and Ring Buffer for STC8H Microcontrollers         * v1.0 *
+// UART1 with RX Interrupt and Ring Buffer for STC8H Microcontrollers         * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART1_init()             Init UART1 with 8N1 and default BAUD rate
-// UART1_setBaud(n)         Set BAUD rate
+// UART1_setBAUD(n)         Set BAUD rate
 // UART1_ready()            Check if UART is ready to write
 // UART1_available()        Check if there is something to read
 // UART1_read()             Read character via UART
 // UART1_write(c)           Send character via UART
+//
+// Notes:
+// ------
+// The UART1 interrupt service routine must be defined in main.c (SDCC requirement):
+// void UART1_ISR(void) __interrupt(INT_NO_UART1) { UART1_interrupt(); }
 //
 // UART1 pin mapping (set below in UART parameters):
 // -------------------------------------------------
@@ -44,6 +49,10 @@ extern volatile uint8_t UART1_rptr;         // UART1 RX buffer read pointer
 extern volatile uint8_t UART1_wptr;         // UART1 RX buffer write pointer
 extern volatile __bit   UART1_readyFlag;    // UART1 ready to write flag
 
+// UART1 interrupt handler, must be called by the UART1 interrupt service routine:
+// void UART1_ISR(void) __interrupt(INT_NO_UART1) { UART1_interrupt(); }
+void UART1_interrupt(void);
+
 // UART1 BAUD rate setting
 #define UART1_BAUD_SET  (65536 - (((F_CPU / UART1_BAUD) + 2) / 4))
 
@@ -67,7 +76,7 @@ extern volatile __bit   UART1_readyFlag;    // UART1 ready to write flag
 inline void UART1_init(void) {
   // Setup pins
   #if UART1_MAP > 0
-    P_SW1 |= DEBUG_MAP << 6;
+    P_SW1 = (P_SW1 & 0x3f) | (UART1_MAP << 6);
   #endif
   #if UART1_MAP == 1
     P3M0  &= ~((1<<6) | (1<<7));
@@ -82,6 +91,8 @@ inline void UART1_init(void) {
 
   SCON = 0x50;                          // RX/TX, 8 bits, variable baudrate
   #if UART1_TIMER == 1
+    TR1   = 0;                          // stop timer1
+    TMOD &= 0x0f;                       // timer1 16-bit auto-reload mode
     AUXR &= 0x9e;
     AUXR |= 0x40;                       // timer1 in 1T mode as baudrate generator
     TL1   = UART1_BAUD_SET & 0xff;      // initial timer value according to BAUD

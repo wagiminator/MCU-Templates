@@ -32,10 +32,10 @@ extern "C" {
 #define EP1_SIZE        8
 #define EP2_SIZE        8
 
-#define EP0_BUF_SIZE    EP_BUF_SIZE(EP0_SIZE)
-#define EP1_BUF_SIZE    EP_BUF_SIZE(EP1_SIZE)
-#define EP2_BUF_SIZE    EP_BUF_SIZE(EP2_SIZE)
-#define EP_BUF_SIZE(x)  (x+2<64 ? x+2 : 64)
+#define EP0_BUF_SIZE    64
+#define EP1_BUF_SIZE    64
+#define EP2_BUF_SIZE    64
+// (64 bytes per direction, if OUT and IN are used: OUT at offset 0, IN at offset 64)
 
 // Endpoint buffers
 extern uint8_t __attribute__((aligned(4))) EP0_buffer[];
@@ -55,6 +55,7 @@ typedef struct __attribute__((packed)) {
 
 extern const USB_DEV_DESCR DevDescr;
 extern const USB_CFG_DESCR_HID CfgDescr;
+#define USB_HID_DESCR_PTR ((const uint8_t*)&CfgDescr.hid0)
 
 // ===================================================================================
 // HID Report Descriptors

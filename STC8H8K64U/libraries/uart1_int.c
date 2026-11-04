@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART1 with RX Interrupt and Ring Buffer for STC8H Microcontrollers         * v1.0 *
+// UART1 with RX Interrupt and Ring Buffer for STC8H Microcontrollers         * v1.1 *
 // ===================================================================================
 
 #include "uart1_int.h"

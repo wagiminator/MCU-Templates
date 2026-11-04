@@ -1,32 +1,32 @@
 // ===================================================================================
-// Basic UART Functions for STC8H Microcontrollers                            * v1.0 *
+// Basic UART Functions for STC8H Microcontrollers                            * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART1_init()             Init UART1 with 8N1 and default BAUD rate
-// UART1_setBaud(n)         Set BAUD rate
+// UART1_setBAUD(n)         Set BAUD rate
 // UART1_ready()            Check if UART is ready to write
 // UART1_available()        Check if there is something to read
 // UART1_read()             Read character via UART
 // UART1_write(c)           Send character via UART
 //
 // UART2_init()             Init UART2 with 8N1 and default BAUD rate
-// UART2_setBaud(n)         Set BAUD rate
+// UART2_setBAUD(n)         Set BAUD rate
 // UART2_ready()            Check if UART is ready to write
 // UART2_available()        Check if there is something to read
 // UART2_read()             Read character via UART
 // UART2_write(c)           Send character via UART
 //
 // UART3_init()             Init UART3 with 8N1 and default BAUD rate
-// UART3_setBaud(n)         Set BAUD rate
+// UART3_setBAUD(n)         Set BAUD rate
 // UART3_ready()            Check if UART is ready to write
 // UART3_available()        Check if there is something to read
 // UART3_read()             Read character via UART
 // UART3_write(c)           Send character via UART
 //
 // UART4_init()             Init UART4 with 8N1 and default BAUD rate
-// UART4_setBaud(n)         Set BAUD rate
+// UART4_setBAUD(n)         Set BAUD rate
 // UART4_ready()            Check if UART is ready to write
 // UART4_available()        Check if there is something to read
 // UART4_read()             Read character via UART
@@ -109,7 +109,7 @@
 inline void UART1_init(void) {
   // Setup pins
   #if UART1_MAP > 0
-    P_SW1 |= DEBUG_MAP << 6;
+    P_SW1 = (P_SW1 & 0x3f) | (UART1_MAP << 6);
   #endif
   #if UART1_MAP == 1
     P3M0  &= ~((1<<6) | (1<<7));
@@ -124,6 +124,8 @@ inline void UART1_init(void) {
 
   SCON = 0x52;                          // RX/TX, 8 bits, variable baudrate, TI flag
   #if UART1_TIMER == 1
+    TR1   = 0;                          // stop timer1
+    TMOD &= 0x0f;                       // timer1 16-bit auto-reload mode
     AUXR &= 0x9e;
     AUXR |= 0x40;                       // timer1 in 1T mode as baudrate generator
     TL1   = UART1_BAUD_SET & 0xff;      // initial timer value according to BAUD

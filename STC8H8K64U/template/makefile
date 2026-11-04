@@ -39,7 +39,7 @@ ISPTOOL   = stc8usb -t $(F_CPU) -f $(BIN)/$(TARGET).bin
 # Compiler Flags
 CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(F_CPU) -I$(INCLUDE) -I$(SOURCE) -I.
 CFLAGS += --iram-size $(IRAM_SIZE) --xram-size $(XRAM_SIZE) --code-size $(CODE_SIZE)
-CFILES  = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c)
+CFILES  = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c) $(wildcard $(INCLUDE)/*.c)
 RFILES  = $(CFILES:.c=.rel)
 CLEAN   = rm -f *.ihx *.lk *.map *.mem *.lst *.rel *.rst *.sym *.asm *.adb $(BIN)/*.ihx $(BIN)/*.lk $(BIN)/*.map $(BIN)/*.mem
 
