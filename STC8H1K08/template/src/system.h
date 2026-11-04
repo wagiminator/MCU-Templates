@@ -1,16 +1,17 @@
 // ===================================================================================
-// Basic System Functions for STC8H Microcontrollers                          * v1.2 *
+// Basic System Functions for STC8H Microcontrollers                          * v1.3 *
 // ===================================================================================
 //
 // System clock functions available:
 // ---------------------------------
 // SYS_CLK_HSI()            set HSI as system clock source
 // SYS_CLK_HSE()            set HSE as system clock source (must be enabled first)
-// SYS_CLK_DIV(d)           set system clock divider
+// SYS_CLK_LSI()            set LSI (internal 32kHz) as system clock source (enable first)
+// SYS_CLK_DIV(d)           set system clock divider (0 and 1: no division)
 //
 // SYS_MCO_DIV(d)           set sytem clock output (MCO) divider (0: MCO off)
-// SYS_MCO_P54(p)           define P5.4 as MCO pin
-// SYS_MCO_P16(p)           define P1.6 as MCO pin
+// SYS_MCO_P54()            define P5.4 as MCO pin
+// SYS_MCO_P16()            define P1.6 as MCO pin
 //
 // HSI_enable()             enable high speed internal oscillator (HSI)
 // HSI_disable()            disable high speed internal oscillator (HSI)
@@ -19,11 +20,6 @@
 // HSE_enable(t)            enable high speed external oscillator (HSE)
 //                          (t=0: clock signal on P1.7, 1: oscillator on P1.6/P1.7)
 // HSE_disable()            disable high speed external oscillator (HSE)
-// LSE_enable(g)            enable low speed external oscillator (LSE)
-//                          (g=0: low gain, g=1: high gain)
-// LSE_disable()            disable low speed external oscillator (LSE)
-// IRC48M_enable()          enable 48MHz internal oscillator (IRC48M)
-// IRC48M_disable()         disable 48MHz internal oscillator (IRC48M)
 //
 // Watchdog Timer (WDT) functions available:
 // -----------------------------------------
@@ -62,6 +58,8 @@
 // Notes:
 // ------
 // Access to extended registers must be granted (P_SW2 |= 0x80;).
+// The STC8H1K08 has no external 32kHz oscillator (LSE) and no IRC48M. The external high speed
+// oscillator (HSE, crystal or clock) is connected to P1.6 (XTALO) and P1.7 (XTALI).
 // Max watchdog timer period = 12 * 32768 * 256 * 1000 / F_CPU [ms]
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
@@ -73,21 +71,17 @@
 // ===================================================================================
 // System Clock Functions
 // ===================================================================================
-#define HSI_enable()        {IRCCR = 0x80; while(!(IRCCR & 0x01));}
-#define HSI_disable()       IRCCR = 0x00
+#define HSI_enable()        {HIRCCR = 0x80; while(!(HIRCCR & 0x01));}
+#define HSI_disable()       HIRCCR = 0x00
 #define LSI_enable()        {IRC32KCR = 0x80; while(!(IRC32KCR & 0x01));}
 #define LSI_disable()       IRC32KCR = 0x00
 #define HSE_enable(t)       {(t) ? (XOSCCR |= (0x01 << 7) | (0x01 << 6)) : (XOSCCR |= (0x01 << 7)); \
                             while(!(XOSCCR & 0x01));}
-#define HSE_disable()       XOSCCR &= ~((0x01 << 7) | (0x01 << 6))
-#define LSE_enable(g)       {(g) ? (X32KCR  = (0x01 << 7) | (0x01 << 6)) : (X32KCR  = (0x01 << 7)); \
-                            while(!(X32KCR & 0x01));}
-#define LSE_disable()       X32KCR = 0x00
-#define IRC48M_enable()     {IRC48MCR = 0x80; while(!(IRC48MCR & 0x01));}
-#define IRC48M_disable()    IRC48MCR = 0x00
+#define HSE_disable()       XOSCCR = 0x00
 
 #define SYS_CLK_HSI()       CKSEL = 0x00
 #define SYS_CLK_HSE()       CKSEL = 0x01
+#define SYS_CLK_LSI()       CKSEL = 0x03
 #define SYS_CLK_DIV(d)      CLKDIV = (d)
 
 #define SYS_MCO_DIV(d)      MCLKOCR = (MCLKOCR & 0x80) | (d)
@@ -143,7 +137,7 @@
 #define SLEEP_stop()        PCON |= 0x02
 #define SLEEP_ms(ms)        {SLEEP_timer_set(ms); SLEEP_stop();}
 #define SLEEP_timer_read()  ( ((((uint16_t)(WKTCH & 0x7f) << 8) | WKTCL) + 1) >> 1 )
-#define SLEEP_timer_set(ms) {WKTCL = ((ms) << 1) - 1; WKTCH = 0x80 | ((((ms) << 1) - 1) >> 8);}
+#define SLEEP_timer_set(ms) {WKTCL = (uint8_t)(((ms) << 1) - 1); WKTCH = 0x80 | (uint8_t)((((ms) << 1) - 1) >> 8);}
 
 // ===================================================================================
 // Interrupt (INT) Functions

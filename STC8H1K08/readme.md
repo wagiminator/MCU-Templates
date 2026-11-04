@@ -3,7 +3,21 @@ The STC8H1K08 is a cost-effective 8-bit ultra-high speed 8051 core MCU compatibl
 
 The *template* directory includes a makefile, an illustrative program, a linker script, and fundamental libraries. These elements are intended to serve as a foundation for beginning the development of bare-metal firmware in the C programming language for this particular microcontroller.
 
-Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* folder within the *template* directory.
+Furthermore, inside the *libraries* directory, there are optional libraries available for certain peripherals. If you intend to utilize these libraries, you need to copy them into the *src* (or *include*) folder within the *template* directory.
+
+# Libraries
+|Library|Description|
+|:-|:-|
+|debug_serial|Basic serial debug output via UART1 or UART2 with a simple printf|
+|eeprom|Read, write and erase the data flash (EEPROM/IAP)|
+|i2c|Basic I2C master functions using the hardware I2C module|
+|neo|Control of addressable LEDs (NeoPixel/WS2812), timing is calculated from F_CPU|
+|spi|Basic SPI master functions using the hardware SPI module|
+|uart|Basic functions for UART1 and UART2 (polling)|
+|uart1_int|UART1 with RX interrupt and ring buffer|
+|uart_tx_soft|Software UART (TX only) on any pin|
+
+The STC8H1K08 in the TSSOP20/QFN20 package has the pins P1.0 - P1.7, P3.0 - P3.7 and P5.4. Pin mappings of the peripherals to other ports are not available.
 
 # Using the Makefile
 To make use of the *makefile*, it's necessary to install some extra software components to fully set up the toolchain:
@@ -30,7 +44,7 @@ make flash     compile, build and upload to MCU
 make clean     remove all build files
 ```
 
-# Factory built-in UART Bootlader
+# Factory built-in UART Bootloader
 The MCU has an embedded bootloader with UART interface, which can be used to upload firmware using a simple USB-to-serial adapter. The open-source platform-independent Python tool [stc8isp](https://pypi.org/project/stc8isp/) can be used for this purpose.
 
 Connect your USB-to-serial converter to your STC8H1K08 MCU as follows:
@@ -48,7 +62,7 @@ USB2SERIAL         STC8G/8H
 Then run the following command to upload your firmware (example):
 
 ```
-stc8isp -p /dev/ttyUSB0 -t 24000000 -f firmware.bin
+stc8isp -p /dev/ttyUSB0 -t 36000000 -f firmware.bin
 ```
 
 Perform a power cycle of your MCU (reconnect to power) when prompted.

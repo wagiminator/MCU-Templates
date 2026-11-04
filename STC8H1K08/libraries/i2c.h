@@ -1,12 +1,12 @@
 // ===================================================================================
-// Basic I2C Master Functions for STC8H Microcontrollers                      * v1.0 *
+// Basic I2C Master Functions for STC8H Microcontrollers                      * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // I2C_init()               I2C init function
 // I2C_start(addr)          I2C start transmission, address must contain R/W bit
-// I2C_restart(addr)        I2C restart transmission, address must contain R/W bit
+// I2C_restart(addr)        I2C repeated start, address must contain R/W bit
 // I2C_stop()               I2C stop transmission
 // I2C_write(data)          I2C transmit one data byte to the slave
 // I2C_read(ack)            I2C receive one data byte (set ack=0 for last byte)
@@ -17,8 +17,9 @@
 // I2C pin mapping (set below in I2C parameters):
 // ----------------------------------------------
 // I2C       MAP0   MAP1   MAP2   MAP3
-// SDA-pin   P1.4   P2.4   P7.6   P3.3
-// SCL-pin   P1.5   P2.5   P7.7   P3.2
+// SDA-pin   P1.4   (P2.4) (P7.6) P3.3
+// SCL-pin   P1.5   (P2.5) (P7.7) P3.2
+// (MAP1 and MAP2 are not available on the STC8H1K08)
 //
 // Notes:
 // ------
@@ -55,15 +56,14 @@
 #define I2C_CMD_ACK_WRITE 0b0101        // send ACK bit in MSACKO (I2CMSST.0)
 #define I2C_SEQ_START     0b1001        // START + send data byte + read ACK
 #define I2C_SEQ_WRITE     0b1010        // send data byte + read ACK
-#define I2C_SEQ_READ      0b1100        // read data byte + send NACK (ACK=1)
-#define I2C_SEQ_READLAST  0b1011        // read data byte + send ACK (ACK=0)
+#define I2C_SEQ_READ      0b1011        // read data byte + send ACK (ACK=0)
+#define I2C_SEQ_READLAST  0b1100        // read data byte + send NACK (ACK=1)
 
 // ===================================================================================
 // I2C Functions and Macros
 // ===================================================================================
 #define I2C_MSSPEED       ((F_CPU / I2C_CLKRATE / 2 - 4) / 2)
 #define I2C_setSpeed(n)   I2CCFG = 0xc0 | ((F_CPU / (n) / 2 - 4) / 2)
-#define I2C_restart(addr) {I2C_stop(); I2C_start(addr);}
 #define I2C_enable()      I2CCFG |=  0x80
 #define I2C_disable()     I2CCFG &= ~0x80
 
@@ -74,15 +74,15 @@ inline void I2C_init(void) {
   #elif I2C_MAP == 1
     P2M0  &= ~((1<<4) | (1<<5));
     P2M1  &= ~((1<<4) | (1<<5));
-    P_SW2 |=  1 << 4;
+    P_SW2  = (P_SW2 & 0xcf) | (1 << 4);
   #elif I2C_MAP == 2
     P7M0  &= ~((1<<6) | (1<<7));
     P7M1  &= ~((1<<6) | (1<<7));
-    P_SW2 |=  2 << 4;
+    P_SW2  = (P_SW2 & 0xcf) | (2 << 4);
   #elif I2C_MAP == 3
     P3M0  &= ~((1<<2) | (1<<3));
     P3M1  &= ~((1<<2) | (1<<3));
-    P_SW2 |=  3 << 4;
+    P_SW2  = (P_SW2 & 0xcf) | (3 << 4);
   #endif
 
   I2CCFG   = 0xc0 | I2C_MSSPEED;        // enable I2C with specified speed
@@ -91,6 +91,7 @@ inline void I2C_init(void) {
 }
 
 void I2C_start(uint8_t addr);
+void I2C_restart(uint8_t addr);
 void I2C_stop(void);
 void I2C_write(uint8_t data);
 

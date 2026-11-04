@@ -1,5 +1,5 @@
 // ===================================================================================
-// Header File for STC8H Microcontrollers                                     * v1.0 *
+// Header File for STC8H Microcontrollers                                     * v1.1 *
 // ===================================================================================
 
 #pragma once
@@ -22,7 +22,7 @@
 #define SFRX_OFF()                    P_SW2 &= 0x7f
 #define SFRX_SET(__SFR__, __POS__)    {SFRX_ON();(__SFR__)|= (0x01<<(__POS__));SFRX_OFF();}
 #define SFRX_RESET(__SFR__, __POS__)  {SFRX_ON();(__SFR__)&=~(0x01<<(__POS__));SFRX_OFF();}
-#define SFRX_WRITE(__SFR__, __VAL__)  {SFRX_ON();(__SFR__)=(__POS__);SFRX_OFF();}
+#define SFRX_WRITE(__SFR__, __VAL__)  {SFRX_ON();(__SFR__)=(__VAL__);SFRX_OFF();}
 
 #define NOP()                         __asm NOP __endasm
 
@@ -341,8 +341,6 @@ SBIT(PP75,              _P7, 5);
 SBIT(PP76,              _P7, 6);
 SBIT(PP77,              _P7, 7);
 
-SFR(VRTRIM,             0xA6);
-
 SFR(USBCLK,             0xDC);
 
 SFR(ADCCFG,             0xDE);
@@ -379,7 +377,8 @@ SFR(RSTCFG,             0xFF);
 #define MCLKOCR           (*(uint8_t volatile __XDATA *)0xfe05)
 #define IRCDB             (*(uint8_t volatile __XDATA *)0xfe06)
 #define IRC48MCR          (*(uint8_t volatile __XDATA *)0xfe07)
-#define X32KCR            (*(uint8_t volatile __XDATA *)0xfe08)
+#define X32KCR            (*(uint8_t volatile __XDATA *)0xfe08)   // not on STC8H1K08/8K64U
+#define SPFUNC            (*(uint8_t volatile __XDATA *)0xfe08)   // STC8H8K64U only
 #define RSTFLAG           (*(uint8_t volatile __XDATA *)0xfe09)
 #define PxPU                                             0xfe10
 #define P0PU                                     SFRX(PxPU + 0)
@@ -427,6 +426,11 @@ SFR(RSTCFG,             0xFF);
 #define P6IE              (*(uint8_t volatile __XDATA *)0xfe36)
 #define P7IE              (*(uint8_t volatile __XDATA *)0xfe37)
 #define LCMIFCFG          (*(uint8_t volatile __XDATA *)0xfe50)
+#define LCMIFCFG2         (*(uint8_t volatile __XDATA *)0xfe51)
+#define LCMIFCR           (*(uint8_t volatile __XDATA *)0xfe52)
+#define LCMIFSTA          (*(uint8_t volatile __XDATA *)0xfe53)
+#define LCMIFDATL         (*(uint8_t volatile __XDATA *)0xfe54)
+#define LCMIFDATH         (*(uint8_t volatile __XDATA *)0xfe55)
 #define RTCCR             (*(uint8_t volatile __XDATA *)0xfe60)
 #define RTCCFG            (*(uint8_t volatile __XDATA *)0xfe61)
 #define RTCIEN            (*(uint8_t volatile __XDATA *)0xfe62)
@@ -464,6 +468,7 @@ SFR(RSTCFG,             0xFF);
 #define TM3PS             (*(uint8_t volatile __XDATA *)0xfea3)
 #define TM4PS             (*(uint8_t volatile __XDATA *)0xfea4)
 #define ADCTIM            (*(uint8_t volatile __XDATA *)0xfea8)
+#define T3T4PIN           (*(uint8_t volatile __XDATA *)0xfeac)
 
 #define PWMA_ETRPS        (*(uint8_t volatile __XDATA *)0xfeb0)
 #define PWMA_ENO          (*(uint8_t volatile __XDATA *)0xfeb1)
@@ -809,3 +814,120 @@ SFR(RSTCFG,             0xFF);
 #define DMA_LCM_TXAL      (*(uint8_t volatile __XDATA *)0xfa76)
 #define DMA_LCM_RXAH      (*(uint8_t volatile __XDATA *)0xfa77)
 #define DMA_LCM_RXAL      (*(uint8_t volatile __XDATA *)0xfa78)
+
+// ===================================================================================
+// USB Serial Interface Engine (SIE) Registers (indirect access via USBADR/USBDAT)
+// ===================================================================================
+// USBCON bits
+#define ENUSB             0x80      // USB enable
+#define USBRST            0x40      // USB reset
+#define PS2M              0x20      // PS/2 mode
+#define PUEN              0x10      // D+/D- pull-up enable
+#define PDEN              0x08      // D+/D- pull-down enable
+#define DFREC             0x04      // differential receiver state
+#define USB_DP            0x02      // D+ state
+#define USB_DM            0x01      // D- state
+
+// USBADR bits
+#define USB_BUSY          0x80      // indirect access busy / start read
+#define USB_AUTORD        0x40      // auto read
+
+// SIE register addresses
+#define FADDR             0x00      // function address
+#define POWER             0x01      // power management
+#define INTRIN1           0x02      // IN endpoint interrupt flags
+#define INTROUT1          0x04      // OUT endpoint interrupt flags
+#define INTRUSB           0x06      // USB bus interrupt flags
+#define INTRIN1E          0x07      // IN endpoint interrupt enable
+#define INTROUT1E         0x09      // OUT endpoint interrupt enable
+#define INTRUSBE          0x0b      // USB bus interrupt enable
+#define FRAME1            0x0c      // frame number low byte
+#define FRAME2            0x0d      // frame number high byte
+#define INDEX             0x0e      // endpoint index
+#define INMAXP            0x10      // IN max packet size (in units of 8 bytes)
+#define CSR0              0x11      // EP0 control/status
+#define INCSR1            0x11      // IN control/status 1
+#define INCSR2            0x12      // IN control/status 2
+#define OUTMAXP           0x13      // OUT max packet size (in units of 8 bytes)
+#define OUTCSR1           0x14      // OUT control/status 1
+#define OUTCSR2           0x15      // OUT control/status 2
+#define COUNT0            0x16      // EP0 OUT byte count
+#define OUTCOUNT1         0x16      // OUT byte count low
+#define OUTCOUNT2         0x17      // OUT byte count high
+#define FIFO0             0x20      // EP0 FIFO
+#define FIFO1             0x21      // EP1 FIFO
+#define FIFO2             0x22      // EP2 FIFO
+#define FIFO3             0x23      // EP3 FIFO
+#define FIFO4             0x24      // EP4 FIFO
+#define FIFO5             0x25      // EP5 FIFO
+#define UTRKCTL           0x30      // USB trim control
+#define UTRKSTS           0x31      // USB trim status
+
+// POWER bits
+#define ISOUD             0x80
+#define USBINH            0x10
+#define USBRSU            0x04
+#define USBSUS            0x02
+#define ENSUS             0x01
+
+// INTRIN1 / INTROUT1 / INTRIN1E / INTROUT1E bits
+#define EP0IF             0x01
+#define EP1INIF           0x02
+#define EP2INIF           0x04
+#define EP3INIF           0x08
+#define EP4INIF           0x10
+#define EP5INIF           0x20
+#define EP1OUTIF          0x02
+#define EP2OUTIF          0x04
+#define EP3OUTIF          0x08
+#define EP4OUTIF          0x10
+#define EP5OUTIF          0x20
+
+// INTRUSB / INTRUSBE bits
+#define SOFIF             0x08
+#define RSTIF             0x04
+#define RSUIF             0x02
+#define SUSIF             0x01
+
+// CSR0 bits
+#define SSUEND            0x80      // serviced setup end
+#define SOPRDY            0x40      // serviced OUT packet ready
+#define SDSTL             0x20      // send stall
+#define SUEND             0x10      // setup end
+#define DATEND            0x08      // data end
+#define STSTL             0x04      // sent stall
+#define IPRDY             0x02      // IN packet ready
+#define OPRDY             0x01      // OUT packet ready
+
+// INCSR1 bits
+#define INCLRDT           0x40      // clear data toggle
+#define INSTSTL           0x20      // sent stall
+#define INSDSTL           0x10      // send stall
+#define INFLUSH           0x08      // flush FIFO
+#define INUNDRUN          0x04      // underrun
+#define INFIFONE          0x02      // FIFO not empty
+#define INIPRDY           0x01      // IN packet ready
+
+// INCSR2 bits
+#define INAUTOSET         0x80
+#define INISO             0x40
+#define INMODEIN          0x20      // shared FIFO used as IN endpoint
+#define INMODEOUT         0x00      // shared FIFO used as OUT endpoint
+#define INENDMA           0x10
+#define INFCDT            0x08
+
+// OUTCSR1 bits
+#define OUTCLRDT          0x80      // clear data toggle
+#define OUTSTSTL          0x40      // sent stall
+#define OUTSDSTL          0x20      // send stall
+#define OUTFLUSH          0x10      // flush FIFO
+#define OUTDATERR         0x08      // data error (CRC)
+#define OUTOVRRUN         0x04      // overrun
+#define OUTFIFOFUL        0x02      // FIFO full
+#define OUTOPRDY          0x01      // OUT packet ready
+
+// OUTCSR2 bits
+#define OUTAUTOCLR        0x80
+#define OUTISO            0x40
+#define OUTENDMA          0x20
+#define OUTDMAMD          0x10

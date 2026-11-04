@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO, PWM and ADC Functions for STC8H1K08 Series Microcontrollers    * v1.1 *
+// Basic GPIO, PWM and ADC Functions for STC8H1K08 Series Microcontrollers    * v1.2 *
 // ===================================================================================
 //
 // Pins must be defined as P10, P11, P12, etc. - e.g.:
@@ -65,7 +65,7 @@
 // PWM functions available:
 // ------------------------
 // PWM_init()               init PWMA timer
-// PWM_start(PIN)           start PWM output on PIN (P10 - P27, P33, P34 only)
+// PWM_start(PIN)           start PWM output on PIN (P10 - P17, P33, P34 only)
 // PWM_stop(PIN)            stop PWM output on PIN
 // PWM_write(PIN, val)      set PWM output active level duty cycle on PIN (0 - 255)
 //
@@ -76,7 +76,7 @@
 // ADC_disable()            disable ADC
 // ADC_fast()               set ADC fast mode (less accurate) (*)
 // ADC_slow()               set ADC slow mode (more accurate)
-// ADC_input(PIN)           set ADC input pin (P10 - P11, P30 - P36 only)
+// ADC_input(PIN)           set ADC input pin (P10, P11, P30 - P36 only)
 // ADC_read()               sample and read ADC value (0 - 1023)
 // ADC_read_VDD()           sample and read VREF, calculate and return VDD in mV
 //
@@ -87,7 +87,7 @@
 // CMP_pos_pin(PIN)         set CMP non-inverting input pin (P37 and ADC input pins only)
 // CMP_neg_pin(PIN)         set CMP inverting input pin (P36 only)
 // CMP_neg_VREF()           set VREF (1.19V) as inverting input
-// CMP_out_pin(PIN)         set CMP output pin (P34, P41 only)
+// CMP_out_pin(PIN)         set CMP output pin (P34 only)
 // CMP_out_enable()         enable CMP output on pin
 // CMP_out_disable()        disable CMP output on pin
 // CMP_out_invert()         invert CMP output
@@ -100,6 +100,7 @@
 // Pins used for PWM should be set as OUTPUT beforehand.
 // Not all PWM pins work independently of each other. Refer to the datasheet for more info.
 // Pins used for ADC or CMP input must have been set as INPUT (high impedance) beforehand.
+// Available pins on the STC8H1K08 (TSSOP20/QFN20): P10 - P17, P30 - P37, P54.
 // If ADC input pins are used for the CMP, ADC and CMP must be enabled.
 // Access to extended registers must be granted (P_SW2 |= 0x80;).
 //
@@ -389,17 +390,13 @@ inline void P7_toggle(void) {__asm__("xrl _P7, #0xff");}
 // ===================================================================================
 // Combined PIN settings
 // ===================================================================================
-#define PIN_all_bidirect()  { P0M1 = 0x00; P0M0 = 0x00; P1M1 = 0x00; P1M0 = 0x00; \
-                              P2M1 = 0x00; P2M0 = 0x00; P3M1 = 0x00; P3M0 = 0x00; \
-                              P4M1 = 0x00; P4M0 = 0x00; P5M1 = 0x00; P5M0 = 0x00; \
-                              P6M1 = 0x00; P6M0 = 0x00; P7M1 = 0x00; P7M0 = 0x00; }
-#define PIN_all_enable()    { P0IE = 0xff; P1IE = 0xff; P2IE = 0xff; P3IE = 0xff; \
-                              P4IE = 0xff; P5IE = 0xff; P6IE = 0xff; P7IE = 0xff; }
-#define PIN_all_disable()   { P0IE = 0x00; P1IE = 0x00; P2IE = 0x00; P3IE = 0x00; \
-                              P4IE = 0x00; P5IE = 0x00; P6IE = 0x00; P7IE = 0x00; }
+#define PIN_all_bidirect()  { P1M1 = 0x00; P1M0 = 0x00; P3M1 = 0x00; P3M0 = 0x00; \
+                              P5M1 = 0x00; P5M0 = 0x00; }
+#define PIN_all_enable()    { P1IE = 0xff; P3IE = 0xff; P5IE = 0xff; }
+#define PIN_all_disable()   { P1IE = 0x00; P3IE = 0x00; P5IE = 0x00; }
 
 // ===================================================================================
-// Pin manipulation macros
+// PIN manipulation macros
 // ===================================================================================
 #define PIN_low(PIN)          PIN_h_s(PIN) = 0              // set pin to LOW
 #define PIN_high(PIN)         PIN_h_s(PIN) = 1              // set pin to HIGH
@@ -408,7 +405,7 @@ inline void P7_toggle(void) {__asm__("xrl _P7, #0xff");}
 #define PIN_write(PIN, val)   PIN_h_s(PIN) = val            // WRITE pin value
 
 // ===================================================================================
-// Convert pin for inline assembly and direct manipulation
+// Convert PIN for inline assembly and direct manipulation
 // ===================================================================================
 #define PIN_asm(PIN)          PIN_h_a(PIN)
 #define PIN_set(PIN)          PIN_h_s(PIN)
@@ -442,7 +439,7 @@ inline void P7_toggle(void) {__asm__("xrl _P7, #0xff");}
 // Basic PWM functions
 // ===================================================================================
 
-inline void PWM_init() {
+inline void PWM_init(void) {
   PWMA_CCER1 = 0x00;        // close channels first
   PWMA_CCER2 = 0x00;
   PWMA_CCMR1 = 0x60;        // set PWMA output mode
@@ -470,17 +467,9 @@ inline void PWM_init() {
   ((PIN == P15) ? (PWMA_PS &= 0xcf,                  PWMA_ENO |= 0x20) : \
   ((PIN == P16) ? (PWMA_PS &= 0x3f,                  PWMA_ENO |= 0x40) : \
   ((PIN == P17) ? (PWMA_PS &= 0x3f,                  PWMA_ENO |= 0x80) : \
-  ((PIN == P20) ? (PWMA_PS &= 0xfc, PWMA_PS |= 0x01, PWMA_ENO |= 0x01) : \
-  ((PIN == P21) ? (PWMA_PS &= 0xfc, PWMA_PS |= 0x01, PWMA_ENO |= 0x02) : \
-  ((PIN == P22) ? (PWMA_PS &= 0xf3, PWMA_PS |= 0x04, PWMA_ENO |= 0x04) : \
-  ((PIN == P23) ? (PWMA_PS &= 0xf3, PWMA_PS |= 0x04, PWMA_ENO |= 0x08) : \
-  ((PIN == P24) ? (PWMA_PS &= 0xcf, PWMA_PS |= 0x10, PWMA_ENO |= 0x10) : \
-  ((PIN == P25) ? (PWMA_PS &= 0xcf, PWMA_PS |= 0x10, PWMA_ENO |= 0x20) : \
-  ((PIN == P26) ? (PWMA_PS &= 0x3f, PWMA_PS |= 0x40, PWMA_ENO |= 0x40) : \
-  ((PIN == P27) ? (PWMA_PS &= 0x3f, PWMA_PS |= 0x40, PWMA_ENO |= 0x80) : \
   ((PIN == P34) ? (                 PWMA_PS |= 0xc0, PWMA_ENO |= 0x40) : \
   ((PIN == P33) ? (                 PWMA_PS |= 0xc0, PWMA_ENO |= 0x80) : \
-(0)))))))))))))))))))
+(0)))))))))))
 
 #define PWM_stop(PIN) \
   ((PIN == P10) ? (PWMA_ENO &= ~0x01) : \
@@ -491,41 +480,25 @@ inline void PWM_init() {
   ((PIN == P15) ? (PWMA_ENO &= ~0x20) : \
   ((PIN == P16) ? (PWMA_ENO &= ~0x40) : \
   ((PIN == P17) ? (PWMA_ENO &= ~0x80) : \
-  ((PIN == P20) ? (PWMA_ENO &= ~0x01) : \
-  ((PIN == P21) ? (PWMA_ENO &= ~0x02) : \
-  ((PIN == P22) ? (PWMA_ENO &= ~0x04) : \
-  ((PIN == P23) ? (PWMA_ENO &= ~0x08) : \
-  ((PIN == P24) ? (PWMA_ENO &= ~0x10) : \
-  ((PIN == P25) ? (PWMA_ENO &= ~0x20) : \
-  ((PIN == P26) ? (PWMA_ENO &= ~0x40) : \
-  ((PIN == P27) ? (PWMA_ENO &= ~0x80) : \
   ((PIN == P34) ? (PWMA_ENO &= ~0x40) : \
   ((PIN == P33) ? (PWMA_ENO &= ~0x80) : \
-(0)))))))))))))))))))
+(0)))))))))))
 
 #define PWM_write(PIN, val) \
   ((PIN == P10) ? (PWMA_CCR1L =  (val)) : \
-  ((PIN == P11) ? (PWMA_CCR1L = ~(val)) : \
+  ((PIN == P11) ? (PWMA_CCR1L = (uint8_t)~(val)) : \
   ((PIN == P12) ? (PWMA_CCR2L =  (val)) : \
-  ((PIN == P13) ? (PWMA_CCR2L = ~(val)) : \
+  ((PIN == P13) ? (PWMA_CCR2L = (uint8_t)~(val)) : \
   ((PIN == P14) ? (PWMA_CCR3L =  (val)) : \
-  ((PIN == P15) ? (PWMA_CCR3L = ~(val)) : \
+  ((PIN == P15) ? (PWMA_CCR3L = (uint8_t)~(val)) : \
   ((PIN == P16) ? (PWMA_CCR4L =  (val)) : \
-  ((PIN == P17) ? (PWMA_CCR4L = ~(val)) : \
-  ((PIN == P20) ? (PWMA_CCR1L =  (val)) : \
-  ((PIN == P21) ? (PWMA_CCR1L = ~(val)) : \
-  ((PIN == P22) ? (PWMA_CCR2L =  (val)) : \
-  ((PIN == P23) ? (PWMA_CCR2L = ~(val)) : \
-  ((PIN == P24) ? (PWMA_CCR3L =  (val)) : \
-  ((PIN == P25) ? (PWMA_CCR3L = ~(val)) : \
-  ((PIN == P26) ? (PWMA_CCR4L =  (val)) : \
-  ((PIN == P27) ? (PWMA_CCR4L = ~(val)) : \
+  ((PIN == P17) ? (PWMA_CCR4L = (uint8_t)~(val)) : \
   ((PIN == P34) ? (PWMA_CCR4L =  (val)) : \
-  ((PIN == P33) ? (PWMA_CCR4L = ~(val)) : \
-(0)))))))))))))))))))
+  ((PIN == P33) ? (PWMA_CCR4L = (uint8_t)~(val)) : \
+(0)))))))))))
 
 // ===================================================================================
-// ADC functions (P10 - P17, P30 - P36, VREF only)
+// ADC functions (P10, P11, P30 - P36, VREF only)
 // ===================================================================================
 #define ADC_enable()        ADC_CONTR |=  0x80
 #define ADC_disable()       ADC_CONTR &= ~0x80
@@ -534,21 +507,15 @@ inline void PWM_init() {
 #define ADC_clockdiv(n)     ADCCFG = (ADCCFG & 0xf0) | ((n) & 0x0f)
 
 #define ADC_input(PIN) \
-  ((PIN == P10) ? (ADC_CONTR &= 0xf0) : \
-  ((PIN == P11) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x01) : \
-  ((PIN == P12) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x02) : \
-  ((PIN == P13) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x03) : \
-  ((PIN == P14) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x04) : \
-  ((PIN == P15) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x05) : \
-  ((PIN == P16) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x06) : \
-  ((PIN == P17) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x07) : \
-  ((PIN == P30) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x08) : \
-  ((PIN == P31) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x09) : \
-  ((PIN == P32) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0a) : \
-  ((PIN == P33) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0b) : \
-  ((PIN == P34) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0c) : \
-  ((PIN == P35) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0d) : \
-  ((PIN == P36) ? (ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0e) : \
+  ((PIN == P10) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x00) : \
+  ((PIN == P11) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x01) : \
+  ((PIN == P30) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x08) : \
+  ((PIN == P31) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x09) : \
+  ((PIN == P32) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0a) : \
+  ((PIN == P33) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0b) : \
+  ((PIN == P34) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0c) : \
+  ((PIN == P35) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0d) : \
+  ((PIN == P36) ? (ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0e) : \
 (0))))))))))
 
 #define ADC_input_VREF()    ADC_CONTR |= 0x0f
@@ -560,9 +527,10 @@ inline void ADC_init(void) {
 }
 
 inline uint16_t ADC_read(void) {
-  ADC_CONTR |= 0x40;
-  while(ADC_CONTR & 0x40);
-  return (((uint16_t)ADC_RES << 8) | ADC_RESL);
+  ADC_CONTR |= 0x40;                            // start conversion
+  while(!(ADC_CONTR & 0x20));                   // wait for conversion complete
+  ADC_CONTR &= ~0x20;                           // clear ADC_FLAG
+  return (((uint16_t)ADC_RES << 8) | ADC_RESL); // return result
 }
 
 inline uint16_t ADC_read_VDD(void) {
@@ -571,7 +539,7 @@ inline uint16_t ADC_read_VDD(void) {
 }
 
 // ===================================================================================
-// Comparator Functions (POS: P37, ADC-pins / NEG: P36, VREF / OUT: P34, P41)
+// Comparator Functions (POS: P37, ADC-pins / NEG: P36, VREF / OUT: P34)
 // ===================================================================================
 #define CMP_enable()        CMPCR1 |=  0x80
 #define CMP_disable()       CMPCR1 &= ~0x80
@@ -579,27 +547,21 @@ inline uint16_t ADC_read_VDD(void) {
 
 #define CMP_pos_pin(PIN) \
   ((PIN == P37) ? (CMPCR1 &= ~0x08) : \
-  ((PIN == P10) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0) : \
-  ((PIN == P11) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x01) : \
-  ((PIN == P12) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x02) : \
-  ((PIN == P13) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x03) : \
-  ((PIN == P14) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x04) : \
-  ((PIN == P15) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x05) : \
-  ((PIN == P16) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x06) : \
-  ((PIN == P17) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x07) : \
-  ((PIN == P30) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x08) : \
-  ((PIN == P31) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x09) : \
-  ((PIN == P32) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0a) : \
-  ((PIN == P33) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0b) : \
-  ((PIN == P34) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0c) : \
-  ((PIN == P35) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0d) : \
-  ((PIN == P36) ? (CMPCR1 |=  0x08, ADC_CONTR &= 0xf0, ADC_CONTR |= 0x0e) : \
+  ((PIN == P10) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x00) : \
+  ((PIN == P11) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x01) : \
+  ((PIN == P30) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x08) : \
+  ((PIN == P31) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x09) : \
+  ((PIN == P32) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0a) : \
+  ((PIN == P33) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0b) : \
+  ((PIN == P34) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0c) : \
+  ((PIN == P35) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0d) : \
+  ((PIN == P36) ? (CMPCR1 |= 0x08, ADC_CONTR = (ADC_CONTR & 0xf0) | 0x0e) : \
 (0)))))))))))
 
 #define CMP_neg_pin(PIN)    ((PIN == P36) ? (CMPCR1 |= 0x04) : (CMPCR1 &= ~0x04))
 #define CMP_neg_VREF()      CMPCR1 &= ~0x04
 
-#define CMP_out_pin(PIN)    ((PIN == P34) ? (P_SW2 &= f7) : ((PIN == P41) ? (P_SW2 |= 0x08) : (0)))
+#define CMP_out_pin(PIN)    ((PIN == P34) ? (P_SW2 &= 0xf7) : (0))
 #define CMP_out_enable()    CMPCR1 |=  0x02
 #define CMP_out_disable()   CMPCR1 &= ~0x02
 #define CMP_out_invert()    CMPCR2 |=  0x80

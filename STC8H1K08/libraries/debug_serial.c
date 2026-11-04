@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.0 *
+// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -45,14 +45,14 @@ static void DEBUG_vfprintf(const char* str,  va_list arp) {
     w = r = s = 0;
     if(d == '%') {
       DEBUG_write(d);
-      d = *str++;
+      continue;
     }
     if(d == '0') {
       d = *str++;
       s = 1;
     }
     while((d >= '0') && (d <= '9')) {
-      w += w * 10 + (d - '0');
+      w = w * 10 + (d - '0');
       d = *str++;
     }
     if(s) w = -w;
@@ -93,7 +93,7 @@ void DEBUG_itoa(int16_t val, int8_t rad, int8_t len) {
     len = -len;
     pad = '0';
   }
-  if(len > 20) return;
+  if(len > 16) len = 16;
   do {
     c = (char)((uint16_t)val % rad);
     if (c >= 10) c += ('A' - 10);
