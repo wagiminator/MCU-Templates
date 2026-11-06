@@ -45,23 +45,6 @@ extern volatile __bit    USB_ENUM_OK;
 extern __code uint8_t*   USB_pDescr;
 
 // ===================================================================================
-// Custom External USB Handler Functions
-// ===================================================================================
-uint8_t HID_control(void);
-void HID_EP_init(void);
-void HID_EP1_IN(void);
-
-// ===================================================================================
-// USB Handler Defines
-// ===================================================================================
-// Custom USB handler functions
-#define USB_INIT_endpoints      HID_EP_init     // custom USB EP init handler
-#define USB_CLASS_SETUP_handler HID_control     // handle class setup requests
-
-// Endpoint callback functions
-#define EP1_IN_callback         HID_EP1_IN
-
-// ===================================================================================
 // Functions
 // ===================================================================================
 void USB_init(void);

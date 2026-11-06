@@ -32,6 +32,25 @@ extern __xdata uint8_t EP1_buffer[EP1_BUF_SIZE];
 extern __xdata uint8_t EP2_buffer[EP2_BUF_SIZE];
 
 // ===================================================================================
+// Custom External USB Handler Functions and Defines
+// ===================================================================================
+// External USB handler functions
+uint8_t CDC_control(void);
+void CDC_EP_init(void);
+void CDC_EP0_OUT(void);
+void CDC_EP2_IN(void);
+void CDC_EP2_OUT(void);
+
+// Custom USB handler functions
+#define USB_INIT_endpoints      CDC_EP_init     // custom USB EP init handler
+#define USB_CLASS_SETUP_handler CDC_control     // handle class setup requests
+#define USB_CLASS_OUT_handler   CDC_EP0_OUT     // handle class out transfers
+
+// Endpoint callback functions
+#define EP2_IN_callback         CDC_EP2_IN
+#define EP2_OUT_callback        CDC_EP2_OUT
+
+// ===================================================================================
 // Device and Configuration Descriptors
 // ===================================================================================
 typedef struct _USB_CFG_DESCR_CDC {

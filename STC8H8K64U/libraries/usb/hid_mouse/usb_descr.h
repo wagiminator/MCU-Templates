@@ -29,6 +29,21 @@ extern __xdata uint8_t EP0_buffer[EP0_BUF_SIZE];
 extern __xdata uint8_t EP1_buffer[EP1_BUF_SIZE];
 
 // ===================================================================================
+// Custom External USB Handler Functions and Defines
+// ===================================================================================
+// External USB handler functions
+uint8_t HID_control(void);
+void HID_EP_init(void);
+void HID_EP1_IN(void);
+
+// Custom USB handler functions
+#define USB_INIT_endpoints      HID_EP_init     // custom USB EP init handler
+#define USB_CLASS_SETUP_handler HID_control     // handle class setup requests
+
+// Endpoint callback functions
+#define EP1_IN_callback         HID_EP1_IN
+
+// ===================================================================================
 // Device and Configuration Descriptors
 // ===================================================================================
 typedef struct _USB_CFG_DESCR_HID {
