@@ -44,6 +44,25 @@ extern uint8_t __attribute__((aligned(4))) EP1_buffer[];
 extern uint8_t __attribute__((aligned(4))) EP2_buffer[];
 
 // ===================================================================================
+// Custom External USB Handler Functions and Defines
+// ===================================================================================
+// External USB handler functions
+uint8_t CDC_control(void);
+void CDC_EP_init(void);
+void CDC_EP0_OUT(void);
+void CDC_EP2_IN(void);
+void CDC_EP2_OUT(void);
+
+// Custom USB handler functions
+#define USB_INIT_endpoints        CDC_EP_init   // custom USB EP init handler
+#define USB_CLASS_SETUP_handler   CDC_control   // handle custom class requests
+#define USB_CLASS_OUT_handler     CDC_EP0_OUT   // handle class out
+
+// Endpoint callback functions
+#define EP2_IN_callback           CDC_EP2_IN
+#define EP2_OUT_callback          CDC_EP2_OUT
+
+// ===================================================================================
 // Device and Configuration Descriptors
 // ===================================================================================
 typedef struct __attribute__((packed)) {

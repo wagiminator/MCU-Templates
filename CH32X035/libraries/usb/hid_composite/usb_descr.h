@@ -43,6 +43,29 @@ extern uint8_t __attribute__((aligned(4))) EP1_buffer[];
 extern uint8_t __attribute__((aligned(4))) EP2_buffer[];
 
 // ===================================================================================
+// Custom External USB Handler Functions and Defines
+// ===================================================================================
+// External USB handler functions
+void HID_EP_init(void);
+uint8_t HID_control(void);
+void HID_EP0_OUT(void);
+void HID_EP1_IN(void);
+#ifdef EP2_SIZE
+void HID_EP2_OUT(void);
+#endif
+
+// Custom USB handler functions
+#define USB_INIT_endpoints        HID_EP_init   // custom USB EP init handler
+#define USB_CLASS_SETUP_handler   HID_control   // handle HID class requests
+#define USB_CLASS_OUT_handler     HID_EP0_OUT   // handle HID class out (SET_REPORT)
+
+// Endpoint callback functions
+#define EP1_IN_callback           HID_EP1_IN
+#ifdef EP2_SIZE
+#define EP2_OUT_callback          HID_EP2_OUT
+#endif
+
+// ===================================================================================
 // Device and Configuration Descriptors
 // ===================================================================================
 typedef struct __attribute__((packed)) {

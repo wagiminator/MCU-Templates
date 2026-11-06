@@ -36,31 +36,6 @@ extern "C" {
 // If USB_VDD is not defined, the supply voltage is detected via the PVD on init.
 
 // ===================================================================================
-// Custom External USB Handler Functions
-// ===================================================================================
-void HID_EP_init(void);
-uint8_t HID_control(void);
-void HID_EP0_OUT(void);
-void HID_EP1_IN(void);
-#ifdef EP2_SIZE
-void HID_EP2_OUT(void);
-#endif
-
-// ===================================================================================
-// USB Handler Defines
-// ===================================================================================
-// Custom USB handler functions
-#define USB_INIT_endpoints        HID_EP_init   // custom USB EP init handler
-#define USB_CLASS_SETUP_handler   HID_control   // handle HID class requests
-#define USB_CLASS_OUT_handler     HID_EP0_OUT   // handle HID class out (SET_REPORT)
-
-// Endpoint callback functions
-#define EP1_IN_callback           HID_EP1_IN
-#ifdef EP2_SIZE
-#define EP2_OUT_callback          HID_EP2_OUT
-#endif
-
-// ===================================================================================
 // Variables
 // ===================================================================================
 #define USB_SetupBuf     ((PUSB_SETUP_REQ)EP0_buffer)
