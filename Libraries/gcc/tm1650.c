@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic TM1650 4-Digit 8-Segment LED Display Functions                       * v1.0 *
+// Basic TM1650 4-Digit 8-Segment LED Display Functions                       * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner: https://github.com/wagiminator
 
@@ -25,7 +25,9 @@ void TM_setBrightness(uint8_t bright) {
 
 // Init TM1650 4-digit 8-segment display
 void TM_init(void) {
+  #if TM_INIT_I2C > 0
   I2C_init();
+  #endif
   TM_write(TM_ADDR_MODE, TM_BRIGHTNESS(TM_BRIGHT) | TM_DISPLAY_ON);
 }
 
@@ -36,111 +38,34 @@ void TM_printSegment(uint8_t digit, uint8_t code) {
 
 // Print number to the specified digit (0-3, counting from right)
 void TM_printDigit(uint8_t digit, uint8_t value) {
-  TM_write(TM_ADDR_DIG4 - (digit << 1), TM_DATA[value]);
+  TM_write(TM_ADDR_DIG4 - (digit << 1), TM_DATA[value & 0x0f]);
 }
 
 // Print hexadecimal value
 void TM_printH(uint16_t value) {
-  for(uint8_t i=0; i<4; i++) {
+  uint8_t i;
+  for(i=0; i<4; i++) {
     TM_printDigit(i, value & 0xf);
     value >>= 4;
   }
 }
 
-#if TM_HW_DIV == 0                                // no hardware division
-
-// For BCD conversion
-const uint16_t TM_DIVIDER[] = {1, 10, 100, 1000};
-
-// Print decimal value (BCD conversion by substraction method)
+// Print positive decimal value
 void TM_printD(uint16_t value) {
-  uint8_t digit    = 4;                           // print 4 digits
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  while(digit--) {                                // for all digits digits
-    uint8_t digitval = 0;                         // start with digit value 0
-    uint16_t divider = TM_DIVIDER[digit];         // read current divider
-    while(value >= divider) {                     // if current divider fits into the value:
-      leadflag = 1;                               // -> end of leading spaces
-      digitval++;                                 // -> increase digit value
-      value -= divider;                           // -> decrease value by divider
-    }
-    if(!digit) leadflag++;                        // least digit has to be printed
-    if(leadflag) TM_printDigit(digit, digitval);  // print digit ...
-    else TM_printSegment(digit, 0);               // ... or leading space
-  }
+  TM_print((value > 9999) ? 9999 : (int16_t)value, 0xff);
 }
 
-// Print value with decimal at dotpos (BCD conversion by substraction method)
+// Print value with decimal at dotpos
 void TM_print(int16_t value, uint8_t dotpos) {
-  uint8_t digit = 4;                              // print 4 digits
-  if(value < 0) {                                 // negativ value?
-    TM_write(TM_ADDR_DIG1, TM_CHAR_NEG);          // -> write "-" on left side
-    value = -value;                               // -> make it a positive value
-    digit--;                                      // -> one digit less
-  }
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  while(digit--) {                                // for all digits digits
-    uint8_t digitval = 0;                         // start with digit value 0
-    uint16_t divider = TM_DIVIDER[digit];         // read current divider
-    while(value >= divider) {                     // if current divider fits into the value:
-      leadflag++;                                 // -> end of leading spaces
-      digitval++;                                 // -> increase digit value
-      value -= divider;                           // -> decrease value by divider
-    }
-    if(digit == dotpos) {                         // digit with the dot?
-      leadflag++;                                 // -> end of leading spaces
-      if(digit) TM_printSegment(digit, TM_DATA[digitval] | 0x80); // -> print digit with dot ...
-      else TM_printDigit(0, digitval);            // ... or without dot if rightmost digit
-    }
-    else if(leadflag) TM_printDigit(digit, digitval); // print digit ...
-    else TM_printSegment(digit, 0);               // ... or leading space
-  }
+  uint8_t  digit = 0;                             // start with rightmost digit
+  uint8_t  neg   = (value < 0);
+  uint16_t v     = neg ? -(uint16_t)value : (uint16_t)value;
+  do {                                            // print digits from right to left
+    uint8_t code = TM_DATA[v % 10];
+    v /= 10;
+    if(digit == dotpos && dotpos) code |= 0x80;   // add decimal point
+    TM_printSegment(digit++, code);
+  } while((v || (dotpos < 4 && digit <= dotpos)) && digit < 4);
+  if(neg && digit < 4) TM_printSegment(digit++, TM_CHAR_NEG);
+  while(digit < 4) TM_printSegment(digit++, 0);   // leading spaces
 }
-
-#else                                             // hardware division
-
-// Print decimal value (using multiplication/division)
-void TM_printD(uint16_t value) {
-  uint8_t digit = 4;                              // print 4 digits
-  uint8_t digitval;                               // current digit value
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  uint16_t divider = 1000;                        // current divider
-  while(digit--) {                                // for all digits
-    digitval = value / divider;                   // calculate digit value
-    value    = value % divider;                   // set value to division remainder
-    divider /= 10;                                // calculate next divider
-    if(digitval) leadflag++;                      // end of leading spaces
-    if(!digit)   leadflag++;                      // least digit has to be printed
-    if(leadflag) TM_printDigit(digit, digitval);  // print digit ...
-    else TM_printSegment(digit, 0);               // ... or leading space
-  }
-}
-
-// Print value with decimal at dotpos (using multiplication/division)
-void TM_print(int16_t value, uint8_t dotpos) {
-  uint8_t digit = 4;                              // print 4 digits
-  uint16_t divider = 1000;                        // current divider
-  if(value < 0) {                                 // negativ value?
-    TM_write(TM_ADDR_DIG1, TM_CHAR_NEG);          // -> write "-" on left side
-    value = -value;                               // -> make it a positive value
-    digit--;                                      // -> one digit less
-    divider = 100;                                // -> current divider
-  }
-  uint8_t digitval;                               // current digit value
-  uint8_t leadflag = 0;                           // flag for leading spaces
-  while(digit--) {                                // for all digits
-    digitval = value / divider;                   // calculate digit value
-    value    = value % divider;                   // set value to division remainder
-    divider /= 10;                                // calculate next divider
-    if(digitval) leadflag++;                      // end of leading spaces
-    if(digit == dotpos) {                         // digit with the dot?
-      leadflag++;                                 // -> end of leading spaces
-      if(digit) TM_printSegment(digit, TM_DATA[digitval] | 0x80); // -> print digit with dot ...
-      else TM_printDigit(0, digitval);            // ... or without dot if rightmost digit
-    }
-    else if(leadflag) TM_printDigit(digit, digitval); // print digit ...
-    else TM_printSegment(digit, 0);               // ... or leading space
-  }
-}
-
-#endif  // TM_HW_DIV

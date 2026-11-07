@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.4 *
+// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.5 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -117,7 +117,7 @@ const uint8_t TFT_FONT_SEG2[] = {
 #define TFT_sendCommand2  TFT_SPI_command2
 
 // SPI init function (setup pins)
-void TFT_SPI_init(void) {
+static void TFT_SPI_init(void) {
   PIN_high(TFT_PIN_CS);                           // setup control pins
   PIN_high(TFT_PIN_DC);
   PIN_output(TFT_PIN_CS);
@@ -130,7 +130,7 @@ void TFT_SPI_init(void) {
 }
 
 // Send a command to the display
-void TFT_SPI_command(uint8_t cmd) {
+static void TFT_SPI_command(uint8_t cmd) {
   while(SPI_busy());
   PIN_low(TFT_PIN_DC);
   TFT_sendData(cmd);
@@ -139,7 +139,7 @@ void TFT_SPI_command(uint8_t cmd) {
 }
 
 // Send a command followed by two data bytes
-void TFT_SPI_command2(uint8_t c, uint16_t d1, uint16_t d2) {
+static void TFT_SPI_command2(uint8_t c, uint16_t d1, uint16_t d2) {
   TFT_sendCommand(c);
   TFT_sendData(d1>>8); TFT_sendData(d1); TFT_sendData(d2>>8); TFT_sendData(d2);
 }
@@ -217,8 +217,13 @@ void TFT_invert(uint8_t yes) {
   #endif
 }
 
+// 12-bit color stream state
+#if TFT_COLORBITS == 12
+static uint8_t TFT_streamflag, TFT_c2;
+#endif
+
 // Start sending data stream to RAM
-void TFT_streamStart(int16_t x, int16_t y, int16_t w, int16_t h) {
+static void TFT_streamStart(int16_t x, int16_t y, int16_t w, int16_t h) {
   int16_t row1 = TFT_XOFF + x;
   int16_t row2 = row1 + w - 1;
   int16_t col1 = TFT_YOFF + y;
@@ -229,10 +234,16 @@ void TFT_streamStart(int16_t x, int16_t y, int16_t w, int16_t h) {
   TFT_sendCommand2(TFT_CASET, col1, col2);        // column address set
   TFT_sendCommand2(TFT_RASET, row1, row2);        // row address set
   TFT_sendCommand(TFT_RAMWR);                     // write to RAM
+  #if TFT_COLORBITS == 12
+  TFT_streamflag = 0;                             // start with first pixel of a pair
+  #endif
 }
 
 // Stop sending data stream to RAM
-void TFT_streamStop(void) {
+static void TFT_streamStop(void) {
+  #if TFT_COLORBITS == 12
+  if(TFT_streamflag) TFT_sendData(TFT_c2);        // send pending half pixel
+  #endif
   #if TFT_CS_CONTROL > 0
     while(SPI_busy());
     PIN_high(TFT_PIN_CS);
@@ -240,19 +251,15 @@ void TFT_streamStop(void) {
 }
 
 // Stream a color
-void TFT_streamColor(uint16_t color) {
+static void TFT_streamColor(uint16_t color) {
   #if TFT_COLORBITS == 16
     TFT_sendData(color >> 8); TFT_sendData(color);
   #else
-    static uint8_t TFT_streamflag = 0;
-    static uint8_t c1, c2, c3;
-    if(TFT_streamflag) {
-      c2 |= (color >> 12); c3 = color >> 4;
-      TFT_sendData(c2); TFT_sendData(c3);
+    if(TFT_streamflag) {                          // second pixel of a pair
+      TFT_sendData(TFT_c2 | (color >> 12)); TFT_sendData(color >> 4);
     }
-    else {
-      c1 = color >> 8; c2 = color & 0xf0;
-      TFT_sendData(c1);
+    else {                                        // first pixel of a pair
+      TFT_sendData(color >> 8); TFT_c2 = color & 0xf0;
     }
     TFT_streamflag = !TFT_streamflag;
   #endif
@@ -462,10 +469,10 @@ void TFT_drawSprite(int16_t x0, int16_t y0, int16_t w, int16_t h, const uint8_t*
 // ===================================================================================
 
 // Variables
-int16_t  TFT_cx, TFT_cy;                          // cursor position
-uint16_t TFT_cc, TFT_cb;                          // text color (foreground, background)
-uint8_t  TFT_cs;                                  // text size
-uint8_t  TFT_buf[2*10];                           // character buffer
+static int16_t  TFT_cx, TFT_cy;                   // cursor position
+static uint16_t TFT_cc = 0xffff, TFT_cb;          // text color (foreground, background)
+static uint8_t  TFT_cs = 1;                       // text size
+static uint8_t  TFT_buf[2*10];                    // character buffer
 
 // Set text cursor position, color and size
 void TFT_cursor(int16_t x, int16_t y) {
@@ -488,7 +495,7 @@ void TFT_textsize(uint8_t size) {
 }
 
 // Converts bit pattern abcdefgh into aabbccddeeffgghh
-uint16_t TFT_stretch(uint16_t x) {
+static uint16_t TFT_stretch(uint16_t x) {
   x = (x & 0xF0)<<4 | (x & 0x0F);
   x = (x<<2 | x) & 0x3333;
   x = (x<<1 | x) & 0x5555;
@@ -627,7 +634,7 @@ void TFT_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t deci
       #elif TFT_SEG_FONT == 2
       uint16_t ptr = (uint16_t)digitval;          // character pointer
       ptr = (ptr << 3) + (ptr << 1);              // -> ptr = c * 5 * 2;
-      TFT_printBitmap(5, 16, (uint8_t*)&TFT_FONT_SEG1[ptr]);
+      TFT_printBitmap(5, 16, (uint8_t*)&TFT_FONT_SEG2[ptr]);
       TFT_fillRect(TFT_cx, TFT_cy, TFT_SEG_SPACE, 16, TFT_cb);
       TFT_cx += TFT_SEG_SPACE;
       #endif

@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306/SH1106 I2C OLED Graphics Functions                                 * v1.6 *
+// SSD1306/SH1106 I2C OLED Graphics Functions                                 * v1.7 *
 // ===================================================================================
 //
 // Functions available:
@@ -200,5 +200,5 @@ void OLED_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t dec
 #endif
 
 #ifdef __cplusplus
-};
+}
 #endif

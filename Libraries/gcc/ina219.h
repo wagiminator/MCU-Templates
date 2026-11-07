@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic INA219 Bidirectional Current/Power Monitor Functions                 * v1.0 *
+// Basic INA219 Bidirectional Current/Power Monitor Functions                 * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -7,6 +7,14 @@
 // INA_init()               write inital configuration and calibration
 // INA_readVoltage()        read voltage in mV
 // INA_readCurrent()        read current in mA
+// INA_readPower()          read power in mW
+//
+// Notes:
+// ------
+// - INA_CALIB = 0.04096 / (current_LSB * R_SHUNT); with current_LSB = 1mA and
+//   R_SHUNT = 10mOhm this gives 4096. Power LSB is 20 * current_LSB = 20mW.
+// - The configuration selects 32V bus range, +-40mV shunt range (max. 4A at 10mOhm),
+//   12-bit with 128 samples averaging and continuous shunt and bus measurement.
 //
 // 2019 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -16,7 +24,7 @@
 extern "C" {
 #endif
 
-#include "i2c_soft.h"                         // choose your I2C library            
+#include "i2c.h"                              // choose your I2C library
 
 // INA219 parameters
 #define INA_INIT_I2C      1                   // init I2C with INA_init()
@@ -38,7 +46,8 @@ uint16_t INA_read(uint8_t reg);               // read a register
 void INA_write(uint8_t reg, uint16_t value);  // write a register value
 uint16_t INA_readVoltage(void);               // read voltage in mV
 int16_t INA_readCurrent(void);                // read current in mA
+uint32_t INA_readPower(void);                 // read power in mW
 
 #ifdef __cplusplus
-};
+}
 #endif

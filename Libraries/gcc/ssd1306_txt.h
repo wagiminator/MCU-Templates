@@ -1,5 +1,5 @@
 // ===================================================================================
-// SSD1306/SH1106/SH1107 I2C OLED Text Functions                              * v1.3 *
+// SSD1306/SH1106/SH1107 I2C OLED Text Functions                              * v1.4 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling an SSD1306/SH1106 I2C 
@@ -66,6 +66,9 @@ extern "C" {
 
 #include "i2c_tx.h"                 // choose your I2C library
 #include "system.h"
+#ifdef __SDCC
+#include "delay.h"
+#endif
 
 // OLED Parameters
 #define OLED_ADDR         0x3C      // OLED I2C device address
@@ -162,5 +165,5 @@ extern uint8_t OLED_x, OLED_y;
 #endif
 
 #ifdef __cplusplus
-};
+}
 #endif

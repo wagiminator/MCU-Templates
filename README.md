@@ -1,7 +1,7 @@
 # MCU Templates
 Discover a set of templates designed to simplify the initial stages of bare-metal firmware development for various microcontrollers. These templates eliminate the need for complicated Hardware Abstraction Layers (HALs) and heavy closed-source development tools. They come with pre-configured Makefiles, linker scripts, programming tools, and internal peripheral libraries to streamline the development process.
 
-In the "Libraries" folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
+In the [Libraries](https://github.com/wagiminator/MCU-Templates/tree/main/Libraries) folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
 
 ## AVR 8-bit Microcontrollers
 - [ATtiny814, tinyAVR 0/1-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATtiny814)

@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7302 250x122 Pixels Monochrome Low-Power LCD Graphics Functions          * v1.1 *
+// ST7302 250x122 Pixels Monochrome Low-Power LCD Graphics Functions          * v1.2 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -118,7 +118,7 @@ const uint8_t LCD_FONT_SEG[] = {
 #define LCD_sendCommand2  LCD_SPI_command2
 
 // SPI init function (setup pins)
-void LCD_SPI_init(void) {
+static void LCD_SPI_init(void) {
   PIN_high(LCD_PIN_CS);                           // setup control pins
   PIN_high(LCD_PIN_DC);
   PIN_high(LCD_PIN_SCL);
@@ -129,7 +129,7 @@ void LCD_SPI_init(void) {
 }
 
 // Transmit one data byte
-void LCD_SPI_write(uint8_t data) {
+static void LCD_SPI_write(uint8_t data) {
   for(uint8_t i=8; i; i--, data <<= 1) {          // shift out 8 bits, MSB first
     PIN_low(LCD_PIN_SCL);                         // SCL low -> prepare next bit
     if(data & 0x80) PIN_high(LCD_PIN_SDA);        // set SDA according to data bit
@@ -139,14 +139,14 @@ void LCD_SPI_write(uint8_t data) {
 }
 
 // Send a command to the display
-void LCD_SPI_command(uint8_t cmd) {
+static void LCD_SPI_command(uint8_t cmd) {
   PIN_low(LCD_PIN_DC);
   LCD_SPI_write(cmd);
   PIN_high(LCD_PIN_DC);
 }
 
 // Send a command followed by two data bytes
-void LCD_SPI_command2(uint8_t c, uint8_t d1, uint8_t d2) {
+static void LCD_SPI_command2(uint8_t c, uint8_t d1, uint8_t d2) {
   LCD_SPI_command(c); LCD_sendData(d1); LCD_sendData(d2);
 }
 
@@ -227,41 +227,41 @@ void LCD_sleep(uint8_t yes) {
 }
 
 // Plot a 12x2 block at row, col
-void LCD_writeBlock(uint8_t row, uint8_t column, uint32_t block) {
+static void LCD_writeBlock(uint8_t row, uint8_t column, uint32_t blk) {
   #if LCD_CS_CONTROL > 0
   PIN_low(LCD_PIN_CS);
   #endif
   LCD_sendCommand2(LCD_CASET, LCD_YOFF + column, LCD_YOFF + column);
   LCD_sendCommand2(LCD_RASET, LCD_XOFF + row, LCD_XOFF + row);
   LCD_sendCommand(LCD_RAMWR);
-  LCD_sendData(block >> 16); LCD_sendData(block >> 8); LCD_sendData(block);
+  LCD_sendData(blk >> 16); LCD_sendData(blk >> 8); LCD_sendData(blk);
   #if LCD_CS_CONTROL > 0
   PIN_high(LCD_PIN_CS);
   #endif
 }
 
 // Read a 12x2 block at row, col
-uint32_t LCD_readBlock(uint8_t row, uint8_t column) {
+static uint32_t LCD_readBlock(uint8_t row, uint8_t column) {
   #if LCD_CS_CONTROL > 0
   PIN_low(LCD_PIN_CS);
   #endif
   LCD_sendCommand2(LCD_CASET, LCD_YOFF + column, LCD_YOFF + column);
   LCD_sendCommand2(LCD_RASET, LCD_XOFF + row, LCD_XOFF + row);
   LCD_sendCommand(LCD_RAMRD);
-  uint32_t block = 0;
+  uint32_t blk = 0;
   PIN_input_PU(LCD_PIN_SDA);                      // data in
   for(uint8_t i=25; i; i--) {                     // shift in dummy bit + 24 bits, MSB first
     PIN_low(LCD_PIN_SCL);                         // SCL low -> shift bit in
-    block <<= 1;                                  // shift data byte
+    blk <<= 1;                                    // shift data byte
     PIN_high(LCD_PIN_SCL);                        // SCL high -> prepare next bit
-    if(PIN_read(LCD_PIN_SDA)) block |= 1;         // set data bit according to SDA
+    if(PIN_read(LCD_PIN_SDA)) blk |= 1;           // set data bit according to SDA
   }
   PIN_output(LCD_PIN_SDA);                        // back to data out
   PIN_high(LCD_PIN_CS);
   #if LCD_CS_CONTROL == 0
   PIN_low(LCD_PIN_CS);
   #endif
-  return block;
+  return blk;
 }
 
 // ===================================================================================
@@ -269,8 +269,8 @@ uint32_t LCD_readBlock(uint8_t row, uint8_t column) {
 // ===================================================================================
 
 // Global Variables
-uint8_t row0 = 255 >> 1, column0 = 0;
-uint32_t block;
+static uint8_t  LCD_row0 = 255 >> 1, LCD_column0 = 0;  // cached block position
+static uint32_t LCD_block;                              // cached block
 
 // Clear screen
 void LCD_clear(void) {
@@ -288,7 +288,7 @@ void LCD_clear(void) {
   #if LCD_CS_CONTROL > 0
   PIN_high(LCD_PIN_CS);
   #endif
-  row0 = 255 >> 1; column0 = 0;
+  LCD_row0 = 255 >> 1; LCD_column0 = 0;
 }
 
 // Set pixel at position (x,y) with color (0: clear pixel, 1: set pixel, 2: invert pixel)
@@ -312,23 +312,23 @@ void LCD_setPixel(int16_t x, int16_t y, uint8_t color) {
     uint8_t bit = ((~y) & 1) | (11 - x % 12) << 1;
   #endif
 
-  if(row != row0 || column != column0) {
-    LCD_writeBlock(row0, column0, block);
-    block = LCD_readBlock(row, column);
-    row0 = row; column0 = column;
+  if(row != LCD_row0 || column != LCD_column0) {
+    LCD_writeBlock(LCD_row0, LCD_column0, LCD_block);
+    LCD_block = LCD_readBlock(row, column);
+    LCD_row0 = row; LCD_column0 = column;
   }
 
   switch(color) {
-    case 0: block &= ~((uint32_t)1 << bit); break;
-    case 1: block |=  ((uint32_t)1 << bit); break;
-    case 2: block ^=  ((uint32_t)1 << bit); break;
+    case 0: LCD_block &= ~((uint32_t)1 << bit); break;
+    case 1: LCD_block |=  ((uint32_t)1 << bit); break;
+    case 2: LCD_block ^=  ((uint32_t)1 << bit); break;
   }
 }
 
 // Flush screen buffer
 void LCD_flush(void) {
-  LCD_writeBlock(row0, column0, block);
-  row0 = 255 >> 1; column0 = 0;
+  LCD_writeBlock(LCD_row0, LCD_column0, LCD_block);
+  LCD_row0 = 255 >> 1; LCD_column0 = 0;
 }
 
 // Get pixel color at (x,y) (0: pixel cleared, 1: pixel set)
@@ -351,6 +351,7 @@ uint8_t LCD_getPixel(int16_t x, int16_t y) {
     uint8_t row = y >> 1, column = x / 12;
     uint8_t bit = ((~y) & 1) | (11 - x % 12) << 1;
   #endif
+  if(row == LCD_row0 && column == LCD_column0) return((LCD_block >> bit) & 1); // cached
   return((LCD_readBlock(row, column) >> bit) & 1);
 }
 
@@ -511,7 +512,7 @@ void LCD_textinvert(uint8_t yes) {
 }
 
 // Converts bit pattern abcdefgh into aabbccddeeffgghh
-uint16_t LCD_stretch(uint16_t x) {
+static uint16_t LCD_stretch(uint16_t x) {
   x = (x & 0xF0)<<4 | (x & 0x0F);
   x = (x<<2 | x) & 0x3333;
   x = (x<<1 | x) & 0x5555;

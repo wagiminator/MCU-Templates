@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.2 *
+// ST7735/ST7789/ILI9340/ILI9341 Color TFT Graphics Functions                 * v1.3 *
 // ===================================================================================
 // with software-SPI
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
@@ -119,7 +119,7 @@ const uint8_t TFT_FONT_SEG2[] = {
 #define TFT_sendCommand2  TFT_SPI_command2
 
 // SPI init function (setup pins)
-void TFT_SPI_init(void) {
+static void TFT_SPI_init(void) {
   PIN_high(TFT_PIN_CS);                           // setup control pins
   PIN_high(TFT_PIN_DC);
   PIN_high(TFT_PIN_SCL);
@@ -130,7 +130,7 @@ void TFT_SPI_init(void) {
 }
 
 // Transmit one data byte
-void TFT_SPI_write(uint8_t data) {
+static void TFT_SPI_write(uint8_t data) {
   for(uint8_t i=8; i; i--, data <<= 1) {          // shift out 8 bits, MSB first
     PIN_low(TFT_PIN_SCL);                         // SCL low -> prepare next bit
     if(data & 0x80) PIN_high(TFT_PIN_SDA);        // set SDA according to data bit
@@ -140,14 +140,14 @@ void TFT_SPI_write(uint8_t data) {
 }
 
 // Send a command to the display
-void TFT_SPI_command(uint8_t cmd) {
+static void TFT_SPI_command(uint8_t cmd) {
   PIN_low(TFT_PIN_DC);
   TFT_sendData(cmd);
   PIN_high(TFT_PIN_DC);
 }
 
 // Send a command followed by two data bytes
-void TFT_SPI_command2(uint8_t c, uint16_t d1, uint16_t d2) {
+static void TFT_SPI_command2(uint8_t c, uint16_t d1, uint16_t d2) {
   TFT_sendCommand(c);
   TFT_sendData(d1>>8); TFT_sendData(d1); TFT_sendData(d2>>8); TFT_sendData(d2);
 }
@@ -409,6 +409,15 @@ void TFT_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
   #endif
 }
 
+// Fill screen with color
+void TFT_fill(uint16_t color) {
+  #if TFT_PORTRAIT == 0
+  TFT_fillRect(0, 0, TFT_WIDTH, TFT_HEIGHT, color);
+  #else
+  TFT_fillRect(0, 0, TFT_HEIGHT, TFT_WIDTH, color);
+  #endif
+}
+
 // Draw vertical line starting from (x,y), height (h), color
 void TFT_drawVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
   TFT_fillRect(x, y, 1, h, color);
@@ -539,9 +548,9 @@ void TFT_drawSprite(int16_t x0, int16_t y0, int16_t w, int16_t h, const uint8_t*
 // ===================================================================================
 
 // Variables
-int16_t  TFT_cx, TFT_cy;                          // cursor position
-uint16_t TFT_cc;                                  // color
-uint8_t  TFT_cs;                                  // size
+static int16_t  TFT_cx, TFT_cy;                          // cursor position
+static uint16_t TFT_cc = 0xffff;                  // color
+static uint8_t  TFT_cs = 1;                       // size
 
 // Set text cursor position, color and size
 void TFT_cursor(int16_t x, int16_t y) {
@@ -559,7 +568,7 @@ void TFT_textsize(uint8_t size) {
 }
 
 // Converts bit pattern abcdefgh into aabbccddeeffgghh
-uint16_t TFT_stretch(uint16_t x) {
+static uint16_t TFT_stretch(uint16_t x) {
   x = (x & 0xF0)<<4 | (x & 0x0F);
   x = (x<<2 | x) & 0x3333;
   x = (x<<1 | x) & 0x5555;

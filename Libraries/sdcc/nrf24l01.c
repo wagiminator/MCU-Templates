@@ -1,5 +1,5 @@
 // ===================================================================================
-// nRF24L01+ Functions                                                        * v1.0 *
+// nRF24L01+ Functions                                                        * v1.1 *
 // ===================================================================================
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
@@ -10,52 +10,39 @@
 // nRF24L01+ Implementation - Definitions and Variables
 // ===================================================================================
 
-// NRF registers
-#define NRF_REG_CONFIG        0x00              // configuration register
-#define NRF_REG_RF_CH         0x05              // RF frequency channel
-#define NRF_REG_RF_SETUP      0x06              // RF setup register
-#define NRF_REG_STATUS        0x07              // status register
-#define NRF_REG_RX_ADDR_P0    0x0A              // RX address pipe 0
-#define NRF_REG_RX_ADDR_P1    0x0B              // RX address pipe 1
-#define NRF_REG_TX_ADDR       0x10              // TX address
-#define NRF_REG_FIFO_STATUS   0x17              // FIFO status register
-#define NRF_REG_DYNPD         0x1C              // enable dynamic payload length
-#define NRF_REG_FEATURE       0x1D              // feature
-
-// NRF commands
-#define NRF_CMD_R_RX_PL_WID   0x60              // read RX payload length
-#define NRF_CMD_R_RX_PAYLOAD  0x61              // read RX payload
-#define NRF_CMD_W_TX_PAYLOAD  0xA0              // write TX payload
-#define NRF_CMD_FLUSH_TX      0xE1              // flush TX FIFO
-#define NRF_CMD_FLUSH_RX      0xE2              // flush RX FIFO
-
 // NRF global variables
-__xdata uint8_t NRF_channel   = 0x02;           // channel (0x00 - 0x7F)
-__xdata uint8_t NRF_speed     = 0;              // 0:250kbps, 1:1Mbps, 2:2Mbps
+__xdata uint8_t NRF_channel   = 0x02;   // channel (0x00 - 0x7F)
+__xdata uint8_t NRF_speed     = 0;      // 0:250kbps, 1:1Mbps, 2:2Mbps
 __xdata uint8_t NRF_tx_addr[] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 __xdata uint8_t NRF_rx_addr[] = {0xC2, 0xC2, 0xC2, 0xC2, 0xC2};
-__code uint8_t  NRF_SETUP[]   = {0x26, 0x06, 0x0E};
-__code uint8_t* NRF_STR[]     = {"250k", "1M", "2M"};
+static __code uint8_t NRF_SETUP[] = {0x26, 0x06, 0x0E};
+__code char* __code NRF_STR[] = {"250k", "1M", "2M"};
 
 // ===================================================================================
 // nRF24L01+ Implementation - SPI Communication Functions
 // ===================================================================================
 
+// Forward declarations
+static void NRF_powerRX(void);
+
 // NRF setup
 void NRF_init(void) {
+  PIN_low(PIN_CE);   PIN_output(PIN_CE);
+  PIN_high(PIN_CSN); PIN_output(PIN_CSN);
   SPI_init();
+  DLY_ms(100);                                    // power-on reset time
   NRF_configure();
 }
 
 // NRF send a command
-void NRF_writeCommand(uint8_t cmd) {
+static void NRF_writeCommand(uint8_t cmd) {
   PIN_low(PIN_CSN);
   SPI_transfer(cmd);
   PIN_high(PIN_CSN);
 }
 
 // NRF write one byte into the specified register
-void NRF_writeRegister(uint8_t reg, uint8_t value) {
+static void NRF_writeRegister(uint8_t reg, uint8_t value) {
   PIN_low(PIN_CSN);
   SPI_transfer(reg + 0x20);
   SPI_transfer(value);
@@ -63,7 +50,7 @@ void NRF_writeRegister(uint8_t reg, uint8_t value) {
 }
 
 // NRF read one byte from the specified register
-uint8_t NRF_readRegister(uint8_t reg) {
+static uint8_t NRF_readRegister(uint8_t reg) {
   uint8_t value;
   PIN_low(PIN_CSN);
   SPI_transfer(reg);
@@ -73,7 +60,7 @@ uint8_t NRF_readRegister(uint8_t reg) {
 }
 
 // NRF write an array of bytes into the specified registers
-void NRF_writeBuffer(uint8_t reg, __xdata uint8_t *buf, uint8_t len) {
+static void NRF_writeBuffer(uint8_t reg, __xdata uint8_t *buf, uint8_t len) {
   if(reg < 0x20) reg += 0x20;
   PIN_low(PIN_CSN);
   SPI_transfer(reg);
@@ -82,7 +69,7 @@ void NRF_writeBuffer(uint8_t reg, __xdata uint8_t *buf, uint8_t len) {
 }
 
 // NRF read an array of bytes from the specified registers
-void NRF_readBuffer(uint8_t reg, __xdata uint8_t *buf, uint8_t len) {
+static void NRF_readBuffer(uint8_t reg, __xdata uint8_t *buf, uint8_t len) {
   PIN_low(PIN_CSN);
   SPI_transfer(reg);
   while(len--) *buf++ = SPI_transfer(0);
@@ -100,14 +87,14 @@ void NRF_powerDown(void) {
 }
 
 // NRF switch to RX mode
-void NRF_powerRX(void) {
+static void NRF_powerRX(void) {
   PIN_low(PIN_CE);                                      // return to Standby-I
   NRF_writeRegister(NRF_REG_CONFIG, NRF_CONFIG | 0x03); // PWR_UP + PRIM_RX
   PIN_high(PIN_CE);                                     // switch to RX Mode
 }
 
 // NRF switch to TX mode
-void NRF_powerTX(void) {
+static void NRF_powerTX(void) {
   PIN_low(PIN_CE);                                      // return to Standby-I
   NRF_writeRegister(NRF_REG_CONFIG, NRF_CONFIG | 0x02); // PWR_UP + !PRIM_RX
   PIN_high(PIN_CE);                                     // switch to TX Mode
@@ -119,11 +106,14 @@ void NRF_configure(void) {
   NRF_writeBuffer(NRF_REG_RX_ADDR_P1, NRF_rx_addr, 5);  // set RX address
   NRF_writeBuffer(NRF_REG_TX_ADDR,    NRF_tx_addr, 5);  // set TX address
   NRF_writeBuffer(NRF_REG_RX_ADDR_P0, NRF_tx_addr, 5);  // set TX address for auto-ACK
-  NRF_writeRegister(NRF_REG_RF_CH, NRF_channel);        // set channel
-  NRF_writeRegister(NRF_REG_RF_SETUP, NRF_SETUP[NRF_speed]); // set speed and power
+  NRF_writeRegister(NRF_REG_SETUP_RETR, 0x2F);          // 750us retransmit delay, 15 retries
+  NRF_writeRegister(NRF_REG_RF_CH, NRF_channel & 0x7F); // set channel
+  NRF_writeRegister(NRF_REG_RF_SETUP, NRF_SETUP[(NRF_speed > 2) ? 2 : NRF_speed]); // set speed and power
   NRF_writeRegister(NRF_REG_FEATURE,  0x04);            // enable dynamic payload length
   NRF_writeRegister(NRF_REG_DYNPD,    0x3F);            // enable dynamic payload length
   NRF_writeCommand(NRF_CMD_FLUSH_RX);                   // flush RX FIFO
+  NRF_writeCommand(NRF_CMD_FLUSH_TX);                   // flush TX FIFO
+  NRF_writeRegister(NRF_REG_STATUS, 0x70);              // clear all status flags
   NRF_powerRX();                                        // switch to RX Mode
 }
 
@@ -136,17 +126,31 @@ uint8_t NRF_available(void) {
 // Read payload bytes into buffer, return payload length
 uint8_t NRF_readPayload(__xdata uint8_t *buf) {
   uint8_t len = NRF_readRegister(NRF_CMD_R_RX_PL_WID);  // read payload length
+  if(len > 32) {                                        // corrupted payload?
+    NRF_writeCommand(NRF_CMD_FLUSH_RX);                 // -> flush RX FIFO
+    NRF_writeRegister(NRF_REG_STATUS, 0x40);            // -> reset status register
+    return 0;
+  }
   NRF_readBuffer(NRF_CMD_R_RX_PAYLOAD, buf, len);       // read payload
   NRF_writeRegister(NRF_REG_STATUS, 0x40);              // reset status register
   return len;                                           // return payload length
 }
 
 // Send a data package (max length 32)
-void NRF_writePayload(__xdata uint8_t *buf, uint8_t len) {
+uint8_t NRF_writePayload(__xdata uint8_t *buf, uint8_t len) {
+  uint8_t status;
+  uint16_t timeout = 1000;                              // max. ~100ms
+  if(len > 32) len = 32;
   NRF_writeRegister(NRF_REG_STATUS, 0x30);              // clear status flags
   NRF_writeCommand(NRF_CMD_FLUSH_TX);                   // flush TX FIFO
   NRF_powerTX();                                        // switch to TX Mode
   NRF_writeBuffer(NRF_CMD_W_TX_PAYLOAD, buf, len);      // write payload and transmit
-  while(!(NRF_readRegister(NRF_REG_STATUS) & 0x30));    // wait until finished
+  do {                                                  // wait until finished
+    status = NRF_readRegister(NRF_REG_STATUS);
+    if(status & 0x30) break;
+    DLY_us(100);
+  } while(--timeout);
+  NRF_writeRegister(NRF_REG_STATUS, 0x30);              // clear status flags
   NRF_powerRX();                                        // return to listening
+  return (status & 0x20) ? 1 : 0;                       // TX_DS: acknowledged
 }

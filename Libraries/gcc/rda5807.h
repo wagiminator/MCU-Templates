@@ -1,5 +1,5 @@
 // ===================================================================================
-// RDA5807 Basic Functions                                                    * v1.0 *
+// RDA5807 Basic Functions                                                    * v1.1 *
 // ===================================================================================
 //
 // Basic functions for the RDA5807 digital stereo FM tuner IC.
@@ -12,7 +12,12 @@
 // RDA_seekUp()             seek next channel
 // RDA_updateStatus()       update status and handle RDS
 // RDA_getFrequency()       calculate frequency in units of 10kHz
-// RDA_waitTuning()         wait until tuning completed
+// RDA_waitTuning()         wait until tuning completed (max. 5 seconds)
+//
+// Notes:
+// ------
+// - Band 87..108MHz, 100kHz channel spacing (channel 0 = 87.0MHz).
+// - The status macros below are valid after RDA_updateStatus().
 //
 // RDA_stationName[]        contains current station name
 //
@@ -26,7 +31,10 @@ extern "C" {
 #endif
 
 #include "system.h"
-#include "i2c_soft.h"                 // choose your I2C library
+#include "i2c.h"                      // choose your I2C library
+#ifdef __SDCC
+#include "delay.h"
+#endif
 
 // RDA parameters
 #define RDA_INIT_I2C    1             // init I2C with RDA_init()
@@ -65,5 +73,5 @@ uint16_t RDA_getFrequency(void);      // Calculate frequency in units of 10kHz
 void RDA_waitTuning(void);            // Wait until tuning completed
 
 #ifdef __cplusplus
-};
+}
 #endif

@@ -107,5 +107,5 @@ void OLED_write(char c);          // OLED write a character or handle control ch
 #endif
 
 #ifdef __cplusplus
-};
+}
 #endif

@@ -217,5 +217,5 @@ void TFT_printSegment(uint16_t value, uint8_t digits, uint8_t lead, uint8_t deci
 #endif
 
 #ifdef __cplusplus
-};
+}
 #endif

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic TM1650 4-Digit 8-Segment LED Display Functions                       * v1.0 *
+// Basic TM1650 4-Digit 8-Segment LED Display Functions                       * v1.1 *
 // ===================================================================================
 //
 // Collection of the most necessary functions for controlling a 4-digit 8-segment LED
@@ -16,7 +16,11 @@
 // TM_printD(val)                 print positive decimal value on display
 // TM_print(val, dotpos)          print value with decimal at dotpos
 //
-// The digits are counted from right to left starting with 0.
+// Notes:
+// ------
+// - The digits are counted from right to left starting with 0.
+// - dotpos > 3 means no decimal point.
+// - The TM1650 commands are sent as I2C addresses (no device address needed).
 //
 // 2023 by Stefan Wagner: https://github.com/wagiminator
 
@@ -26,10 +30,10 @@
 extern "C" {
 #endif
 
-#include "i2c_tx.h"                               // choose your I2C library
+#include "i2c.h"                                  // choose your I2C library
 
 // TM1650 parameters
-#define TM_HW_DIV         0                       // 1: MCU has hardware division
+#define TM_INIT_I2C       1                       // 1: init I2C with TM_init()
 #define TM_BRIGHT         1                       // initial display brightness (1-8)
 
 // TM1650 register addresses
@@ -58,7 +62,7 @@ extern "C" {
 #define TM_CHAR_h         0x74                    // "h"
 #define TM_CHAR_L         0x38                    // "L"
 #define TM_CHAR_P         0x73                    // "P"
-#define TM_CHAR_U         0x3f                    // "U"
+#define TM_CHAR_U         0x3e                    // "U"
 
 // TM1650 conversion table
 extern const uint8_t TM_DATA[];                   // number to segment code conversion table
@@ -74,5 +78,5 @@ void TM_printD(uint16_t value);                   // print positive decimal valu
 void TM_print(int16_t value, uint8_t dotpos);     // print value with decimal at dotpos
 
 #ifdef __cplusplus
-};
+}
 #endif

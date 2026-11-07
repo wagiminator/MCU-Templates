@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic INA219 Bidirectional Current/Power Monitor Functions                 * v1.0 *
+// Basic INA219 Bidirectional Current/Power Monitor Functions                 * v1.1 *
 // ===================================================================================
 // 2019 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -7,7 +7,7 @@
 
 // INA219 write a register value
 void INA_write(uint8_t reg, uint16_t value) {
-  I2C_start((INA_ADDR << 1) | 0);                 // start transmission to INA219
+  I2C_start((uint8_t)(INA_ADDR << 1));            // start transmission to INA219
   I2C_write(reg);                                 // write register address
   I2C_write(value >> 8);                          // write register content high byte
   I2C_write(value);                               // write register content low  byte
@@ -17,10 +17,12 @@ void INA_write(uint8_t reg, uint16_t value) {
 // INA219 read a register
 uint16_t INA_read(uint8_t reg) {
   uint16_t result;                                // result variable
-  I2C_start((INA_ADDR << 1) | 0);                 // start transmission to INA219
+  I2C_start((uint8_t)(INA_ADDR << 1));            // start transmission to INA219
   I2C_write(reg);                                 // write register address
-  I2C_restart((INA_ADDR << 1) | 1);               // restart for reading
-  result = (uint16_t)(I2C_read(1) << 8) | I2C_read(0);  // read register content
+  I2C_stop();                                     // stop transmission
+  I2C_start((uint8_t)((INA_ADDR << 1) | 1));      // start for reading
+  result  = (uint16_t)I2C_read(1) << 8;           // read register content high byte
+  result |= I2C_read(0);                          // read register content low byte
   I2C_stop();                                     // stop transmission
   return result;                                  // return result
 }
@@ -41,5 +43,10 @@ uint16_t INA_readVoltage(void) {
 
 // INA219 read current in mA
 int16_t INA_readCurrent(void) {
-  return  INA_read(INA_REG_CURRENT);
+  return (int16_t)INA_read(INA_REG_CURRENT);
+}
+
+// INA219 read power in mW
+uint32_t INA_readPower(void) {
+  return (uint32_t)INA_read(INA_REG_POWER) * 20;
 }

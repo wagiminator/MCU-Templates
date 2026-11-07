@@ -1,5 +1,5 @@
 // ===================================================================================
-// RDA5807 Basic Functions                                                    * v1.0 *
+// RDA5807 Basic Functions                                                    * v1.1 *
 // ===================================================================================
 // 2022 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -18,10 +18,10 @@ uint16_t RDA_write_regs[6] = {                    // RDA registers for writing:
 
 // RDA variables
 char RDA_stationName[9];                          // string for the station name
-char RDA_rdsStationName[8];                       // just for internal use
+static char RDA_rdsStationName[8];                // just for internal use
 
 // RDA write specified register
-void RDA_writeReg(uint8_t reg) {
+static void RDA_writeReg(uint8_t reg) {
   I2C_start((RDA_ADDR_INDEX << 1) | 0);           // start I2C for index write to RDA
   I2C_write(0x02 + reg);                          // set the register to write
   I2C_write(RDA_write_regs[reg] >> 8);            // send high byte
@@ -30,7 +30,7 @@ void RDA_writeReg(uint8_t reg) {
 }
 
 // RDA write all registers
-void RDA_writeAllRegs(void) {
+static void RDA_writeAllRegs(void) {
   I2C_start((RDA_ADDR_SEQ << 1) | 0);             // start I2C for sequential write to RDA
   for(uint8_t i=0; i<6; i++) {                    // write to 6 registers
     I2C_write(RDA_write_regs[i] >> 8);            // send high byte
@@ -40,15 +40,17 @@ void RDA_writeAllRegs(void) {
 }
 
 // RDA read all registers
-void RDA_readAllRegs(void) {
+static void RDA_readAllRegs(void) {
   I2C_start((RDA_ADDR_SEQ << 1) | 1);             // start I2C for sequential read from RDA
-  for(uint8_t i=0; i<6; i++)                      // read 6 registers
-    RDA_read_regs[i] = (uint16_t)(I2C_read(1) << 8) | I2C_read(5-i);
+  for(uint8_t i=0; i<6; i++) {                    // read 6 registers
+    RDA_read_regs[i]  = (uint16_t)I2C_read(1) << 8; // read high byte
+    RDA_read_regs[i] |= I2C_read(i < 5);          // read low byte (NACK for last byte)
+  }
   I2C_stop();                                     // stop I2C
 }
 
 // RDA clear station
-void RDA_resetStation(void) {
+static void RDA_resetStation(void) {
   for(uint8_t i=0; i<8; i++) RDA_stationName[i] = ' ';
 }
 
@@ -68,7 +70,7 @@ void RDA_init(void) {
 // RDA set volume
 void RDA_setVolume(uint8_t vol) {
   RDA_write_regs[RDA_REG_5] &= ~0x000F;           // clear volume bits
-  RDA_write_regs[RDA_REG_5] |=  vol;              // set volume
+  RDA_write_regs[RDA_REG_5] |=  vol & 0x0F;       // set volume
   RDA_writeReg(RDA_REG_5);                        // write to register 0x05
 }
 
@@ -76,7 +78,7 @@ void RDA_setVolume(uint8_t vol) {
 void RDA_setChannel(uint16_t chan) {
   RDA_resetStation();
   RDA_write_regs[RDA_REG_3] &= ~0xFFC0;           // clear channel
-  RDA_write_regs[RDA_REG_3] |= (chan << 6) | 0x0010;  // set channel and tune enable
+  RDA_write_regs[RDA_REG_3] |= ((chan & 0x03FF) << 6) | 0x0010; // set channel and tune enable
   RDA_writeReg(RDA_REG_3);                        // write register
 }
 
@@ -92,11 +94,15 @@ void RDA_updateStatus(void) {
   RDA_readAllRegs();                              // read all registers
 
   // When tuned disable tuning and stop seeking
-  if (!RDA_isTuning) {
-    RDA_write_regs[RDA_REG_3] &= ~0x0010;         // clear tune enable flag
-    RDA_writeReg(RDA_REG_3);
-    RDA_write_regs[RDA_REG_2] &= ~0x0100;         // clear seek enable flag
-    RDA_writeReg(RDA_REG_2);
+  if(!RDA_isTuning) {
+    if(RDA_write_regs[RDA_REG_3] & 0x0010) {      // tune enable flag set?
+      RDA_write_regs[RDA_REG_3] &= ~0x0010;       // clear tune enable flag
+      RDA_writeReg(RDA_REG_3);
+    }
+    if(RDA_write_regs[RDA_REG_2] & 0x0100) {      // seek enable flag set?
+      RDA_write_regs[RDA_REG_2] &= ~0x0100;       // clear seek enable flag
+      RDA_writeReg(RDA_REG_2);
+    }
   }
 
   // Check for RDS data
@@ -133,8 +139,9 @@ uint16_t RDA_getFrequency(void) {
 
 // Wait until tuning completed
 void RDA_waitTuning(void) {
+  uint8_t timeout = 50;
   do {
     DLY_ms(100);
     RDA_updateStatus();
-  } while(RDA_isTuning);
+  } while(RDA_isTuning && --timeout);
 }
