@@ -22,6 +22,8 @@ volatile __xdata uint8_t HID_writePointer = 0;  // data pointer for writing
 // Flush the TX buffer (upload to host)
 void HID_flush(void) {
   if(!HID_writeBusyFlag && HID_writePointer) {  // not busy and buffer not empty?
+    while(HID_writePointer < EP1_SIZE)          // fill rest of report with zeros
+      EP1_buffer[64 + HID_writePointer++] = 0;
     HID_writeBusyFlag = 1;                      // busy for now
     UEP1_T_LEN = EP1_SIZE;                      // full buffer needs to be transmitted
     UEP1_CTRL  = (UEP1_CTRL & ~MASK_UEP_T_RES)

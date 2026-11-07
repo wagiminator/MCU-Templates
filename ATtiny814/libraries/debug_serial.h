@@ -1,11 +1,11 @@
 // ===================================================================================
-// Basic Serial Debug Functions for tinyAVR 0-Series and 1-Series             * v1.0 *
+// Basic Serial Debug Functions for tinyAVR 0-Series and 1-Series             * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
-// DEBUG_init()             Init serial DEBUG on PD5 with default BAUD rate (115200)
-// DEBUG_setBaud(n)         Set BAUD rate
+// DEBUG_init()             Init serial DEBUG (USART0 TX) with default BAUD rate (115200)
+// DEBUG_setBaud(n)         Set BAUD rate (normal speed mode)
 //
 // DEBUG_write(c)           Send character
 // DEBUG_print(s)           Send string
@@ -16,12 +16,13 @@
 // DEBUG_printH(n)          Send 16-bit half-word hex value as string
 // DEBUG_printB(n)          Send  8-bit byte hex value as string
 // DEBUG_newline()          Send newline
-// DEBUG_printf(s, ...)     Uses printf (supports %s, %c, %d, %u, %x, %b, %02d, %%)
+// DEBUG_printf(s, ...)     Uses printf (supports %s, %c, %d, %u, %x, %b, %02d, %%, %ld)
 //
-// USART0 TX pin mapping (set below in UART parameters):
-// -----------------------------------------------------
+// USART0 TX pin mapping (set below in DEBUG parameters):
+// ------------------------------------------------------
 // DEBUG_TX   0     1
 // TX-pin    PB2   PA1
+// 8-pin:    PA6   PA1
 //
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -31,7 +32,6 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
 #include "system.h"
 
 // DEBUG parameters
@@ -50,6 +50,8 @@ extern "C" {
   void DEBUG_printH(uint16_t value);        // send hex half-word value as string
   void DEBUG_printB(uint8_t value);         // send hex byte value as string
   void DEBUG_printf(const char *format, ...); // use printf (requires more memory)
+  #define DEBUG_setBaud(n)  USART0.BAUD = (((F_CPU * 8) / (n)) + 1) / 2
+  #define DEBUG_newline()   DEBUG_write('\n')
 #else
   #define DEBUG_init()
   #define DEBUG_write(x)
@@ -60,10 +62,11 @@ extern "C" {
   #define DEBUG_printH(x)
   #define DEBUG_printB(x)
   #define DEBUG_printf(f, ...)
+  #define DEBUG_setBaud(n)
+  #define DEBUG_newline()
 #endif
 
-#define DEBUG_setBAUD(n)  USART0.BAUD = (((F_CPU * 8) / DEBUG_BAUD) + 1) / 2;  // set BAUD rate
-#define DEBUG_newline()   DEBUG_write('\n') // send newline
+#define DEBUG_setBAUD     DEBUG_setBaud     // alias
 #define DEBUG_printS      DEBUG_print       // alias for print
 #define DEBUG_out         DEBUG_println     // default DEBUG function
 

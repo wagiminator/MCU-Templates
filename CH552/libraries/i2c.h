@@ -1,5 +1,5 @@
 // ===================================================================================
-// I2C Functions for CH551, CH552 and CH554                                   * v1.1 *
+// I2C Functions for CH551, CH552 and CH554                                   * v1.2 *
 // ===================================================================================
 //
 // Simple I2C bitbanging for 400kHz slave devices. For system clock < 12MHz the 
@@ -23,3 +23,6 @@ void I2C_restart(uint8_t addr); // I2C restart transmission
 void I2C_stop(void);            // I2C stop transmission
 void I2C_write(uint8_t data);   // I2C transmit one data byte to the slave
 uint8_t I2C_read(uint8_t ack);  // I2C receive one data byte from the slave
+
+// I2C buffer functions
+#define I2C_writeBuffer(buf,len)  do {uint8_t _n = (len); uint8_t* _p = (buf); while(_n--) I2C_write(*_p++); I2C_stop();} while(0)

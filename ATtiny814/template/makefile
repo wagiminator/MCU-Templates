@@ -42,10 +42,12 @@ ISPTOOL  = tinyupdi
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags
-CFLAGS   = -Os -flto -Wall -mmcu=$(DEVICE) -DF_CPU=$(F_CPU)
+CFLAGS   = -Os -flto -Wall -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -ffunction-sections -fdata-sections
 CFLAGS  += -I$(AVRDEV) -I$(INCLUDE) -I$(SOURCE) -I.
-LDFLAGS  = -B$(AVRDEV)/dev/$(DEVICE)
+LDFLAGS  = -B$(AVRDEV)/dev/$(DEVICE) -Wl,--gc-sections
 CFILES   = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c) $(wildcard $(SOURCE)/*.S)
+
+.PHONY: help all elf bin hex asm flash fuses clean size removetemp removeelf
 
 # Symbolic Targets
 help:

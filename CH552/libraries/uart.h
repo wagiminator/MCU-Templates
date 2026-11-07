@@ -1,8 +1,32 @@
 // ===================================================================================
-// UART Functions for CH551, CH552 and CH554                                  * v1.1 *
+// UART Functions for CH551, CH552 and CH554                                  * v1.2 *
 // ===================================================================================
 //
 // Basic UART functions without buffers and interrupts.
+//
+// Functions available:
+// --------------------
+// UART0_init()             init UART0 (8N1, TIMER1 as BAUD rate generator)
+// UART0_ready()            check if UART0 is ready to write
+// UART0_available()        check if UART0 has received a data byte
+// UART0_read()             read data byte from UART0 (waits for data)
+// UART0_write(b)           write data byte to UART0
+// UART1_init()             init UART1 (8N1)
+// UART1_ready()            check if UART1 is ready to write
+// UART1_available()        check if UART1 has received a data byte
+// UART1_read()             read data byte from UART1 (waits for data)
+// UART1_write(b)           write data byte to UART1
+//
+// Pins (UARTx_ALTER 0/1):
+// -----------------------
+// UART0: RXD P3.0 / P1.2, TXD P3.1 / P1.3
+// UART1: RXD1 P1.6 / P3.4, TXD1 P1.7 / P3.2 (not available on CH551)
+//
+// To use the print functions (print.h), define a small wrapper function, since the
+// inline functions have no address:
+// void UART0_putchar(char c) {UART0_write(c);}
+// printD(UART0_putchar, 1234);
+//
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
 #pragma once
@@ -17,6 +41,22 @@
 
 #define UART0_BAUD_SET  (uint8_t)(256 - (((F_CPU / 8 / UART0_BAUD) + 1) / 2))
 #define UART1_BAUD_SET  (uint8_t)(256 - (((F_CPU / 8 / UART1_BAUD) + 1) / 2))
+
+// Check BAUD rates (register must be 1..255, error should be < 2%)
+#define UART0_BAUD_DIV  (((F_CPU / 8 / UART0_BAUD) + 1) / 2)
+#define UART1_BAUD_DIV  (((F_CPU / 8 / UART1_BAUD) + 1) / 2)
+#if UART0_BAUD_DIV < 1 || UART0_BAUD_DIV > 255
+  #error UART0_BAUD not possible with this F_CPU
+#elif ((F_CPU / 16 / UART0_BAUD_DIV) > (UART0_BAUD + UART0_BAUD / 50)) || \
+      ((F_CPU / 16 / UART0_BAUD_DIV) < (UART0_BAUD - UART0_BAUD / 50))
+  #warning UART0_BAUD error > 2% with this F_CPU
+#endif
+#if UART1_BAUD_DIV < 1 || UART1_BAUD_DIV > 255
+  #error UART1_BAUD not possible with this F_CPU
+#elif ((F_CPU / 16 / UART1_BAUD_DIV) > (UART1_BAUD + UART1_BAUD / 50)) || \
+      ((F_CPU / 16 / UART1_BAUD_DIV) < (UART1_BAUD - UART1_BAUD / 50))
+  #warning UART1_BAUD error > 2% with this F_CPU
+#endif
 
 // UART state macros
 #define UART0_ready()       (TI)            // UART0 ready to write?
@@ -52,7 +92,7 @@ inline uint8_t UART0_read(void) {
 }
 
 // UART0 write single byte
-inline void UART0_write(uint8_t data) {
+inline void UART0_write(char data) {
   while(!TI);                               // wait for last data byte to be transmitted
   TI = 0;                                   // clear transmit complete flag
   SBUF = data;                              // start transmitting data byte
@@ -78,7 +118,7 @@ inline uint8_t UART1_read(void) {
 }
 
 // UART1 write single byte
-inline void UART1_write(uint8_t data) {
+inline void UART1_write(char data) {
   while(!U1TI);                             // wait for last data byte to be transmitted
   U1TI = 0;                                 // clear transmit complete flag
   SBUF1 = data;                             // start transmitting data byte

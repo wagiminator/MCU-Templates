@@ -36,7 +36,7 @@
 #define I2C_SCL_HIGH()  PIN_input(PIN_SCL)  // release SCL -> pulled HIGH by resistor
 #define I2C_SCL_LOW()   PIN_output(PIN_SCL) // SCL LOW     -> pulled LOW  by MCU
 #define I2C_SDA_READ()  PIN_read(PIN_SDA)   // read SDA pin
-#define I2C_CLOCKOUT()  I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_SCL_LOW()
+#define I2C_CLOCKOUT()  do {I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_SCL_LOW();} while(0)
 
 // ===================================================================================
 // I2C Functions

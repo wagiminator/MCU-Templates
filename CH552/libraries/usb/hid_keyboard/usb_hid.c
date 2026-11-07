@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Functions for CH551, CH552 and CH554                               * v1.1 *
+// USB HID Functions for CH551, CH552 and CH554                               * v1.2 *
 // ===================================================================================
 
 #include "usb_hid.h"
@@ -40,8 +40,8 @@ void HID_EP_init(void) {
   UEP2_CTRL   = bUEP_AUTO_TOG                     // EP2 Auto flip sync flag
               | UEP_R_RES_ACK;                    // EP2 OUT transaction returns ACK
   UEP2_3_MOD  = bUEP2_RX_EN;                      // EP2 RX_enable
-  HID_writeBusyFlag = 0;                          // reset write busy flag
   #endif
+  HID_writeBusyFlag = 0;                          // reset write busy flag
 }
 
 // Endpoint 1 IN handler (HID report transfer to host completed)

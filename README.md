@@ -3,10 +3,10 @@ Discover a set of templates designed to simplify the initial stages of bare-meta
 
 In the "Libraries" folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
 
-## AVR 8-bit Mircocontrollers
+## AVR 8-bit Microcontrollers
 - [ATtiny814, tinyAVR 0/1-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATtiny814)
 
-## 8051-based 8-bit Microcrontrollers
+## 8051-based 8-bit Microcontrollers
 - [CH551, CH552, CH554](https://github.com/wagiminator/MCU-Templates/tree/main/CH552)
 - [CH558, CH559](https://github.com/wagiminator/MCU-Templates/tree/main/CH559)
 - [STC8H1K08, STC8H1K17](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H1K08)

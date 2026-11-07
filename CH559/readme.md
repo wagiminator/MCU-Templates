@@ -16,7 +16,7 @@ This template is a lightweight starting point for bare-metal firmware developmen
 - an example program
 - a simple upload tool
 
-An optional USB CDC library is also included.
+Optional libraries for the internal peripherals, a USB CDC device library and USB host libraries for keyboards, mice and gamepads are also included.
 
 ## Supported Microcontrollers
 
@@ -64,7 +64,9 @@ Common features of all variants:
 Notes:
 - Signals ending in "_" are alternate pins (e.g. RXD_/TXD_ of UART0 on P0.2/P0.3).
 - The CH558T has the same pinout, but no USB host.
-- Only P1 pins can be used as ADC inputs (`PIN_input_AN()`, `ADC_input()`). PWM is available on (P2.4 or P4.3) and (P2.5 or P4.5) with `PWM_start()`.
+- Only P1 pins can be used as ADC inputs (`PIN_input_AN()`, `ADC_input()`). PWM1/PWM2 are available on P2.4/P2.5 or (mapped together) on P4.3/P4.5 with `PWM_start()`.
+- The open-drain/bidirectional mode (`bPn_OC`) can only be set for a whole port. `PIN_output()` sets the whole port to push-pull, `PIN_output_OD()`/`PIN_output_BI()` the whole port to open-drain.
+- USB host port 0 uses DP/DM (P5.1/P5.0), port 1 HP/HM (P5.5/P5.4, LQFP48 only).
 
 ## Template Structure
 
@@ -84,16 +86,30 @@ Notes:
 There is no linker script: memory sizes are passed to SDCC by the makefile (`XRAM_LOC`, `XRAM_SIZE`, `CODE_SIZE`).
 
 ## Libraries
-The *libraries* folder contains an optional USB library. Further CH55x libraries (e.g. from the CH552 folder) can be used as a starting point, but may need adjustments for the CH559 registers.
+The *libraries* folder contains optional libraries for the internal peripherals, for USB device and for USB host. Parameters are set at the beginning of the respective header file. Some libraries need definitions in a *config.h* file (e.g. `PIN_SDA`, `PIN_SCL`, `PIN_NEO`, `NEO_COUNT`).
 
 | Library | Description |
 |:-|:-|
-| usb/usb_cdc | USB CDC (virtual serial port) |
+| debug_serial | Serial debug output (TX only) via UART0 or UART1 with lightweight print functions or printf |
+| flash | Read/erase/write the 1KB data flash |
+| i2c | Software I2C master (bit-banging, up to 400kHz) on any P0-P3 pins (`PIN_SDA`, `PIN_SCL` in *config.h*) |
+| millis | Millisecond counter using TIMER2 (auto-reload, no drift) |
+| neo | NeoPixel (WS2812) control on any P0-P3 pin (`PIN_NEO`, `NEO_GRB`, `NEO_COUNT` in *config.h*), timing calculated for all F_CPU >= 6MHz |
+| print | Lightweight print functions (strings, decimal and hex numbers) for any output function, much smaller than printf |
+| spi | Hardware SPI0 master functions |
+| uart | Basic UART0 (TIMER1 BAUD rate generator) and UART1 (16550 compatible with FIFO) functions |
+| usb/usb_cdc | USB device: CDC (virtual serial port) |
+| usb_host/host_keyboard | USB host: keyboard (boot protocol, ASCII conversion with US layout, LEDs) |
+| usb_host/host_mouse | USB host: mouse (boot protocol, buttons, movement, wheel) |
+| usb_host/host_gamepad | USB host: HID gamepad/joystick (report descriptor parser for axes, hat switch and buttons) |
 
 Note: The *makefile* compiles all *.c* files in the template folder and in *src*, but not in an *include* folder. Therefore, libraries must be copied into *src*.
 
-### Using the USB Libraries
-Each USB library consists of the following files:
+### Using the USB Host Libraries
+Each USB host library consists of the class driver (e.g. *host_keyboard.c/h*), the USB host core (*usb_host.c/h*), the USB definitions (*usb.h*) and the configuration (*config.h*). Copy all files into the *src* folder. The host is polled, so the `xxx_update()` function of the class driver must be called frequently in the main loop. Only devices that are directly connected to the root hub ports are supported (no external USB hubs). The board must provide 5V (VBUS) for the USB device. `F_CPU` should be 48MHz or 56MHz (at least 12MHz).
+
+### Using the USB Device Libraries
+Each USB device library consists of the following files:
 - the class driver (e.g. *usb_cdc.c/h*)
 - the USB descriptors (*usb_descr.c/h*)
 - the device configuration (*config.h*)
@@ -157,6 +173,9 @@ A brand-new chip starts automatically in bootloader mode as soon as it is connec
 
 ## Notes and Tips
 - The template uses `FREQ_SYS` = 56MHz by default. For the CH558, also adjust `CODE_SIZE` and `XRAM_SIZE` in the makefile (32KB code, 4KB xRAM).
+- Libraries with interrupt service routines (*millis*) must be included in the file containing `main()`, otherwise SDCC does not link the interrupt vector.
+- The USB host libraries and the *flash* library are for the CH559 only (the CH558 has no USB host and a different data flash).
+- `printf` from the SDCC library needs about 2KB of flash. The *print* library or the `DEBUG_print` functions need only a few hundred bytes.
 - The 8051 has only 256 bytes of iRAM. Large arrays should be placed in xRAM (`__xdata`) and constants in code flash (`__code`).
 - The CH559 can also be programmed with the Arduino IDE using [ch55xduino](https://github.com/DeqingSun/ch55xduino), see *template.ino*.
 

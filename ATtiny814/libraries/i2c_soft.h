@@ -49,8 +49,8 @@ uint8_t I2C_read(uint8_t ack);    // I2C receive one data byte from the slave
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 void I2C_readBuffer(uint8_t* buf, uint16_t len);
 
-#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
-#define I2C_getBuffer(addr,buf,len)   {I2C_start(addr); I2C_readBuffer(buf,len);}
+#define I2C_sendBuffer(addr,buf,len)  do {I2C_start(addr); I2C_writeBuffer(buf,len);} while(0)
+#define I2C_getBuffer(addr,buf,len)   do {I2C_start(addr); I2C_readBuffer(buf,len);} while(0)
 
 #ifdef __cplusplus
 };

@@ -43,7 +43,8 @@ void KBD_press(uint8_t key) {
   if(key >= 136) key -= 136;                    // non-printing key/not a modifier?
   else if(key >= 128) {                         // modifier key?
     KBD_report[1] |= (1<<(key-128));            // add modifier to report
-    key = 0;
+    KBD_sendReport();                             // send report
+    return;
   }
   else {                                        // printing key?
     key = KBD_map[key];                         // convert ascii to keycode for report

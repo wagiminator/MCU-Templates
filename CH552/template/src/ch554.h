@@ -278,7 +278,7 @@ SFR(PIN_FUNC,	0xC6);	// pin function selection
 #define bPWM2_PIN_X       0x08      // PWM2 alternate pin enable: 0=PWM2 on P3.4, 1=PWM2 on P3.1
 #define bPWM1_PIN_X       0x04      // PWM1 alternate pin enable: 0=PWM1 on P1.5, 1=PWM1 on P3.0
 #define bT2EX_PIN_X       0x02      // T2EX/CAP2 alternate pin enable: 0=T2EX/CAP2 on P1.1, 1=T2EX/CAP2 on RST
-#define bT2_PIN_X         0x01      // T2/CAP1 alternate pin enable: 0=T2/CAP1 on P1.1, 1=T2/CAP1 on P1.4
+#define bT2_PIN_X         0x01      // T2/CAP1 alternate pin enable: 0=T2/CAP1 on P1.0, 1=T2/CAP1 on P1.4
 SFR(XBUS_AUX,	0xA2);	// xBUS auxiliary setting
 #define bUART0_TX         0x80      // ReadOnly: indicate UART0 transmittal status
 #define bUART0_RX         0x40      // ReadOnly: indicate UART0 receiving status

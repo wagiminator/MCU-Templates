@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO, PWM and ADC Functions for CH559                                * v1.0 *
+// Basic GPIO, PWM and ADC Functions for CH558 and CH559                      * v1.1 *
 // ===================================================================================
 //
 // Pins must be defined as P10, P11, P12, etc. - e.g.:
@@ -16,6 +16,9 @@
 // PIN_output_PU_OD(PIN)    set PIN as OUTPUT (open-drain, pullup, also INPUT, P0-P3)
 // PIN_output_BI(PIN)       set PIN as 8051 bi-directional (open-drain, pullup, P0-P3)
 //
+// PIN_dir_in(PIN)          change only direction of PIN to input (port mode unchanged)
+// PIN_dir_out(PIN)         change only direction of PIN to output (port mode unchanged)
+//
 // PIN_current_low(PIN)     set PIN output current drive capabilty to 5mA (default)
 // PIN_current_high(PIN)    set PIN output current to 20mA for P0, P2, P3 / 10mA for P1
 //
@@ -31,19 +34,31 @@
 // PIN_WAKE_enable(PIN)     enable wake-up from sleep by PIN low (P03, P14, P15 only)
 // PIN_WAKE_disable(PIN)    disable wake-up from sleep by PIN low
 //
-// PWM_start(PIN)           start PWM output on PIN, can be (P24 or P43) and (P25 or P45)
+// INT0_falling()           external interrupt INT0 (P3.2) on falling edge
+// INT0_low()               external interrupt INT0 (P3.2) on low level
+// INT0_enable()            enable INT0 interrupt (INT_NO_INT0)
+// INT0_disable()           disable INT0 interrupt
+// INT1_falling()           external interrupt INT1 (P3.3) on falling edge
+// INT1_low()               external interrupt INT1 (P3.3) on low level
+// INT1_enable()            enable INT1 interrupt (INT_NO_INT1)
+// INT1_disable()           disable INT1 interrupt
+//
+// PWM_start(PIN)           start PWM output on PIN, can be (P24 and P25) or (P43 and P45)
 // PWM_stop(PIN)            stop PWM output on PIN
 // PWM_write(PIN, val)      set PWM output active level duty cycle on PIN
 //
 // PWM_pol_normal(PIN)      set normal PWM polarity on PIN (default low and active high)
 // PWM_pol_reverse(PIN)     set reverse PWM polarity on PIN (default high and active low)
-// PWM_set_freq(FREQ)       set global PWM frequency (in Hertz)
+// PWM_set_freq(FREQ)       set global PWM frequency (Hz, F_CPU/65025 .. F_CPU/255), call first!
+// PWM_set_cycle(n)         set PWM cycle (resolution), duty = val / n (default 255)
 //
-// ADC_init()               init and enable ADC
+// ADC_init()               init and enable ADC (10-bit)
 // ADC_enable()             enable ADC
 // ADC_disable()            disable ADC
+// ADC_set10bit()           set 10-bit resolution (default)
+// ADC_set11bit()           set 11-bit resolution
 // ADC_input(PIN)           set ADC input pin (P1 only)
-// ADC_read()               sample and read ADC value (0..1023)
+// ADC_read()               sample and read ADC value (0..1023 or 0..2047)
 //
 // Notes:
 // ------
@@ -55,7 +70,9 @@
 // Reset defaults P4:    PIN_input_PU
 // Reset defaults P5:    PIN_input (not changable, but PULL-DOWN available)
 // Pins used for PWM should be set as OUTPUT beforehand.
-// Pins used for ADC must have been set with PIN_INPUT_AN beforehand.
+// PWM1 and PWM2 are mapped together (bPWM1_PIN_X): either P2.4/P2.5 or P4.3/P4.5.
+// Pins used for ADC must have been set with PIN_input_AN beforehand.
+// The ADC reference is VDD33 (3.3V).
 //
 // 2022 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -127,6 +144,16 @@ SBIT(PP47, 0xC0, 7);
 
 SFR(P4, 0xC0);
 
+// Dummies for P5 (input only, read via P5_IN), needed by PIN_read()
+#define PP50 0
+#define PP51 0
+#define PP52 0
+#define PP53 0
+#define PP54 0
+#define PP55 0
+#define PP56 0
+#define PP57 0
+
 // 2nd-stage glue defines
 #define PIN_h_a(PIN) _P##PIN
 #define PIN_h_s(PIN) P##PIN
@@ -135,7 +162,7 @@ SFR(P4, 0xC0);
 #define PORT_h_h(PORT, PIN)       PP##PORT##PIN = 1
 #define PORT_h_t(PORT, PIN)       PP##PORT##PIN = !PP##PORT##PIN
 #define PORT_h_r(PORT, PIN)       (PP##PORT##PIN)
-#define PORT_h_w(PORT,PIN,val)    PP##PORT##PIN = val
+#define PORT_h_w(PORT,PIN,val)    PP##PORT##PIN = (val)
 
 // ===================================================================================
 // Set PIN as INPUT (high impedance, no PULLUP, P0-P4 only)
@@ -177,9 +204,9 @@ SFR(P4, 0xC0);
                              P2_PU    |=  (1<<((PIN)&7))) : \
   ((PIN>=P30)&&(PIN<=P37) ? (PORT_CFG &= ~bP3_OC,           \
                              P3_DIR   &= ~(1<<((PIN)&7)),   \
-                             P3_PU    |= ~(1<<((PIN)&7))) : \
+                             P3_PU    |=  (1<<((PIN)&7))) : \
   ((PIN>=P40)&&(PIN<=P47) ? (P4_DIR   &= ~(1<<((PIN)&7)),   \
-                             P4_PU    |= ~(1<<((PIN)&7))) : \
+                             P4_PU    |=  (1<<((PIN)&7))) : \
 (0))))))
 
 // ===================================================================================
@@ -278,6 +305,25 @@ SFR(P4, 0xC0);
 #define PIN_bidir     PIN_output_BI
 
 // ===================================================================================
+// Change only the direction of PIN (P0-P4), the port mode (bPn_OC) is not changed
+// ===================================================================================
+#define PIN_dir_in(PIN) \
+  ((PIN>=P00)&&(PIN<=P07) ? (P0_DIR &= ~(1<<((PIN)&7))) : \
+  ((PIN>=P10)&&(PIN<=P17) ? (P1_DIR &= ~(1<<((PIN)&7))) : \
+  ((PIN>=P20)&&(PIN<=P27) ? (P2_DIR &= ~(1<<((PIN)&7))) : \
+  ((PIN>=P30)&&(PIN<=P37) ? (P3_DIR &= ~(1<<((PIN)&7))) : \
+  ((PIN>=P40)&&(PIN<=P47) ? (P4_DIR &= ~(1<<((PIN)&7))) : \
+(0))))))
+
+#define PIN_dir_out(PIN) \
+  ((PIN>=P00)&&(PIN<=P07) ? (P0_DIR |=  (1<<((PIN)&7))) : \
+  ((PIN>=P10)&&(PIN<=P17) ? (P1_DIR |=  (1<<((PIN)&7))) : \
+  ((PIN>=P20)&&(PIN<=P27) ? (P2_DIR |=  (1<<((PIN)&7))) : \
+  ((PIN>=P30)&&(PIN<=P37) ? (P3_DIR |=  (1<<((PIN)&7))) : \
+  ((PIN>=P40)&&(PIN<=P47) ? (P4_DIR |=  (1<<((PIN)&7))) : \
+(0))))))
+
+// ===================================================================================
 // Set PIN output current drive capabilty to 5mA (P0-P3 only, affects whole port)
 // ===================================================================================
 #define PIN_current_low(PIN) \
@@ -304,7 +350,7 @@ SFR(P4, 0xC0);
 #define PIN_low(PIN)          PIN_h_s(PIN) = 0              // set pin to LOW
 #define PIN_high(PIN)         PIN_h_s(PIN) = 1              // set pin to HIGH
 #define PIN_toggle(PIN)       PIN_h_s(PIN) = !PIN_h_s(PIN)  // TOGGLE pin
-#define PIN_write(PIN, val)   PIN_h_s(PIN) = val            // WRITE pin value
+#define PIN_write(PIN, val)   PIN_h_s(PIN) = (val)          // WRITE pin value
 
 // ===================================================================================
 // PIN INPUT read macros (P0-P5)
@@ -323,77 +369,81 @@ SFR(P4, 0xC0);
 
 // ===================================================================================
 // Enable/disable WAKE-up from sleep by PIN LOW (P03, P14, P15 only)
+// (WAKE_CTRL can only be written in safe mode)
 // ===================================================================================
-#define WAKE_PIN_enable(PIN) \
-  ((PIN == P03) ? (WAKE_CTRL |= bWAK_P0_3_LO) : \
-  ((PIN == P14) ? (WAKE_CTRL |= bWAK_P1_4_LO) : \
-  ((PIN == P15) ? (WAKE_CTRL |= bWAK_P1_5_LO) : \
-(0)))))
+#define PIN_WAKE_bit(PIN) \
+  ((PIN == P03) ? bWAK_P0_3_LO : \
+  ((PIN == P14) ? bWAK_P1_4_LO : \
+  ((PIN == P15) ? bWAK_P1_5_LO : \
+(0))))
 
-#define WAKE_PIN_disable(PIN) \
-  ((PIN == P03) ? (WAKE_CTRL &= ~bWAK_P0_3_LO) : \
-  ((PIN == P14) ? (WAKE_CTRL &= ~bWAK_P1_4_LO) : \
-  ((PIN == P15) ? (WAKE_CTRL &= ~bWAK_P1_5_LO) : \
-(0)))))
+#define PIN_WAKE_enable(PIN)  do {SAFE_MOD = 0x55; SAFE_MOD = 0xAA;            \
+                                  WAKE_CTRL |=  PIN_WAKE_bit(PIN); SAFE_MOD = 0;} while(0)
+#define PIN_WAKE_disable(PIN) do {SAFE_MOD = 0x55; SAFE_MOD = 0xAA;            \
+                                  WAKE_CTRL &= ~PIN_WAKE_bit(PIN); SAFE_MOD = 0;} while(0)
+#define WAKE_PIN_enable       PIN_WAKE_enable     // old name
+#define WAKE_PIN_disable      PIN_WAKE_disable    // old name
 
 // ===================================================================================
-// Start PWM on PIN, must be a PWM1/2-capable: (P24 or 43) and (P25 or P45)
+// External interrupts INT0 (P3.2) and INT1 (P3.3)
+// ===================================================================================
+#define INT0_falling()        IT0 = 1
+#define INT0_low()            IT0 = 0
+#define INT0_enable()         EX0 = 1
+#define INT0_disable()        EX0 = 0
+#define INT1_falling()        IT1 = 1
+#define INT1_low()            IT1 = 0
+#define INT1_enable()         EX1 = 1
+#define INT1_disable()        EX1 = 0
+
+// ===================================================================================
+// PWM1/PWM2 functions: PWM1 on P24 (or P43), PWM2 on P25 (or P45)
+// Both channels are mapped together (bPWM1_PIN_X).
 // ===================================================================================
 #define PWM_start(PIN) \
-  ((PIN == P24) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC &= ~bPWM1_PIN_X, PWM_CTRL |= bPWM1_OUT_EN) : \
-  ((PIN == P25) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC &= ~bPWM2_PIN_X, PWM_CTRL |= bPWM2_OUT_EN) : \
-  ((PIN == P43) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC |=  bPWM1_PIN_X, PWM_CTRL |= bPWM1_OUT_EN) : \
-  ((PIN == P45) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC |=  bPWM2_PIN_X, PWM_CTRL |= bPWM2_OUT_EN) : \
+  ((PIN == P24) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC &= ~bPWM1_PIN_X, PWM_CTRL |= bPWM_OUT_EN)  : \
+  ((PIN == P25) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC &= ~bPWM1_PIN_X, PWM_CTRL |= bPWM2_OUT_EN) : \
+  ((PIN == P43) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC |=  bPWM1_PIN_X, PWM_CTRL |= bPWM_OUT_EN)  : \
+  ((PIN == P45) ? (PWM_CTRL &= ~bPWM_CLR_ALL, PIN_FUNC |=  bPWM1_PIN_X, PWM_CTRL |= bPWM2_OUT_EN) : \
 (0)))))
 
-// ===================================================================================
-// Set PWM output active level duty cycle on pin
-// ===================================================================================
+// Set PWM duty cycle (val / PWM_CYCLE, default 255)
 #define PWM_write(PIN, val) \
-  ((PIN == P24) ? (PWM_DATA1 = val) : \
-  ((PIN == P25) ? (PWM_DATA2 = val) : \
-  ((PIN == P43) ? (PWM_DATA1 = val) : \
-  ((PIN == P45) ? (PWM_DATA2 = val) : \
+  ((PIN == P24) ? (PWM_DATA  = (val)) : \
+  ((PIN == P25) ? (PWM_DATA2 = (val)) : \
+  ((PIN == P43) ? (PWM_DATA  = (val)) : \
+  ((PIN == P45) ? (PWM_DATA2 = (val)) : \
 (0)))))
 
-// ===================================================================================
-// Stop PWM on pin
-// ===================================================================================
 #define PWM_stop(PIN) \
-  ((PIN == P24) ? (PWM_CTRL &= ~bPWM1_OUT_EN) : \
+  ((PIN == P24) ? (PWM_CTRL &= ~bPWM_OUT_EN)  : \
   ((PIN == P25) ? (PWM_CTRL &= ~bPWM2_OUT_EN) : \
-  ((PIN == P43) ? (PWM_CTRL &= ~bPWM1_OUT_EN) : \
+  ((PIN == P43) ? (PWM_CTRL &= ~bPWM_OUT_EN)  : \
   ((PIN == P45) ? (PWM_CTRL &= ~bPWM2_OUT_EN) : \
 (0)))))
 
-// ===================================================================================
-// Set normal PWM polarity on pin (default low and active high)
-// ===================================================================================
 #define PWM_pol_normal(PIN) \
-  ((PIN == P24) ? (PWM_CTRL &= ~bPWM1_POLAR) : \
+  ((PIN == P24) ? (PWM_CTRL &= ~bPWM_POLAR)  : \
   ((PIN == P25) ? (PWM_CTRL &= ~bPWM2_POLAR) : \
-  ((PIN == P43) ? (PWM_CTRL &= ~bPWM1_POLAR) : \
+  ((PIN == P43) ? (PWM_CTRL &= ~bPWM_POLAR)  : \
   ((PIN == P45) ? (PWM_CTRL &= ~bPWM2_POLAR) : \
 (0)))))
 
-// ===================================================================================
-// Set reverse PWM polarity on pin (default high and active low)
-// ===================================================================================
 #define PWM_pol_reverse(PIN) \
-  ((PIN == P24) ? (PWM_CTRL |= bPWM1_POLAR) : \
+  ((PIN == P24) ? (PWM_CTRL |= bPWM_POLAR)  : \
   ((PIN == P25) ? (PWM_CTRL |= bPWM2_POLAR) : \
-  ((PIN == P43) ? (PWM_CTRL |= bPWM1_POLAR) : \
+  ((PIN == P43) ? (PWM_CTRL |= bPWM_POLAR)  : \
   ((PIN == P45) ? (PWM_CTRL |= bPWM2_POLAR) : \
 (0)))))
 
-// ===================================================================================
-// Set global PWM frequency (in Hertz, range: F_CPU/65536 - F_CPU/256)
-// ===================================================================================
-#define PWM_set_freq(FREQ) \
-  (((FREQ) >= F_CPU / 256) ? (PWM_CK_SE = 0)              : \
-  (((F_CPU / 256 / (FREQ) - 1) > 255) ? (PWM_CK_SE = 255) : \
-  (PWM_CK_SE = (uint8_t)(F_CPU / 256 / (FREQ) - 1))         \
-))
+// Set global PWM frequency and PWM_CYCLE = 255 (must be called before PWM_start)
+// PWM frequency = F_CPU / PWM_CK_SE / PWM_CYCLE
+#define PWM_set_freq(FREQ) do {                                      \
+  PWM_CYCLE = 255;                                                   \
+  PWM_CK_SE = ((FREQ) >= F_CPU / 255) ? 1 :                          \
+              ((F_CPU / 255 / (FREQ)) > 255) ? 255 :                 \
+              (uint8_t)(F_CPU / 255 / (FREQ)); } while(0)
+#define PWM_set_cycle(n)      PWM_CYCLE = (n)
 
 // ===================================================================================
 // ADC functions (P1 only)
@@ -401,12 +451,15 @@ SFR(P4, 0xC0);
 #define ADC_enable()    ADC_SETUP |=  bADC_POWER_EN
 #define ADC_disable()   ADC_SETUP &= ~bADC_POWER_EN
 
+#define ADC_set10bit()  ADC_EX_SW &= ~bADC_RESOLUTION
+#define ADC_set11bit()  ADC_EX_SW |=  bADC_RESOLUTION
+
 inline void ADC_init(void) {
-  //uint16_t temp;
-  ADC_enable();
-  ADC_CK_SE = (uint8_t)((F_CPU + 11999999) / 12000000);
-  //temp = ADC_FIFO;
-  //ADC_CTRL = 0;
+  ADC_SETUP  = bADC_POWER_EN;                     // enable ADC power
+  ADC_CK_SE  = (uint8_t)((F_CPU + 11999999) / 12000000); // ADC clock <= 12MHz
+  ADC_CTRL   = 0;                                 // manual sampling, manual channel
+  ADC_STAT   = bADC_IF_ACT;                       // clear flag
+  if(ADC_FIFO);                                   // clear FIFO
 }
 
 #define ADC_input(PIN) \
@@ -414,8 +467,11 @@ inline void ADC_init(void) {
 (0))
 
 inline uint16_t ADC_read(void) {
-  ADC_CTRL |=  bADC_SAMPLE;
-  while(!(ADC_STAT & bADC_IF_ACT));
-  ADC_CTRL &= ~bADC_SAMPLE;
-  return ADC_FIFO;
+  ADC_STAT  =  bADC_IF_ACT;                       // clear finished flag
+  ADC_CTRL |=  bADC_SAMPLE;                       // start sampling pulse
+  __asm__("nop"); __asm__("nop");                 // pulse >= 1 ADC clock (Fsys/ADC_CK_SE)
+  __asm__("nop"); __asm__("nop");
+  ADC_CTRL &= ~bADC_SAMPLE;                       // end sampling pulse
+  while(!(ADC_STAT & bADC_IF_ACT));               // wait for conversion
+  return ADC_FIFO;                                // return result
 }

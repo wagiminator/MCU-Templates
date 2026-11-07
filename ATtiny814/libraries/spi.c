@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.0 *
+// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -11,7 +11,7 @@ void SPI_init(void) {
     VPORTA.DIR |= (1<<1);
     VPORTA.DIR |= (1<<3);
     PORTA.PIN2CTRL |= PORT_PULLUPEN_bm;
-  #elif SPI_MAP == 1
+  #elif SPI_MAP == 1 && defined(PORTC)
     VPORTC.DIR |= (1<<2);
     VPORTC.DIR |= (1<<0);
     PORTC.PIN1CTRL |= PORT_PULLUPEN_bm;

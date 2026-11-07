@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.2 *
+// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.3 *
 // ===================================================================================
 //
 // Functions available:
@@ -17,6 +17,7 @@
 // I2C_MAP   0     1     2
 // SDA-pin  PB1   PA1   No mapping
 // SCL-pin  PB0   PA2   No mapping
+// 8-pin:   SDA PA1, SCL PA2 (map 0, no alternative)
 //
 // External pull-up resistors (4k7 - 10k) are mandatory!
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
@@ -41,7 +42,7 @@ void I2C_stop(void);            // I2C stop transmission
 
 void I2C_writeBuffer(uint8_t* buf, uint16_t len);
 
-#define I2C_sendBuffer(addr,buf,len)  {I2C_start(addr); I2C_writeBuffer(buf,len);}
+#define I2C_sendBuffer(addr,buf,len)  do {I2C_start(addr); I2C_writeBuffer(buf,len);} while(0)
 
 #ifdef __cplusplus
 };

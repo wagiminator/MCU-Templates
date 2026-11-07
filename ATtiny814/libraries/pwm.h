@@ -1,0 +1,85 @@
+// ===================================================================================
+// PWM Functions using Timer/Counter A (TCA0) for tinyAVR 0/1-Series          * v1.0 *
+// ===================================================================================
+//
+// Functions available:
+// --------------------
+// PWM_init()               init TCA0 for PWM with parameters below and start timer
+// PWM_start(ch)            enable PWM output on channel ch (sets pin as output)
+// PWM_stop(ch)             disable PWM output on channel ch (pin is set LOW)
+// PWM_write(ch,v)          set duty cycle of channel ch (0 .. PWM_TOP)
+// PWM_setTOP(v)            set TOP value (period), PWM frequency = F_CPU/PRESC/(TOP+1)
+// PWM_setPRESC(n)          set prescaler (0:1, 1:2, 2:4, 3:8, 4:16, 5:64, 6:256, 7:1024)
+// PWM_enable()             enable timer
+// PWM_disable()            disable timer (outputs keep their current state)
+//
+// PWM_OVF_INT_enable()     enable overflow interrupt (TCA0_OVF_vect / TCA0_LUNF_vect)
+// PWM_OVF_INT_disable()    disable overflow interrupt
+// PWM_OVF_FLAG_read()      read overflow interrupt flag
+// PWM_OVF_FLAG_clear()     clear overflow interrupt flag
+//
+// PWM modes (set below in PWM parameters):
+// ----------------------------------------
+// PWM_MODE 0: single mode, 16-bit, 3 channels (0..2), PWM_TOP up to 65535
+// PWM_MODE 1: split mode,   8-bit, 6 channels (0..5), PWM_TOP up to 255
+//
+// PWM channel pin mapping (alternative pins selected by PWM_ALT bitmask, bit n = WOn):
+// ------------------------------------------------------------------------------------
+// Channel        0     1     2     3     4     5
+// Default pin   PB0   PB1   PB2   PA3   PA4   PA5
+// Alt pin       PB3   PB4   PB5   PC3   PC4   PC5    (PB4/PB5/PCx: 20-pin devices only)
+// 8-pin device  PA3   PA1   PA2   PA3    -     -     (alternative for channel 0: PA7)
+//
+// Notes:
+// ------
+// - Channels 3..5 are only available in split mode.
+// - On 8-pin devices, channels 0 and 3 share the same pin PA3.
+// - TCA0 is not available for other purposes when this library is used.
+//
+// 2026 by Stefan Wagner:   https://github.com/wagiminator
+
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "system.h"
+
+// ===================================================================================
+// PWM Parameters
+// ===================================================================================
+#define PWM_MODE          0             // 0: single mode (16-bit, 3 ch), 1: split mode (8-bit, 6 ch)
+#define PWM_PRESC         0             // prescaler (0:1, 1:2, 2:4, 3:8, 4:16, 5:64, 6:256, 7:1024)
+#define PWM_TOP           255           // TOP value (period), freq = F_CPU/PRESC/(TOP+1)
+#define PWM_ALT           0x00          // bitmask for alternative pins (bit n = channel n)
+
+// ===================================================================================
+// PWM Functions and Macros
+// ===================================================================================
+void PWM_init(void);                    // init and start PWM timer
+void PWM_start(uint8_t ch);             // enable PWM output on channel
+void PWM_stop(uint8_t ch);              // disable PWM output on channel
+void PWM_write(uint8_t ch, uint16_t v); // set duty cycle of channel
+
+#define PWM_enable()          TCA0.SINGLE.CTRLA |=  TCA_SINGLE_ENABLE_bm
+#define PWM_disable()         TCA0.SINGLE.CTRLA &= ~TCA_SINGLE_ENABLE_bm
+#define PWM_setPRESC(n)       TCA0.SINGLE.CTRLA = (TCA0.SINGLE.CTRLA & ~0x0e) | (((n) & 7) << 1)
+
+#if PWM_MODE == 0
+  #define PWM_setTOP(v)       TCA0.SINGLE.PERBUF = (v)
+  #define PWM_OVF_INT_enable()  TCA0.SINGLE.INTCTRL  |=  TCA_SINGLE_OVF_bm
+  #define PWM_OVF_INT_disable() TCA0.SINGLE.INTCTRL  &= ~TCA_SINGLE_OVF_bm
+  #define PWM_OVF_FLAG_read()   (TCA0.SINGLE.INTFLAGS &  TCA_SINGLE_OVF_bm)
+  #define PWM_OVF_FLAG_clear()  TCA0.SINGLE.INTFLAGS  =  TCA_SINGLE_OVF_bm
+#else
+  #define PWM_setTOP(v)       do {TCA0.SPLIT.LPER = (v); TCA0.SPLIT.HPER = (v);} while(0)
+  #define PWM_OVF_INT_enable()  TCA0.SPLIT.INTCTRL   |=  TCA_SPLIT_LUNF_bm
+  #define PWM_OVF_INT_disable() TCA0.SPLIT.INTCTRL   &= ~TCA_SPLIT_LUNF_bm
+  #define PWM_OVF_FLAG_read()   (TCA0.SPLIT.INTFLAGS  &  TCA_SPLIT_LUNF_bm)
+  #define PWM_OVF_FLAG_clear()  TCA0.SPLIT.INTFLAGS   =  TCA_SPLIT_LUNF_bm
+#endif
+
+#ifdef __cplusplus
+};
+#endif

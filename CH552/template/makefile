@@ -9,7 +9,7 @@
 # Install toolchain:
 #   sudo apt install build-essential sdcc
 #   sudo apt install python3 python3-pip
-#   python3 -m pip install pyusb
+#   python3 -m pip install pyusb chprog
 #
 # Provide access permission to USB bootloader:
 #   echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="666"' | sudo tee /etc/udev/rules.d/99-ch55x.rules
@@ -30,21 +30,24 @@ FREQ_SYS  = 16000000
 XRAM_LOC  = 0x0100
 XRAM_SIZE = 0x0300
 CODE_SIZE = 0x3800
+# CH551: XRAM_SIZE = 0x0100, CODE_SIZE = 0x2800
 
 # Toolchain
 CC        = sdcc
 OBJCOPY   = objcopy
 PACK_HEX  = packihx
-ISPTOOL  ?= python3 $(TOOLS)/chprog.py $(BIN)/$(TARGET).bin
+ISPTOOL  ?= chprog $(BIN)/$(TARGET).bin
 
 # Compiler Flags
-CFLAGS  = -mmcs51 --model-small --no-xinit-opt -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I$(SOURCE) -I.
+CFLAGS  = -mmcs51 --model-small --no-xinit-opt --opt-code-size -DF_CPU=$(FREQ_SYS) -I$(INCLUDE) -I$(SOURCE) -I.
 CFLAGS += --xram-size $(XRAM_SIZE) --xram-loc $(XRAM_LOC) --code-size $(CODE_SIZE)
 CFILES  = $(wildcard ./*.c) $(wildcard $(SOURCE)/*.c)
 RFILES  = $(CFILES:.c=.rel)
 CLEAN   = rm -f *.ihx *.lk *.map *.mem *.lst *.rel *.rst *.sym *.asm *.adb $(BIN)/*.ihx $(BIN)/*.lk $(BIN)/*.map $(BIN)/*.mem
 
 # Symbolic Targets
+.PHONY: help flash all hex bin bin-hex install size removetemp clean
+
 help:
 	@echo "Use the following commands:"
 	@echo "make all     compile, build and keep all files"
@@ -86,9 +89,9 @@ install: flash
 
 size:
 	@echo "------------------"
-	@echo "FLASH: $(shell awk '$$1 == "ROM/EPROM/FLASH"      {print $$4}' $(BIN)/$(TARGET).mem) bytes"
-	@echo "IRAM:  $(shell awk '$$1 == "Stack"           {print 248-$$10}' $(BIN)/$(TARGET).mem) bytes"
-	@echo "XRAM:  $(shell awk '$$1 == "EXTERNAL" {print $(XRAM_LOC)+$$5}' $(BIN)/$(TARGET).mem) bytes"
+	@echo "FLASH: $(shell awk '$$1 == "ROM/EPROM/FLASH" {print $$(NF-1)}' $(BIN)/$(TARGET).mem) bytes"
+	@echo "IRAM:  $(shell awk '$$1 == "Stack" {print 248-$$10}' $(BIN)/$(TARGET).mem) bytes"
+	@echo "XRAM:  $(shell awk '$$1 == "EXTERNAL" {print $$(NF-1)}' $(BIN)/$(TARGET).mem) bytes"
 	@echo "------------------"
 
 removetemp:

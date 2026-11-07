@@ -1,18 +1,29 @@
 // ===================================================================================
-// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.2 *
+// Basic I2C Master Functions (write only) for tinyAVR 0-Series and 1-Series  * v1.3 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_tx.h"
 
-#define I2C_BAUD  ((F_CPU / I2C_CLKRATE - 10) / 2);   // simplified BAUD calculation
+// Missing in some device headers (0-series)
+#ifndef PORTMUX_TWI0_bm
+  #define PORTMUX_TWI0_bm 0x10
+#endif
+
+// BAUD calculation: f_SCL = F_CPU / (10 + 2 * BAUD + F_CPU * t_rise), t_rise ~ 250ns
+#define I2C_BAUD_CALC   (((F_CPU / I2C_CLKRATE) - 10 - (F_CPU / 4000000)) / 2)
+#if I2C_BAUD_CALC < 1
+  #define I2C_BAUD      1                         // fastest possible at low F_CPU
+#else
+  #define I2C_BAUD      I2C_BAUD_CALC
+#endif
 
 // Init I2C
 void I2C_init(void) {
   // Setup GPIO pins
   #if I2C_MAP == 0
-
-  #elif I2C_MAP == 1
+    PORTMUX.CTRLB &= ~PORTMUX_TWI0_bm;
+  #elif I2C_MAP == 1 && defined(PORTB)
     PORTMUX.CTRLB |= PORTMUX_TWI0_bm;
   #else
     #warning No automatic pin mapping for TWI0

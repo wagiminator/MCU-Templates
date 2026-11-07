@@ -43,7 +43,7 @@ void CDC_println(char* str);      // write string with newline to OUT buffer and
 #define CDC_init                  USB_init                      // setup USB-CDC
 #define CDC_available()           (CDC_readByteCount)           // ready to be read
 #define CDC_ready()               (!CDC_writeBusyFlag)          // ready to be written
-#define CDC_writeflush(c)         {CDC_write(c);CDC_flush();}   // write & flush char
+#define CDC_writeflush(c)         do {CDC_write(c);CDC_flush();} while(0) // write & flush
 
 // ===================================================================================
 // CDC Control Line State

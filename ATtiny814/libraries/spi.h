@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.0 *
+// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -11,9 +11,9 @@
 // SPI_enable()             Enable SPI module
 // SPI_disable()            Disable SPI module
 // SPI_MSB_first()          The MSB of the data byte is transmitted firstly
-// SPI_LSB_first()          The MSB of the data byte is transmitted firstly
-// SPI_setPRESC(n)          Set SPI clock prescaler (see below)
-// SPI_setMODE(n)           Set phase and polarity (refer to datasheet)
+// SPI_LSB_first()          The LSB of the data byte is transmitted firstly
+// SPI_setPRESC(n)          Set SPI clock prescaler (0:2, 1:8, 2:32, 3:64)
+// SPI_setMODE(n)           Set SPI mode 0..3 (phase and polarity)
 //
 // SPI0 pin mapping (set below in SPI parameters):
 // -----------------------------------------------
@@ -21,6 +21,8 @@
 // MOSI-pin   PA1    PC2    No mapping
 // MISO-pin   PA2    PC1    No mapping
 // SCK-pin    PA3    PC0    No mapping
+// SS-pin     PA4    PC3    (PA0 on 8-pin devices, not used by this library)
+// Map 1 is only available on 20-pin devices.
 //
 // Notes:
 // ------
@@ -41,8 +43,8 @@ extern "C" {
 // ===================================================================================
 // SPI Parameters
 // ===================================================================================
-#define SPI_MAP           0             // SPI port pin map (0 - 1)
-#define SPI_PRESC         0             // SPI clock divider (0:1, 1:4, 2:16, 3:32)
+#define SPI_MAP           0             // SPI port pin map (see above)
+#define SPI_PRESC         0             // SPI clock divider (0:2, 1:8, 2:32, 3:64)
 
 // ===================================================================================
 // SPI Functions and Macros

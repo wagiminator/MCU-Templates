@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB Handler for CH551, CH552 and CH554                                     * v1.5 *
+// USB Handler for CH551, CH552 and CH554                                     * v1.6 *
 // ===================================================================================
 
 #include "usb_handler.h"
@@ -59,6 +59,8 @@ void USB_EP0_copyDescr(uint8_t len) {
   __asm
     push acc                    ; acc -> stack
     push ar7                    ; r7  -> stack
+    mov  a, dpl                 ; len == 0 ?
+    jz   02$                    ; -> nothing to copy (djnz would copy 256 bytes)
     mov  r7, dpl                ; r7  <- len
     inc  _XBUS_AUX              ; select dptr1
     mov  dptr, #_EP0_buffer     ; dptr1 <- EP0_buffer
@@ -73,6 +75,7 @@ void USB_EP0_copyDescr(uint8_t len) {
     djnz r7, 01$                ; repeat len times
     mov  _USB_pDescr, dpl       ; USB_pDescr += len
     mov  (_USB_pDescr + 1), dph
+    02$:
     pop  ar7                    ; r7  <- stack
     pop  acc                    ; acc <- stack
   __endasm;
@@ -331,6 +334,7 @@ void USB_EP0_SETUP(void) {
     UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL; // STALL
   }
   else {                                    // transmit data to host or send 0-length packet
+    if(len > USB_SetupLen) len = USB_SetupLen;  // never send more than requested
     USB_SetupLen -= len;
     UEP0_T_LEN    = len;
     UEP0_CTRL     = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK;
@@ -358,7 +362,7 @@ void USB_EP0_IN(void) {
   switch(USB_SetupReq) {
     case USB_GET_DESCRIPTOR:
       len = USB_SetupLen >= EP0_SIZE ? EP0_SIZE : USB_SetupLen;
-      USB_EP0_copyDescr(len);                     // copy descriptor to EP0                                
+      USB_EP0_copyDescr(len);                     // copy descriptor to EP0
       USB_SetupLen -= len;
       UEP0_T_LEN    = len;
       UEP0_CTRL    ^= bUEP_T_TOG;                 // switch between DATA0 and DATA1

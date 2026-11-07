@@ -1,5 +1,5 @@
 // ===================================================================================
-// I2C Functions for CH551, CH552 and CH554                                   * v1.1 *
+// I2C Functions for CH551, CH552 and CH554                                   * v1.2 *
 // ===================================================================================
 //
 // Simple I2C bitbanging for 400kHz slave devices. For system clock < 12MHz the 
@@ -21,7 +21,7 @@
 // ===================================================================================
 // I2C Delay
 // ===================================================================================
-// (for 400kHz devices -> SCL low: min 1300us, SCL high: min 600us)
+// (for 400kHz devices -> SCL low: min 1300ns, SCL high: min 600ns)
 // The exact number of clock cycles required for jumps and thus also loops cannot 
 // be precisely predicted. However, this can be accepted for this type of 
 // application (synchronous data transmission).
@@ -60,7 +60,7 @@
 #define I2C_SCL_HIGH()  PIN_high(PIN_SCL)   // release SCL -> pulled HIGH by resistor
 #define I2C_SCL_LOW()   PIN_low(PIN_SCL)    // SCL LOW     -> pulled LOW  by MCU
 #define I2C_SDA_READ()  PIN_read(PIN_SDA)   // read SDA pin
-#define I2C_CLOCKOUT()  I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_DELAY_H();I2C_SCL_LOW()
+#define I2C_CLOCKOUT()  do {I2C_DELAY_L();I2C_SCL_HIGH();I2C_DELAY_H();I2C_DELAY_H();I2C_SCL_LOW();} while(0)
 
 // ===================================================================================
 // I2C Functions

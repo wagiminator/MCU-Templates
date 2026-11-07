@@ -1,5 +1,5 @@
 // ===================================================================================
-// Touch Key Functions for CH551, CH552 and CH554                             * v1.0 *
+// Touch Key Functions for CH551, CH552 and CH554                             * v1.1 *
 // ===================================================================================
 //
 // Simple touch key control functions without using baseline detection and interrupts.
@@ -30,7 +30,13 @@
 // TOUCH_PRESSED            touchkey has just been pressed
 // TOUCH_ON                 touchkey is still pressed
 // TOUCH_RELEASED           touchkey has just been released
-// TOUCH_OFF                touchkey ist sill released
+// TOUCH_OFF                touchkey is still released
+//
+// Notes:
+// ------
+// - Touch pins: P1.0, P1.1, P1.4, P1.5, P1.6, P1.7 (TIN0..TIN5).
+// - Each sample takes 1-2 timer cycles (1ms or 2ms). DLY_ms() uses the same timer
+//   and must not be used with TOUCH_cycle_2ms().
 //
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -52,7 +58,7 @@
 
 // Touch key functions
 #define TOUCH_disable()     TKEY_CTRL &= 0xF8
-#define TOUCH_enable()      TKEY_CTRL = TKEY_CTRL & 0xF8 | 7
+#define TOUCH_enable()      TKEY_CTRL = (TKEY_CTRL & 0xF8) | 7
 #define TOUCH_cycle_1ms()   TKEY_CTRL &= ~bTKC_2MS
 #define TOUCH_cycle_2ms()   TKEY_CTRL |= bTKC_2MS
 

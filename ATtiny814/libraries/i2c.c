@@ -1,21 +1,32 @@
 // ===================================================================================
-// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.2 *
+// Basic I2C Master Functions for tinyAVR 0-Series and 1-Series               * v1.3 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c.h"
 
-#define I2C_BAUD  ((F_CPU / I2C_CLKRATE - 10) / 2);   // simplified BAUD calculation
+// Missing in some device headers (0-series)
+#ifndef PORTMUX_TWI0_bm
+  #define PORTMUX_TWI0_bm 0x10
+#endif
+
+// BAUD calculation: f_SCL = F_CPU / (10 + 2 * BAUD + F_CPU * t_rise), t_rise ~ 250ns
+#define I2C_BAUD_CALC   (((F_CPU / I2C_CLKRATE) - 10 - (F_CPU / 4000000)) / 2)
+#if I2C_BAUD_CALC < 1
+  #define I2C_BAUD      1                         // fastest possible at low F_CPU
+#else
+  #define I2C_BAUD      I2C_BAUD_CALC
+#endif
 
 // Read/write flag
-uint8_t I2C_rwflag;
+static uint8_t I2C_rwflag;
 
 // Init I2C
 void I2C_init(void) {
   // Setup GPIO pins
   #if I2C_MAP == 0
-
-  #elif I2C_MAP == 1
+    PORTMUX.CTRLB &= ~PORTMUX_TWI0_bm;
+  #elif I2C_MAP == 1 && defined(PORTB)
     PORTMUX.CTRLB |= PORTMUX_TWI0_bm;
   #else
     #warning No automatic pin mapping for TWI0
@@ -35,7 +46,7 @@ void I2C_start(uint8_t addr) {
 
 // I2C restart transmission
 void I2C_restart(uint8_t addr) {
-  if(!I2C_rwflag) {                               // for read operation only
+  if(!I2C_rwflag) {                               // for write operation only
     while(~TWI0.MSTATUS & TWI_WIF_bm);            // wait for last transfer to complete
   }
   I2C_start(addr);                                // start sending address
@@ -43,10 +54,11 @@ void I2C_restart(uint8_t addr) {
 
 // I2C stop transmission
 void I2C_stop(void) {
-  if(!I2C_rwflag) {                               // for read operation only
+  if(!I2C_rwflag) {                               // for write operation only
     while(~TWI0.MSTATUS & TWI_WIF_bm);            // wait for last transfer to complete
   }
-  TWI0.MCTRLB = TWI_MCMD_STOP_gc;                 // send stop condition
+  TWI0.MCTRLB = TWI_ACKACT_NACK_gc                // NACK after last byte (read only)
+              | TWI_MCMD_STOP_gc;                 // send stop condition
 }
 
 // I2C transmit one data byte to the slave, ignore ACK bit

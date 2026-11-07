@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.0 *
+// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -15,6 +15,7 @@
 // I2C_MAP   0     1     2
 // SDA-pin  PB1   PA1   No mapping
 // SCL-pin  PB0   PA2   No mapping
+// 8-pin:   SDA PA1, SCL PA2 (map 0, no alternative)
 //
 // External pull-up resistors (4k7 - 10k) are mandatory!
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
@@ -32,7 +33,8 @@ extern "C" {
 #define I2C_ADDR        0x36              // I2C address of the device
 #define I2C_REG_SIZE    10                // number of 8-bit registers
 #define I2C_REG_SLCT    0                 // 0: transmission will always start with register 0
-                                          // 1: first byte written is register address (pointer)
+                                          // 1: first byte written is register address (pointer),
+                                          //    a following read starts at this register
 
 // I2C Slave Registers
 extern volatile uint8_t I2C_REG[];        // slave register array

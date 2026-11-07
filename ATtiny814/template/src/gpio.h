@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO Functions for tinyAVR 0-Series and 1-Series                     * v0.1 *
+// Basic GPIO Functions for tinyAVR 0-Series and 1-Series                     * v1.0 *
 // ===================================================================================
 //
 // Pins must be defined as PA0, PA1, .., PB0, PB1, .. - e.g.:
@@ -66,7 +66,7 @@
 // ADC_STDBY_disable()      disable ADC running in STANDBY sleep mode (*)
 // ADC_set8bit()            set ADC resolution to  8-bit
 // ADC_set10bit()           set ADC resolution to 10-bit (*)
-// ADC_freerun()            set ADC to free-run (continious) mode
+// ADC_freerun()            set ADC to free-run (continuous) mode
 // ADC_singleshot()         set ADC to single-shot mode (*)
 // ADC_slow()               set ADC for slow conversion speed (more accurate, higher impedance)
 // ADC_medium()             set ADC for medium conversion speed
@@ -84,16 +84,16 @@
 // ADC_read_VDD()           sample and read VDD in mV         (for 10-bit single-shot mode)
 // ADC_read_TEMP()          sample and read temperature in °C (for 10-bit single-shot mode)
 // ADC_read_freerun()       read next 10-bit ADC value in free-run mode (must be started first)
-// ADC_start_freerun()      set ADC to free-run (continious) mode and start conversion
+// ADC_start_freerun()      set ADC to free-run (continuous) mode and start conversion
 // ADC_start()              start ADC conversion
 //
 // ADC_REF_VDD()            select VDD as ADC reference
-// ADC_REF_VREF()           select internal voltage reference as ADC refeerence
+// ADC_REF_VREF()           select internal voltage reference as ADC reference
 // ADC_VREF_0v55()          select 0.55V as internal reference (*)
 // ADC_VREF_1V1()           select 1.1V  as internal reference
 // ADC_VREF_1V5()           select 1.5V  as internal reference
 // ADC_VREF_2V5()           select 2.5V  as internal reference
-// ADC_VREF_4V34()          select 4.43V as internal reference
+// ADC_VREF_4V34()          select 4.34V as internal reference
 // ADC_VREF_enable()        force internal reference to stay always on
 // ADC_VREF_disable()       internal reference is only on when needed (*)
 //
@@ -124,8 +124,8 @@
 // CMP_POS_PB5()            set pin PB5 as positive (non-inverting) CMP input
 // CMP_POS_PB6()            set pin PB6 as positive (non-inverting) CMP input
 //
-// CMP_OUT_enable()         enable CMP output on pin PA5
-// CMP_OUT_disable()        disable CMP output on pin PA5
+// CMP_OUT_enable()         enable CMP output on pin PA5 (PA3 on 8-pin devices)
+// CMP_OUT_disable()        disable CMP output
 // CMP_OUT_invert()         invert CMP output
 // CMP_OUT_invertoff()      do not invert CMP output
 // CMP_OUT_read()           read CMP output (0: pos < neg, 1: pos > neg; if not inverted)
@@ -140,7 +140,7 @@
 // ------------------------
 // DAC_enable()             enable digital-to-analog converter (DAC)
 // DAC_disable()            disable DAC
-// DAC_OUT_enable()         enable DAC output on pin PA6 and configure PA6
+// DAC_OUT_enable()         enable DAC output on pin PA6 and disable digital input of PA6
 // DAC_OUT_disable()        disable DAC output on pin PA6 (*)
 // DAC_STDBY_enable()       enable DAC running in STANDBY sleep mode
 // DAC_STDBY_disable()      disable DAC running in STANDBY sleep mode (*)
@@ -151,7 +151,7 @@
 // DAC_VREF_1V1()           select 1.1V  as DAC reference
 // DAC_VREF_1V5()           select 1.5V  as DAC reference
 // DAC_VREF_2V5()           select 2.5V  as DAC reference
-// DAC_VREF_4V34()          select 4.43V as DAC reference
+// DAC_VREF_4V34()          select 4.34V as DAC reference
 // DAC_VREF_enable()        force DAC reference to stay always on
 // DAC_VREF_disable()       DAC reference is only on when needed (*)
 //
@@ -160,8 +160,10 @@
 // - (*) reset state
 // - Pins used for ADC and DAC must be set with PIN_input and PIN_disable beforehand. 
 // - ADC input pins: PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB4, PB5.
-// - CMP inverting input pins: PA6, PB4; non-onverting: PA7, PB1, PB5, PB6; output: PA5.
-// - DAC output pin: PA6.
+// - CMP inverting input pins: PA6, PB4; non-inverting: PA7, PB5, PB1, PB6; output: PA5
+//   (8-pin devices: inverting PA6, non-inverting PA7, output PA3).
+// - DAC output pin: PA6. DAC functions are only available on 1-series devices.
+// - ADC_read_VDD() and ADC_read_TEMP() change reference and input settings.
 // - Not all pins and functions are available for every ATtiny. Refer to the datasheet
 //   for more details.
 //
@@ -194,9 +196,9 @@ enum { PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7,
 
 #define PIN_low(x)          (&VPORTA.OUT)[((x)&24)>>1] &= ~(1<<((x)&7))
 #define PIN_high(x)         (&VPORTA.OUT)[((x)&24)>>1] |=  (1<<((x)&7))
-#define PIN_toggle(x)       (&VPORTA.IN )[((x)&24)>>1] |=  (1<<((x)&7))
+#define PIN_toggle(x)       (&VPORTA.IN )[((x)&24)>>1]  =  (1<<((x)&7))
 #define PIN_read(x)         ((&VPORTA.IN)[((x)&24)>>1] &   (1<<((x)&7)))
-#define PIN_write(x, v)     (v)?(PIN_high(x)):(PIN_low(x))
+#define PIN_write(x, v)     ((v) ? (PIN_high(x)) : (PIN_low(x)))
 
 #define PIN_enable(x)       (&PORTA.PIN0CTRL)[(((x)&24)<<2)+((x)&7)] &= ~PORT_ISC_gm
 #define PIN_disable(x)      (&PORTA.PIN0CTRL)[(((x)&24)<<2)+((x)&7)] =                \
@@ -216,14 +218,18 @@ enum { PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7,
                             | PORT_ISC_BOTHEDGES_gc
 
 #define PIN_FLAG_read(x)    ((&VPORTA.INTFLAGS)[((x)&24)>>1] &  (1<<((x)&7)))
-#define PIN_FLAG_clear(x)   ( &VPORTA.INTFLAGS)[((x)&24)>>1] |= (1<<((x)&7))
+#define PIN_FLAG_clear(x)   ( &VPORTA.INTFLAGS)[((x)&24)>>1] =  (1<<((x)&7))
 
 // Disable all pins to save power
 static inline void PIN_all_disable(void) {
   for(uint8_t pin=0; pin<8; pin++) {
-    (&PORTA.PIN0CTRL)[pin +  0] = PORT_ISC_INPUT_DISABLE_gc;
-    (&PORTA.PIN0CTRL)[pin + 32] = PORT_ISC_INPUT_DISABLE_gc;
-    (&PORTA.PIN0CTRL)[pin + 64] = PORT_ISC_INPUT_DISABLE_gc;
+    (&PORTA.PIN0CTRL)[pin] = PORT_ISC_INPUT_DISABLE_gc;
+    #ifdef PORTB
+    (&PORTB.PIN0CTRL)[pin] = PORT_ISC_INPUT_DISABLE_gc;
+    #endif
+    #ifdef PORTC
+    (&PORTC.PIN0CTRL)[pin] = PORT_ISC_INPUT_DISABLE_gc;
+    #endif
   }
 }
 
@@ -234,7 +240,7 @@ static inline void PIN_all_disable(void) {
 #define PORTA_output()      PORTA.DIR = 0xff
 #define PORTA_low()         PORTA.OUT = 0x00
 #define PORTA_high()        PORTA.OUT = 0xff
-#define PORTA_write(v)      PORTA.OUT = val
+#define PORTA_write(v)      PORTA.OUT = (v)
 #define PORTA_toggle()      PORTA.OUTTGL = 0xff
 #define PORTA_read()        (PORTA.IN)
 
@@ -242,7 +248,7 @@ static inline void PIN_all_disable(void) {
 #define PORTB_output()      PORTB.DIR = 0xff
 #define PORTB_low()         PORTB.OUT = 0x00
 #define PORTB_high()        PORTB.OUT = 0xff
-#define PORTB_write(v)      PORTB.OUT = val
+#define PORTB_write(v)      PORTB.OUT = (v)
 #define PORTB_toggle()      PORTB.OUTTGL = 0xff
 #define PORTB_read()        (PORTB.IN)
 
@@ -250,7 +256,7 @@ static inline void PIN_all_disable(void) {
 #define PORTC_output()      PORTC.DIR = 0xff
 #define PORTC_low()         PORTC.OUT = 0x00
 #define PORTC_high()        PORTC.OUT = 0xff
-#define PORTC_write(v)      PORTC.OUT = val
+#define PORTC_write(v)      PORTC.OUT = (v)
 #define PORTC_toggle()      PORTC.OUTTGL = 0xff
 #define PORTC_read()        (PORTC.IN)
 
@@ -278,7 +284,7 @@ static inline void PIN_all_disable(void) {
 #define ADC_freerun()       ADC0.CTRLA |=  ADC_FREERUN_bm
 #define ADC_singleshot()    ADC0.CTRLA &= ~ADC_FREERUN_bm
 #define ADC_start()         ADC0.COMMAND = ADC_STCONV_bm
-#define ADC_start_freerun() {ADC_freerun(); ADC_FLAG_clear(); ADC_start();}
+#define ADC_start_freerun() do {ADC_freerun(); ADC_FLAG_clear(); ADC_start();} while(0)
 
 #define ADC_oversample(n)   ADC0.CTRLB  =  (n) & 0x07
 
@@ -288,15 +294,15 @@ static inline void PIN_all_disable(void) {
 #define ADC_VREF_enable()   VREF.CTRLB |=  VREF_ADC0REFEN_bm
 #define ADC_VREF_disable()  VREF.CTRLB &= ~VREF_ADC0REFEN_bm
 #define ADC_VREF_0v55()     VREF.CTRLA &= ~VREF_ADC0REFSEL_gm
-#define ADC_VREF_1V1()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_ADC0REFSEL_1V1_gc
-#define ADC_VREF_1V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_ADC0REFSEL_1V5_gc
-#define ADC_VREF_2V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_ADC0REFSEL_2V5_gc
-#define ADC_VREF_4V34()     VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_ADC0REFSEL_4V34_gc
+#define ADC_VREF_1V1()      VREF.CTRLA = (VREF.CTRLA & ~VREF_ADC0REFSEL_gm) | VREF_ADC0REFSEL_1V1_gc
+#define ADC_VREF_1V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF_ADC0REFSEL_gm) | VREF_ADC0REFSEL_1V5_gc
+#define ADC_VREF_2V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF_ADC0REFSEL_gm) | VREF_ADC0REFSEL_2V5_gc
+#define ADC_VREF_4V34()     VREF.CTRLA = (VREF.CTRLA & ~VREF_ADC0REFSEL_gm) | VREF_ADC0REFSEL_4V34_gc
 
 #define ADC_isRunning()     (ADC0.COMMAND  &  ADC_STCONV_bm)
 #define ADC_isReady()       (ADC0.INTFLAGS &  ADC_RESRDY_bm)
 #define ADC_FLAG_read()     (ADC0.INTFLAGS &  ADC_RESRDY_bm)
-#define ADC_FLAG_clear()    ADC0.INTFLAGS |=  ADC_RESRDY_bm
+#define ADC_FLAG_clear()    ADC0.INTFLAGS  =  ADC_RESRDY_bm
 #define ADC_INT_enable()    ADC0.INTCTRL  |=  ADC_RESRDY_bm
 #define ADC_INT_disable()   ADC0.INTCTRL  &= ~ADC_RESRDY_bm
 
@@ -312,12 +318,12 @@ static inline void PIN_all_disable(void) {
 #define ADC_input_TEMP()    ADC0.MUXPOS = 0x1e
 #define ADC_input_GND()     ADC0.MUXPOS = 0x1f
 
-#define ADC_slow()          {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 4); \
-                             ADC0.SAMPCTRL = 0x1f;}
-#define ADC_medium()        {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 2); \
-                             ADC0.SAMPCTRL = 0x07;}
-#define ADC_fast()          {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 0); \
-                             ADC0.SAMPCTRL = 0x00;}
+#define ADC_slow()          do {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 4); \
+                             ADC0.SAMPCTRL = 0x1f;} while(0)
+#define ADC_medium()        do {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 2); \
+                             ADC0.SAMPCTRL = 0x07;} while(0)
+#define ADC_fast()          do {ADC0.CTRLC = (ADC0.CTRLC & ~ADC_PRESC_gm) | (ADC_PRESC + 0); \
+                             ADC0.SAMPCTRL = 0x00;} while(0)
 
 // ADC init
 static inline void ADC_init(void) {
@@ -336,7 +342,7 @@ static inline uint16_t ADC_read(void) {
 }
 
 // ADC read (8-bit, for single shot only)
-static inline uint16_t ADC_read_8bit(void) {
+static inline uint8_t ADC_read_8bit(void) {
   ADC0.COMMAND = ADC_STCONV_bm;               // start sampling
   while(ADC0.COMMAND & ADC_STCONV_bm);        // wait until sampling complete
   return ADC0.RESL;                           // return sample value
@@ -354,16 +360,27 @@ static inline uint16_t ADC_read_VDD(void) {
   ADC_REF_VDD();                              // select VDD as ADC reference
   ADC_input_VREF();                           // set internal reference as ADC input
   DLY_us(32);                                 // give time to settle
-  return((1500UL * 1023) / ADC_read());       // sample, calculate and return VDD in mV
+  uint16_t raw = ADC_read();                  // sample internal reference
+  if(!raw) return 0xffff;                     // prevent division by zero
+  return((1500UL * 1024) / raw);              // calculate and return VDD in mV
 }
 
 // Sample and read temperature sensor in °C
-static inline int8_t ADC_read_TEMP(void) {
+static inline int16_t ADC_read_TEMP(void) {
+  uint8_t ctrlc    = ADC0.CTRLC;              // save ADC settings
+  uint8_t sampctrl = ADC0.SAMPCTRL;
   ADC_VREF_1V1();                             // select 1.1V internal reference
-  ADC_REF_VREF();                             // select internal reference as ADC reference
+  ADC0.CTRLC = ADC_SAMPCAP_bm                 // SAMPCAP = 1 (datasheet recommendation)
+             | ADC_REFSEL_INTREF_gc           // internal reference as ADC reference
+             | (ADC_PRESC + 1);               // CLK_ADC <= 625kHz -> SAMPLEN >= 32us
+  ADC0.SAMPCTRL = 31;                         // max sample length
   ADC_input_TEMP();                           // set temp sensor as ADC input
   DLY_us(32);                                 // give time to settle
-  return(((((int32_t)ADC_read() - SIGROW.TEMPSENSE1) * SIGROW.TEMPSENSE0 + 90) >> 8) - 273);
+  int32_t temp = (int32_t)ADC_read() - (int8_t)SIGROW.TEMPSENSE1; // offset correction
+  temp *= SIGROW.TEMPSENSE0;                  // gain correction
+  ADC0.CTRLC    = ctrlc;                      // restore ADC settings
+  ADC0.SAMPCTRL = sampctrl;
+  return(((temp + 0x80) >> 8) - 273);         // calculate and return temperature in °C
 }
 
 // ===================================================================================
@@ -377,27 +394,31 @@ static inline int8_t ADC_read_TEMP(void) {
 #define CMP_LP_disable()    AC0.CTRLA &= ~AC_LPMODE_bm
 #define CMP_HYS_set(n)      AC0.CTRLA  =  (AC0.CTRLA & ~AC_HYSMODE_gm) | (((n)<<1)&0x06)
 
-#define CMP_NEG_PA6()       AC0.MUXCTRLA &= ~AC_MUXNEG_gm
-#define CMP_NEG_PB4()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXNEG_gm) | AC_MUXNEG_PIN1_gc
-#define CMP_NEG_VREF()      AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXNEG_gm) | AC_MUXNEG_VREF_gc
-#define CMP_NEG_DAC()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXNEG_gm) | AC_MUXNEG_DAC_gc
+#define CMP_NEG_PA6()       AC0.MUXCTRLA &= ~0x06               // AINN0
+#define CMP_NEG_PB4()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x06) | (1<<1)  // AINN1
+#define CMP_NEG_VREF()      AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x06) | (2<<1)  // VREF
+#define CMP_NEG_DAC()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x06) | (3<<1)  // DAC0
 
-#define CMP_POS_PA7()       AC0.MUXCTRLA &= ~AC_MUXPOS_gm
-#define CMP_POS_PB5()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXPOS_gm) | AC_MUXPOS_PIN1_gc
-#define CMP_POS_PB1()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXPOS_gm) | AC_MUXPOS_PIN2_gc
-#define CMP_POS_PB6()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~AC_MUXPOS_gm) | AC_MUXPOS_PIN3_gc
+#define CMP_POS_PA7()       AC0.MUXCTRLA &= ~0x18               // AINP0
+#define CMP_POS_PB5()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x18) | (1<<3)  // AINP1
+#define CMP_POS_PB1()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x18) | (2<<3)  // AINP2
+#define CMP_POS_PB6()       AC0.MUXCTRLA = (AC0.MUXCTRLA & ~0x18) | (3<<3)  // AINP3
 
-#define CMP_OUT_enable()    {PIN_output(PA5); AC0.CTRLA |= AC_OUTEN_bm;}
+#ifdef PORTB
+  #define CMP_OUT_enable()  do {PIN_output(PA5); AC0.CTRLA |= AC_OUTEN_bm;} while(0)
+#else
+  #define CMP_OUT_enable()  do {PIN_output(PA3); AC0.CTRLA |= AC_OUTEN_bm;} while(0)
+#endif
 #define CMP_OUT_disable()   AC0.CTRLA    &= ~AC_OUTEN_bm
 #define CMP_OUT_invert()    AC0.MUXCTRLA |=  AC_INVERT_bm
 #define CMP_OUT_invertoff() AC0.MUXCTRLA &= ~AC_INVERT_bm
-#define CMP_OUT_read()      (AC0.STATUS >> AC_STATE_bp)
+#define CMP_OUT_read()      ((AC0.STATUS & AC_STATE_bm) >> AC_STATE_bp)
 
 #define CMP_INT_mode(n)     AC0.CTRLA    =  (AC0.CTRLA & ~AC_INTMODE_gm) | (((n)<<4)&0x30)
 #define CMP_INT_enable()    AC0.INTCTRL  =  AC_CMP_bm
 #define CMP_INT_disable()   AC0.INTCTRL  =  0
 #define CMP_FLAG_read()     (AC0.STATUS  &  AC_CMP_bm)
-#define CMP_FLAG_clear()    AC0.STATUS  |=  AC_CMP_bm
+#define CMP_FLAG_clear()    AC0.STATUS   =  AC_CMP_bm
 
 // ===================================================================================
 // DAC Functions
@@ -406,18 +427,18 @@ static inline int8_t ADC_read_TEMP(void) {
 #define DAC_disable()       DAC0.CTRLA &= ~DAC_ENABLE_bm
 #define DAC_STDBY_enable()  DAC0.CTRLA |=  DAC_RUNSTDBY_bm
 #define DAC_STDBY_disable() DAC0.CTRLA &= ~DAC_RUNSTDBY_bm
-#define DAC_OUT_enable()    {PIN_disable(PA6); PIN_output(PA6); DAC0.CTRLA |= DAC_OUTEN_bm;}
+#define DAC_OUT_enable()    do {PIN_disable(PA6); DAC0.CTRLA |= DAC_OUTEN_bm;} while(0)
 #define DAC_OUT_disable()   DAC0.CTRLA &= ~DAC_OUTEN_bm
 
-#define DAC_set(v)          DAC0.DATA = v
+#define DAC_set(v)          DAC0.DATA = (v)
 
 #define DAC_VREF_enable()   VREF.CTRLB |=  VREF_DAC0REFEN_bm
 #define DAC_VREF_disable()  VREF.CTRLB &= ~VREF_DAC0REFEN_bm
 #define DAC_VREF_0v55()     VREF.CTRLA &= ~VREF_DAC0REFSEL_gm
-#define DAC_VREF_1V1()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_DAC0REFSEL_1V1_gc
-#define DAC_VREF_1V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_DAC0REFSEL_1V5_gc
-#define DAC_VREF_2V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_DAC0REFSEL_2V5_gc
-#define DAC_VREF_4V34()     VREF.CTRLA = (VREF.CTRLA & ~VREF.CTRLA) | VREF_DAC0REFSEL_4V34_gc
+#define DAC_VREF_1V1()      VREF.CTRLA = (VREF.CTRLA & ~VREF_DAC0REFSEL_gm) | VREF_DAC0REFSEL_1V1_gc
+#define DAC_VREF_1V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF_DAC0REFSEL_gm) | VREF_DAC0REFSEL_1V5_gc
+#define DAC_VREF_2V5()      VREF.CTRLA = (VREF.CTRLA & ~VREF_DAC0REFSEL_gm) | VREF_DAC0REFSEL_2V5_gc
+#define DAC_VREF_4V34()     VREF.CTRLA = (VREF.CTRLA & ~VREF_DAC0REFSEL_gm) | VREF_DAC0REFSEL_4V34_gc
 
 #ifdef __cplusplus
 };

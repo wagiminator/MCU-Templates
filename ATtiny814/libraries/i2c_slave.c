@@ -1,19 +1,21 @@
 // ===================================================================================
-// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.0 *
+// Basic I2C Slave Functions for tinyAVR 0-Series and 1-Series                * v1.1 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "i2c_slave.h"
 
+// Missing in some device headers (0-series)
+#ifndef PORTMUX_TWI0_bm
+  #define PORTMUX_TWI0_bm 0x10
+#endif
+
 // I2C slave registers
-uint8_t I2C_REG_ptr;                              // register pointer
+static uint8_t I2C_REG_ptr;                       // register pointer
 volatile uint8_t I2C_REG[I2C_REG_SIZE];           // register array
 volatile uint8_t I2C_FLAG_changed = 0;            // register change flag
 volatile uint8_t I2C_FLAG_busy = 0;               // I2C busy flag
-
-#if I2C_REG_SLCT > 0
-uint8_t I2C_FLAG_reg;
-#endif
+static uint8_t I2C_FLAG_first;                    // first data byte of transaction
 
 // I2C slave command macros
 #define I2C_complete() TWI0.SCTRLB = TWI_SCMD_COMPTRANS_gc
@@ -29,13 +31,15 @@ uint8_t I2C_FLAG_reg;
 #define I2C_isStop()  ((TWI0.SSTATUS & TWI_APIF_bm) && (~TWI0.SSTATUS & TWI_AP_bm))
 #define I2C_isIn()    (~TWI0.SSTATUS & TWI_DIR_bm)
 #define I2C_isOut()   (TWI0.SSTATUS & TWI_DIR_bm)
+#define I2C_isNACK()  (TWI0.SSTATUS & TWI_RXACK_bm)
+#define I2C_isError() (TWI0.SSTATUS & (TWI_COLL_bm | TWI_BUSERR_bm))
 
 // I2C slave init
 void I2C_init(void) {
   // Setup GPIO pins
   #if I2C_MAP == 0
-
-  #elif I2C_MAP == 1
+    PORTMUX.CTRLB &= ~PORTMUX_TWI0_bm;
+  #elif I2C_MAP == 1 && defined(PORTB)
     PORTMUX.CTRLB |= PORTMUX_TWI0_bm;
   #else
     #warning No automatic pin mapping for TWI0
@@ -52,37 +56,50 @@ void I2C_init(void) {
 
 // I2C slave interrupt service routine
 ISR(TWI0_TWIS_vect) { 
+  // Bus error or collision: abort transaction
+  if(I2C_isError()) {
+    TWI0.SSTATUS = TWI_COLL_bm | TWI_BUSERR_bm;   // clear error flags
+    I2C_complete();                               // wait for next start condition
+    I2C_FLAG_busy = 0;
+    return;
+  }
+
   // Address match interrupt handler
   if(I2C_isAddr()) {                              // address match?
     I2C_sendACK();                                // send ACK to master
-    I2C_REG_ptr = 0;                              // reset register pointer
-    I2C_FLAG_busy = 1;                            // set I2C busy flag
-    #if I2C_REG_SLCT > 0
-    I2C_FLAG_reg  = 1;                            // first byte will be reg ptr
+    #if I2C_REG_SLCT == 0
+    I2C_REG_ptr = 0;                              // always start with register 0
     #endif
+    I2C_FLAG_first = 1;                           // next byte is the first one
+    I2C_FLAG_busy  = 1;                           // set I2C busy flag
     return;                                       // quit ISR
   }
   
   // Data interrupt handler
   if(I2C_isData()) {                              // data transmission?
     if(I2C_isOut()) {                             // slave writing to master?
+      if(!I2C_FLAG_first && I2C_isNACK()) {       // master sent NACK?
+        I2C_complete();                           // -> transaction is complete
+        return;
+      }
       I2C_put(I2C_REG[I2C_REG_ptr]);              // send register value to master
       I2C_response();                             // no ACK needed here
     }
     else {                                        // slave reading from master?
+      uint8_t data = I2C_get();                   // get data byte
       #if I2C_REG_SLCT > 0
-      if(I2C_FLAG_reg) {
-        I2C_REG_ptr = I2C_get();;                 // read register address (pointer)
-        I2C_FLAG_reg = 0;                         // next bytes will be data
+      if(I2C_FLAG_first) {                        // first byte is register address
+        I2C_REG_ptr = (data < I2C_REG_SIZE) ? data : 0;
+        I2C_FLAG_first = 0;
+        I2C_sendACK();                            // send ACK to master
+        return;                                   // don't increase pointer
       }
-      else
       #endif
-      {
-        I2C_REG[I2C_REG_ptr] = I2C_get();         // read register value from master
-        I2C_FLAG_changed = 1;                     // set register changed flag
-      }
+      I2C_REG[I2C_REG_ptr] = data;                // write register value from master
+      I2C_FLAG_changed = 1;                       // set register changed flag
       I2C_sendACK();                              // send ACK to master
     }
+    I2C_FLAG_first = 0;
     if(++I2C_REG_ptr >= I2C_REG_SIZE)             // increase pointer...
       I2C_REG_ptr = 0;                            // ...or wrap around
     return;                                       // quit ISR

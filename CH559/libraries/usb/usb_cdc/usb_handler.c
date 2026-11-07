@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB Handler for CH559                                                      * v1.1 *
+// USB Handler for CH559                                                      * v1.2 *
 // ===================================================================================
 
 #include "usb_handler.h"
@@ -36,6 +36,7 @@ void USB_init(void) {
               | bUC_INT_BUSY                // return NAK if USB INT flag not clear
               | bUC_DMA_EN;                 // DMA enable
   UDEV_CTRL   = bUD_DP_PD_DIS               // disable UDP pulldown resistor
+              | bUD_DM_PD_DIS               // disable UDM pulldown resistor
               | bUD_PORT_EN;                // enable port, full-speed
 
   USB_EP_init();                            // setup endpoints
@@ -60,6 +61,8 @@ void USB_EP0_copyDescr(uint8_t len) {
   __asm
     push acc                    ; acc -> stack
     push ar7                    ; r7  -> stack
+    mov  a, dpl                 ; len == 0 ?
+    jz   02$                    ; -> nothing to copy (djnz would copy 256 bytes)
     mov  r7, dpl                ; r7  <- len
     inc  _XBUS_AUX              ; select dptr1
     mov  dptr, #_EP0_buffer     ; dptr1 <- EP0_buffer
@@ -74,6 +77,7 @@ void USB_EP0_copyDescr(uint8_t len) {
     djnz r7, 01$                ; repeat len times
     mov  _USB_pDescr, dpl       ; USB_pDescr += len
     mov  (_USB_pDescr + 1), dph
+    02$:
     pop  ar7                    ; r7  <- stack
     pop  acc                    ; acc <- stack
   __endasm;
@@ -332,6 +336,7 @@ void USB_EP0_SETUP(void) {
     UEP0_CTRL  = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_STALL | UEP_T_RES_STALL; // STALL
   }
   else {                                    // transmit data to host or send 0-length packet
+    if(len > USB_SetupLen) len = USB_SetupLen;  // never send more than requested
     USB_SetupLen -= len;
     UEP0_T_LEN    = len;
     UEP0_CTRL     = bUEP_R_TOG | bUEP_T_TOG | UEP_R_RES_ACK | UEP_T_RES_ACK; // Expect DATA1, Answer ACK

@@ -1,5 +1,5 @@
 // ===================================================================================
-// NeoPixel (Addressable LED) Functions for CH551, CH552 and CH554            * v1.2 *
+// NeoPixel (Addressable LED) Functions for CH551, CH552 and CH554            * v1.3 *
 // ===================================================================================
 //
 // Basic control functions for 800kHz addressable LEDs (NeoPixel). A simplified 
@@ -21,7 +21,6 @@
 
 #define NEOPIN PIN_asm(PIN_NEO)             // convert PIN_NEO for inline assembly
 __xdata uint8_t NEO_buffer[3 * NEO_COUNT];  // pixel buffer
-__xdata uint8_t *ptr;                       // pixel buffer pointer
 
 // ===================================================================================
 // Protocol Delays
@@ -69,7 +68,7 @@ __xdata uint8_t *ptr;                       // pixel buffer pointer
     nop             \
     nop                     // 8 - 4 = 4 clock cycles for min 625ns
   #define TCT_DELAY         // 14 - 4 - 11 < 0 clock cycles for min 1150ns
-#elif F_CPU == 6000000      // 13 MHz system clock
+#elif F_CPU == 6000000      // 6 MHz system clock
   #define T1H_DELAY         // 4 - 4 = 0 clock cycles for min 625ns
   #define TCT_DELAY         // 7 - 0 - 11 < 0 clock cycles for min 1150ns
 #else
@@ -104,10 +103,11 @@ void NEO_sendByte(uint8_t data) {
 // ===================================================================================
 void NEO_update(void) {
   uint8_t i;
-  ptr = NEO_buffer;
+  __bit ea = EA;                            // save interrupt state
+  __xdata uint8_t* ptr = NEO_buffer;
   EA = 0;
   for(i=3*NEO_COUNT; i; i--) NEO_sendByte(*ptr++);
-  EA = 1;
+  EA = ea;                                  // restore interrupt state
   NEO_latch();
 }
 
@@ -116,7 +116,7 @@ void NEO_update(void) {
 // ===================================================================================
 void NEO_clearAll(void) {
   uint8_t i;
-  ptr = NEO_buffer;
+  __xdata uint8_t* ptr = NEO_buffer;
   for(i=3*NEO_COUNT; i; i--) *ptr++ = 0;
   NEO_update();
 }
@@ -125,6 +125,8 @@ void NEO_clearAll(void) {
 // Write Color to a Single Pixel in Buffer
 // ===================================================================================
 void NEO_writeColor(uint8_t pixel, uint8_t r, uint8_t g, uint8_t b) {
+  __xdata uint8_t* ptr;
+  if(pixel >= NEO_COUNT) return;            // check pixel index
   ptr = NEO_buffer + (3 * pixel);
   #if defined (NEO_GRB)
     *ptr++ = g; *ptr++ = r; *ptr = b;

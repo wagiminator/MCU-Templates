@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic GPIO, PWM and ADC Functions for CH551, CH552 and CH554               * v1.5 *
+// Basic GPIO, PWM and ADC Functions for CH551, CH552 and CH554               * v1.6 *
 // ===================================================================================
 //
 // Pins must be defined as P10, P11, P12, etc. - e.g.:
@@ -24,13 +24,27 @@
 // PIN_WAKE_enable(PIN)     enable wake-up from sleep by PIN low (P13, P14, P15 only)
 // PIN_WAKE_disable(PIN)    disable wake-up from sleep by PIN low
 //
+// PIN_INT_enable(PIN)      enable GPIO interrupt on PIN low (P13, P14, P15, P31 only)
+// PIN_INT_disable(PIN)     disable GPIO interrupt on PIN
+// PIN_INT_edge()           GPIO interrupts on falling edge (for all GPIO interrupt pins)
+// PIN_INT_level()          GPIO interrupts on low level (default)
+//
+// INT0_falling()           external interrupt INT0 (P3.2) on falling edge
+// INT0_low()               external interrupt INT0 (P3.2) on low level
+// INT0_enable()            enable INT0 interrupt (INT_NO_INT0)
+// INT0_disable()           disable INT0 interrupt
+// INT1_falling()           external interrupt INT1 (P3.3) on falling edge
+// INT1_low()               external interrupt INT1 (P3.3) on low level
+// INT1_enable()            enable INT1 interrupt (INT_NO_INT1)
+// INT1_disable()           disable INT1 interrupt
+//
 // PWM_start(PIN)           start PWM output on PIN, can be (P15 or P30) and (P34 or P31)
 // PWM_stop(PIN)            stop PWM output on PIN
 // PWM_write(PIN, val)      set PWM output active level duty cycle on PIN
 //
 // PWM_pol_normal(PIN)      set normal PWM polarity on PIN (default low and active high)
 // PWM_pol_reverse(PIN)     set reverse PWM polarity on PIN (default high and active low)
-// PWM_set_freq(FREQ)       set global PWM frequency (in Hertz)
+// PWM_set_freq(FREQ)       set global PWM frequency (in Hertz, F_CPU/65280 .. F_CPU/256)
 //
 // ADC_enable()             enable ADC
 // ADC_disable()            disable ADC
@@ -47,8 +61,10 @@
 //
 // Notes:
 // ------
-// Pins used for PWM should be set as OUTPUT beforehand.
-// Pins used for ADC or CMP must have been set as INPUT (high impedance) beforehand.
+// - Pins used for PWM should be set as OUTPUT (push-pull) beforehand.
+// - Pins used for ADC or CMP must have been set as INPUT (high impedance) beforehand.
+// - The ADC result is relative to VCC (0..255). ADC and CMP are not available on CH551.
+// - The GPIO interrupt (INT_NO_GPIO) is shared by all enabled GPIO interrupt pins.
 //
 // 2022 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -97,7 +113,7 @@ SBIT(PP37, 0xB0, 7);
 #define PORT_h_h(PORT, PIN)       PP##PORT##PIN = 1
 #define PORT_h_t(PORT, PIN)       PP##PORT##PIN = !PP##PORT##PIN
 #define PORT_h_r(PORT, PIN)       (PP##PORT##PIN)
-#define PORT_h_w(PORT,PIN,val)    PP##PORT##PIN = val
+#define PORT_h_w(PORT,PIN,val)    PP##PORT##PIN = (val)
 
 // ===================================================================================
 // Set pin as INPUT (high impedance, no pullup)
@@ -144,7 +160,7 @@ SBIT(PP37, 0xB0, 7);
 #define PIN_high(PIN)         PIN_h_s(PIN) = 1              // set pin to HIGH
 #define PIN_toggle(PIN)       PIN_h_s(PIN) = !PIN_h_s(PIN)  // TOGGLE pin
 #define PIN_read(PIN)         (PIN_h_s(PIN))                // READ pin
-#define PIN_write(PIN, val)   PIN_h_s(PIN) = val            // WRITE pin value
+#define PIN_write(PIN, val)   PIN_h_s(PIN) = (val)          // WRITE pin value
 
 // ===================================================================================
 // (PORT, PIN) manipulation macros
@@ -168,18 +184,47 @@ SBIT(PP37, 0xB0, 7);
 
 // ===================================================================================
 // Enable/disable WAKE-up from sleep by pin LOW (P13, P14, P15 only)
+// (WAKE_CTRL can only be written in safe mode)
 // ===================================================================================
-#define WAKE_PIN_enable(PIN) \
-  ((PIN == P13) ? (WAKE_CTRL |= bWAK_P1_3_LO) : \
-  ((PIN == P14) ? (WAKE_CTRL |= bWAK_P1_4_LO) : \
-  ((PIN == P15) ? (WAKE_CTRL |= bWAK_P1_5_LO) : \
+#define PIN_WAKE_bit(PIN) \
+  ((PIN == P13) ? bWAK_P1_3_LO : \
+  ((PIN == P14) ? bWAK_P1_4_LO : \
+  ((PIN == P15) ? bWAK_P1_5_LO : \
+(0))))
+
+#define PIN_WAKE_enable(PIN)  do {SAFE_MOD = 0x55; SAFE_MOD = 0xAA;            \
+                                  WAKE_CTRL |=  PIN_WAKE_bit(PIN); SAFE_MOD = 0;} while(0)
+#define PIN_WAKE_disable(PIN) do {SAFE_MOD = 0x55; SAFE_MOD = 0xAA;            \
+                                  WAKE_CTRL &= ~PIN_WAKE_bit(PIN); SAFE_MOD = 0;} while(0)
+#define WAKE_PIN_enable       PIN_WAKE_enable     // old name
+#define WAKE_PIN_disable      PIN_WAKE_disable    // old name
+
+// ===================================================================================
+// GPIO interrupt on pin LOW / falling edge (P13, P14, P15, P31 only)
+// ===================================================================================
+#define PIN_INT_bit(PIN) \
+  ((PIN == P13) ? bIE_P1_3_LO : \
+  ((PIN == P14) ? bIE_P1_4_LO : \
+  ((PIN == P15) ? bIE_P1_5_LO : \
+  ((PIN == P31) ? bIE_P3_1_LO : \
 (0)))))
 
-#define WAKE_PIN_disable(PIN) \
-  ((PIN == P13) ? (WAKE_CTRL &= ~bWAK_P1_3_LO) : \
-  ((PIN == P14) ? (WAKE_CTRL &= ~bWAK_P1_4_LO) : \
-  ((PIN == P15) ? (WAKE_CTRL &= ~bWAK_P1_5_LO) : \
-(0)))))
+#define PIN_INT_enable(PIN)   do {GPIO_IE |=  PIN_INT_bit(PIN); IE_GPIO = 1;} while(0)
+#define PIN_INT_disable(PIN)  GPIO_IE &= ~PIN_INT_bit(PIN)
+#define PIN_INT_edge()        GPIO_IE |=  bIE_IO_EDGE
+#define PIN_INT_level()       GPIO_IE &= ~bIE_IO_EDGE
+
+// ===================================================================================
+// External interrupts INT0 (P3.2) and INT1 (P3.3)
+// ===================================================================================
+#define INT0_falling()        IT0 = 1
+#define INT0_low()            IT0 = 0
+#define INT0_enable()         EX0 = 1
+#define INT0_disable()        EX0 = 0
+#define INT1_falling()        IT1 = 1
+#define INT1_low()            IT1 = 0
+#define INT1_enable()         EX1 = 1
+#define INT1_disable()        EX1 = 0
 
 // ===================================================================================
 // Start PWM on pin, must be a PWM-capable pin: (P15 or P30) and (P34 or P31)
@@ -195,10 +240,10 @@ SBIT(PP37, 0xB0, 7);
 // Set PWM output active level duty cycle on pin
 // ===================================================================================
 #define PWM_write(PIN, val) \
-  ((PIN == P15) ? (PWM_DATA1 = val) : \
-  ((PIN == P34) ? (PWM_DATA2 = val) : \
-  ((PIN == P30) ? (PWM_DATA1 = val) : \
-  ((PIN == P31) ? (PWM_DATA2 = val) : \
+  ((PIN == P15) ? (PWM_DATA1 = (val)) : \
+  ((PIN == P34) ? (PWM_DATA2 = (val)) : \
+  ((PIN == P30) ? (PWM_DATA1 = (val)) : \
+  ((PIN == P31) ? (PWM_DATA2 = (val)) : \
 (0)))))
 
 // ===================================================================================
@@ -234,10 +279,11 @@ SBIT(PP37, 0xB0, 7);
 // ===================================================================================
 // Set global PWM frequency (in Hertz, range: F_CPU/65536 - F_CPU/256)
 // ===================================================================================
+// PWM frequency = F_CPU / 256 / PWM_CK_SE
 #define PWM_set_freq(FREQ) \
-  (((FREQ) >= F_CPU / 256) ? (PWM_CK_SE = 0)              : \
-  (((F_CPU / 256 / (FREQ) - 1) > 255) ? (PWM_CK_SE = 255) : \
-  (PWM_CK_SE = (uint8_t)(F_CPU / 256 / (FREQ) - 1))         \
+  (((FREQ) >= F_CPU / 256) ? (PWM_CK_SE = 1)              : \
+  (((F_CPU / 256 / (FREQ)) > 255) ? (PWM_CK_SE = 255)     : \
+  (PWM_CK_SE = (uint8_t)(F_CPU / 256 / (FREQ)))             \
 ))
 
 // ===================================================================================

@@ -94,13 +94,18 @@ The *libraries* folder contains optional libraries for the internal peripherals 
 
 | Library | Description |
 |:-|:-|
-| debug_serial | Serial debug output (TX only) via UART0 or UART1 with printf |
+| debug_serial | Serial debug output (TX only) via UART0 or UART1 with lightweight print functions or printf |
 | eeprom | Read/write the 128-byte data flash ("EEPROM") |
 | i2c | Software I2C master (bit-banging, up to 400kHz) on any pins (`PIN_SDA`, `PIN_SCL` in *config.h*) |
+| millis | Millisecond counter using TIMER2 (auto-reload, no drift) |
 | neo | NeoPixel (WS2812) control on any pin (`PIN_NEO`, `NEO_GRB`, `NEO_COUNT` in *config.h*, F_CPU at least 6MHz) |
+| print | Lightweight print functions (strings, decimal and hex numbers) for any output function, much smaller than printf |
 | spi | Hardware SPI master functions |
+| tim2 | TIMER2 capture (period/pulse measurement on T2/T2EX), counter and clock output, header only |
 | touch | Capacitive touch key functions (thresholds in *config.h*) |
+| typec | USB Type-C CC pull-up/pull-down control and detection of the source current (CH552/CH554), header only |
 | uart | Basic UART0/UART1 functions (polling, no buffer) |
+| uart_int | UART0 or UART1 with RX interrupt and ring buffer |
 | usb/usb_cdc | USB CDC (virtual serial port) |
 | usb/hid_keyboard | USB HID keyboard |
 | usb/hid_mouse | USB HID mouse |
@@ -174,8 +179,10 @@ A brand-new chip starts automatically in bootloader mode as soon as it is connec
 - **WCHISPTool**: WCH offers the free but closed-source software [WCHISPTool](https://www.wch.cn/downloads/WCHISPTool_Setup_exe.html) for Windows. Open the *<firmware>.hex* file and upload it to the microcontroller.
 
 ## Notes and Tips
-- The template uses `FREQ_SYS` = 16MHz by default. The maximum system clock is 24MHz. At a supply voltage of 3.3V, a system clock of at most 16MHz is commonly recommended (e.g. by ch55xduino).
+- The template uses `FREQ_SYS` = 16MHz by default. The maximum system clock is 24MHz (VCC >= 4.5V), 16MHz needs VCC >= 3.8V. The setting 32MHz is reserved by WCH and therefore not supported. According to the datasheet, 12MHz is the maximum at a supply voltage of 3.3V (ch55xduino also offers 16MHz at 3.3V, which usually works).
 - When the chip is supplied with 3.3V, connect V33 with VCC. When supplied with 5V, connect a 100nF capacitor between V33 and GND.
+- `printf` from the SDCC library needs about 2KB of flash. The *print* library or the `DEBUG_print` functions need only a few hundred bytes.
+- Libraries with interrupt service routines (*millis*, *uart_int*) must be included in the file containing `main()`, otherwise SDCC does not link the interrupt vector.
 - The 8051 has only 256 bytes of iRAM. Large arrays should be placed in xRAM (`__xdata`) and constants in code flash (`__code`).
 - The CH552 can also be programmed with the Arduino IDE using [ch55xduino](https://github.com/DeqingSun/ch55xduino).
 

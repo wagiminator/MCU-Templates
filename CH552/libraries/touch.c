@@ -1,5 +1,5 @@
 // ===================================================================================
-// Touch Key Functions for CH551, CH552 and CH554                             * v1.0 *
+// Touch Key Functions for CH551, CH552 and CH554                             * v1.1 *
 // ===================================================================================
 //
 // Simple touch key control functions without using baseline detection and interrupts.
@@ -21,7 +21,7 @@ __idata uint8_t TOUCH_last = 0;
 uint16_t TOUCH_h_sample(uint8_t channel) {
   TKEY_CTRL = (TKEY_CTRL & 0xF8 | channel) + 1;   // start sampling channel
   while(~TKEY_CTRL & bTKC_IF);                    // wait for sampling complete
-  return TKEY_DAT;                                // return sampling value
+  return TKEY_DAT & 0x3FFF;                       // return sampling value (mask flag bits)
 }
 
 // Read touch key state
