@@ -1,23 +1,32 @@
 # MCU Templates
 Discover a set of templates designed to simplify the initial stages of bare-metal firmware development for various microcontrollers. These templates eliminate the need for complicated Hardware Abstraction Layers (HALs) and heavy closed-source development tools. They come with pre-configured Makefiles, linker scripts, programming tools, and internal peripheral libraries to streamline the development process.
 
+In the "Libraries" folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
+
+## AVR 8-bit Mircocontrollers
 - [ATtiny814, tinyAVR 0/1-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATtiny814)
+
+## 8051-based 8-bit Microcrontrollers
 - [CH551, CH552, CH554](https://github.com/wagiminator/MCU-Templates/tree/main/CH552)
 - [CH558, CH559](https://github.com/wagiminator/MCU-Templates/tree/main/CH559)
+- [STC8H1K08, STC8H1K17](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H1K08)
+- [STC8H8K64U, STC8H8K32U](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H8K64U)
+
+## RISC-V 32-bit Microcontrollers
+- [CH32V002, V004, V005, V006, V007, M007](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V002)
 - [CH32V003](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V003)
 - [CH32V103](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V103)
 - [CH32V203](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V203)
 - [CH32X035, CH32X034, CH32X033](https://github.com/wagiminator/MCU-Templates/tree/main/CH32X035)
-- [CH32V002, V004, V005, V006, V007, M007](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V002)
+
+## ARM Cortex M 32-bit Microcontrollers
+- [ATSAMD11C14A, ATSAMD11D14AM/AS/AU](https://github.com/wagiminator/MCU-Templates/tree/main/ATSAMD11)
+- [ATSAMD21E, ATSAMD21G, ATSAMD21J](https://github.com/wagiminator/MCU-Templates/tree/main/ATSAMD21)
 - [PY32F002A, PY32F003, PY32F030](https://github.com/wagiminator/MCU-Templates/tree/main/PY32F002A)
-- [STC8H1K08, STC8H1K17](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H1K08)
-- [STC8H8K64U, STC8H8K32U](https://github.com/wagiminator/MCU-Templates/tree/main/STC8H8K64U)
 - [STM32C011, STM32C031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32C011)
 - [STM32F030, STM32F031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32F030)
 - [STM32G030, STM32G031, STM32G041](https://github.com/wagiminator/MCU-Templates/tree/main/STM32G030)
 - [STM32L010, STM32L011, STM32L021, STM32L031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32L010)
-
-In the "Libraries" folder, you'll find general libraries for external peripheral devices that can be used by all microcontrollers.
 
 ## Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
