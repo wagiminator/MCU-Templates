@@ -129,6 +129,9 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | usbfs/hid_mouse | USB HID mouse |
 | usbfs/hid_consumer | USB HID consumer control (multimedia keys) |
 | usbfs/hid_composite | USB HID composite device (keyboard, consumer and mouse) |
+| usb_host/host_keyboard | USB host for a keyboard (boot protocol, ASCII conversion) |
+| usb_host/host_mouse | USB host for a mouse (boot protocol) |
+| usb_host/host_gamepad | USB host for a HID gamepad/joystick (report descriptor parser) |
 
 The CH32V203 has two USB controllers. The libraries in the *usbd* folder use the USBD peripheral (PA11/PA12) which is available on all chips. The libraries in the *usbfs* folder use the USBFS peripheral (PB6/PB7), which is only available on the CH32V203F8, G8, C8 and RB.
 
@@ -144,6 +147,19 @@ To use a library, copy all of its files into the *src* folder. Adjust the *confi
 Additionally:
 - The interrupt vector table must be enabled (`SYS_USE_VECTORS` = 1 in *system.h*, default).
 - The system clock must be 48MHz, 96MHz or 144MHz (`F_CPU`).
+
+### Using the USB Host Libraries
+Each USB host library consists of the following files:
+- the class driver (e.g. *host_keyboard.c/h*)
+- the configuration (*config.h*)
+- the USB host handler (*usb_host.c/h*), which contains all MCU-specific parts incl. the register accesses
+- the USB definitions (*usb.h*)
+
+To use a library, copy all of its files into the *src* folder. The library is started with its init function (e.g. `KBD_init()`); the update function (e.g. `KBD_update()`) must be called frequently, it handles connecting/disconnecting and enumerating the device and polls its reports. A single HID device can be connected directly to the USB port (PB6/PB7 (USBFS, only on CH32V203F8, G8, C8 and RB)); hubs are not supported, and for composite devices only the first matching interface is used. The host works without interrupts.
+Additionally:
+- VBUS (5V) for the connected device must be provided by the board.
+- The system clock must be 48MHz, 96MHz or 144MHz (`F_CPU`).
+- The USB device libraries and the USB host libraries cannot be used at the same time.
 
 ## Compiling Firmware
 ### Using the Makefile

@@ -1,0 +1,102 @@
+// ===================================================================================
+// USB Host Handler for CH32X035 (USBFS)                                      * v1.0 *
+// ===================================================================================
+//
+// Lightweight polled USB host for a single HID device directly connected to the
+// USB port (PC16 = D-, PC17 = D+). Low-speed and full-speed devices are
+// supported, hubs are not. All MCU specific parts (incl. register accesses) are
+// implemented in this handler, the class drivers only use the functions below.
+//
+// Functions available:
+// --------------------
+// USBH_init()              init USB host
+// USBH_task()              handle connect/disconnect and enumeration (call frequently)
+// USBH_ready()             check if a supported device is connected and ready
+// USBH_poll()              poll interrupt IN endpoint of the device, returns number
+//                          of received bytes (0 if none, data in USBH_RX_buffer)
+// USBH_setup(t,r,v,i,l)    prepare SETUP packet (type, request, value, index, length)
+// USBH_control(buf)        execute control transfer with prepared SETUP packet,
+//                          data stage to/from buf, returns 0 (USBH_OK) on success
+//
+// Class driver interface (implemented by the class driver, e.g. host_keyboard.c):
+// -------------------------------------------------------------------------------
+// uint8_t USBH_CLASS_match(uint8_t* itf)   return 1 if interface descriptor is supported
+// uint8_t USBH_CLASS_init(void)            init device, return 0 (USBH_OK) on success
+//
+// Notes:
+// ------
+// - Works with CH32X035, CH32X034 and CH32X033 (USB clock from the 48MHz HSI).
+// - Set USB_VDD in config.h according to the supply voltage (0: 3.3V, 1: 5V).
+// - VBUS (5V) for the device must be provided by the board.
+// - Blocking functions, no interrupts are used.
+//
+// 2026 by Stefan Wagner:   https://github.com/wagiminator
+
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "system.h"
+#include "usb.h"
+#include "config.h"
+
+// ===================================================================================
+// Parameters (can be overwritten in config.h)
+// ===================================================================================
+#ifndef USBH_BUF_SIZE
+  #define USBH_BUF_SIZE     128       // size of descriptor buffer
+#endif
+
+// ===================================================================================
+// Device States and Error Codes
+// ===================================================================================
+#define USBH_DEV_NONE       0         // no device connected
+#define USBH_DEV_READY      1         // supported device ready
+#define USBH_DEV_FAILED     2         // device not supported or enumeration failed
+
+#define USBH_OK             0         // success
+#define USBH_ERR_NAK        1         // device responded with NAK
+#define USBH_ERR_STALL      2         // device responded with STALL
+#define USBH_ERR_TIMEOUT    3         // no response
+#define USBH_ERR_PROTOCOL   4         // other error (toggle, CRC, ...)
+#define USBH_ERR_DESCR      5         // descriptor not supported
+
+// ===================================================================================
+// Device Information
+// ===================================================================================
+typedef struct {
+  uint8_t  state;                     // device state (see above)
+  uint8_t  speed;                     // 0: low-speed, 1: full-speed
+  uint8_t  addr;                      // USB device address
+  uint8_t  ep0size;                   // max packet size of EP0
+  uint8_t  itf;                       // interface number
+  uint8_t  ep;                        // interrupt IN endpoint number
+  uint8_t  tog;                       // data toggle of interrupt IN endpoint
+  uint16_t rlen;                      // HID report descriptor length
+} USBH_DEV_t;
+
+extern USBH_DEV_t USBH_dev;                   // device information
+extern uint8_t USBH_buffer[USBH_BUF_SIZE];    // descriptor/data buffer
+extern uint8_t USBH_RX_buffer[64];            // DMA receive buffer
+extern uint8_t USBH_TX_buffer[64];            // DMA transmit buffer
+#define USBH_setupReq ((PUSB_SETUP_REQ)USBH_TX_buffer)
+
+// ===================================================================================
+// Functions
+// ===================================================================================
+void USBH_init(void);
+void USBH_task(void);
+uint8_t USBH_poll(void);
+void USBH_setup(uint8_t type, uint8_t req, uint16_t value, uint16_t index, uint16_t len);
+uint8_t USBH_control(uint8_t* buf);
+#define USBH_ready()        (USBH_dev.state == USBH_DEV_READY)
+
+// Class driver interface
+uint8_t USBH_CLASS_match(uint8_t* itf);
+uint8_t USBH_CLASS_init(void);
+
+#ifdef __cplusplus
+}
+#endif
