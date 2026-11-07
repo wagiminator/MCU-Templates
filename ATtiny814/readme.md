@@ -116,8 +116,25 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | uart | Basic USART0 functions (polling, no buffer) |
 | uart_int | USART0 with RX interrupt and ring buffer |
 | userrow | Read and write the 32-byte user row (EEPROM page that survives a chip erase) |
+| v-usb/hid_keyboard | Software USB HID keyboard (low-speed USB via bit-banging, V-USB) |
+| v-usb/hid_mouse | Software USB HID mouse |
+| v-usb/hid_consumer | Software USB HID consumer control (multimedia keys) |
+| v-usb/hid_joystick | Software USB HID joystick |
+| v-usb/hid_composite | Software USB HID composite device (keyboard, consumer and mouse) |
 
 Libraries that use the same peripheral cannot be combined (e.g. *millis* with `MIL_TIMER = 0` and *tcb* with `TCB_NUM = 0`, or *uart*, *uart_int* and *debug_serial*).
+
+### Notes on the V-USB Libraries
+The tinyAVR has no USB peripheral. The libraries in the *v-usb* folder implement a low-speed USB device in software. They are based on [V-USB](https://www.obdev.at/products/vusb/index.html) by Objective Development and its tinyAVR 0/1-series port [V-USB_TinyAvr](https://github.com/12oclocker/V-USB_TinyAvr) by 12oClocker, which compensates the different instruction timings of the tinyAVR core. The API is the same as that of the USB libraries of the other MCU templates (e.g. CH32V003 and CH32X035).
+- Copy all files of a library (including the assembler files *usbdrvasm.S* and *\*.inc*) into the *src* folder.
+- The system clock must be 16.5MHz (`F_CPU = 16500000` in the makefile). The internal oscillator must be set to 16MHz by fuse 2 (OSCCFG = 0x01). The library disables the clock prescaler and calibrates the oscillator to 16.5MHz after each USB bus reset using the USB frame timing. Since tinyupdi does not know this frequency, replace `-t $(F_CPU)` by `-t 16000000` in the makefile. 12.8MHz (`F_CPU = 12800000`) is also supported, but the oscillator must then be calibrated down by about 20%, which not all chips can achieve.
+- Set the USB pins in *config.h*. The default is D+ on PA2 and D- on PA1, which are available on all packages (8/14/20-pin). D+ and D- must be on the same port, D+ should be on one of the fully asynchronous pins Px2 or Px6. All other interrupts of this port cannot be used.
+- D- needs a 1.5k pull-up resistor (to VCC or to the GPIO defined by `USB_PIN_DPU`). At 16.5MHz the MCU requires a supply voltage of at least 4V (e.g. 5V from USB), so the data lines need 68R series resistors and 3.6V zener diodes to limit the signal levels (see [VUSB-AVR](https://github.com/wagiminator/VUSB-AVR) for a typical wiring).
+- The USB requests are processed in the interrupt of a timer (every 1ms), which is selected with `USB_POLL_TIMER` in *config.h* (default: PIT of the RTC; alternatively TCB0 or TCB1). This timer cannot be used for other purposes. The USB pin interrupt is set to high priority (level 1), so that it can interrupt all other interrupts.
+- GPIOR0 and GPIOR1 are used by the V-USB driver.
+- The libraries require 4KB flash or more (2.3 - 3.4KB are used by the libraries).
+- This implementation of Software USB is still experimental.
+- V-USB is licensed under the GNU GPL v2 or v3 (see *License.txt* in the library folders).
 
 ## Compiling Firmware
 ### Using the Makefile
@@ -191,6 +208,7 @@ USB2SERIAL                       tinyAVR
 - Writing fuse 5 (SYSCFG0) with wrong values can disable the UPDI pin. The chip can then only be programmed with a high-voltage UPDI programmer.
 - The UART libraries select the double-speed mode automatically if the BAUD rate is too high for a low `F_CPU`. With `UART_OSCCOMP` the factory-measured oscillator error can be compensated, which improves the accuracy of high BAUD rates.
 - The NeoPixel library requires `F_CPU` >= 8MHz (e.g. 10MHz with the 20MHz oscillator).
+- The V-USB libraries require `F_CPU` = 16.5MHz with the 16MHz oscillator (see above).
 
 ## Development Boards and Projects
 ### Development Boards and Programmers
@@ -222,6 +240,9 @@ USB2SERIAL                       tinyAVR
 
 ## Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
+- [V-USB](https://www.obdev.at/products/vusb/index.html)
+- [V-USB_TinyAvr](https://github.com/12oclocker/V-USB_TinyAvr)
+- [VUSB-AVR](https://github.com/wagiminator/VUSB-AVR)
 - [tinyupdi on PyPI](https://pypi.org/project/tinyupdi/)
 - [megaupdi on PyPI](https://pypi.org/project/megaupdi/)
 - [AVR Serial UPDI Programmer Web App](https://wagiminator.github.io/apps/serialupdi/)

@@ -105,8 +105,25 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | uart_dma | USART1 with DMA-driven RX ring buffer |
 | uart_dma_rx | USART1 RX only with DMA-driven ring buffer |
 | uart2 | Basic USART2 functions (polling, no buffer) (PY32F003/F030 only) |
+| v-usb/hid_keyboard | Software USB HID keyboard (low-speed USB via bit-banging) |
+| v-usb/hid_mouse | Software USB HID mouse |
+| v-usb/hid_consumer | Software USB HID consumer control (multimedia keys) |
+| v-usb/hid_joystick | Software USB HID joystick |
+| v-usb/hid_composite | Software USB HID composite device (keyboard, consumer and mouse) |
 
 The DMA libraries (*i2c_dma*, *i2c_dma_tx*, *uart_dma*, *uart_dma_rx*) need a chip with DMA controller (PY32F003/F030). The PY32F002A has no DMA.
+
+### Notes on the V-USB Libraries
+The PY32F0xx has no USB peripheral. The libraries in the *v-usb* folder implement a low-speed USB device in software. They have the same structure and API as the V-USB libraries of the CH32V003 template: the C part is based on [rv003usb](https://github.com/cnlohr/rv003usb) by CNLohr, the timing-critical bit-banging part (*usb_handler.S*) was newly written for the Cortex-M0+ core.
+- Copy all files of a library (including the assembler file *usb_handler.S*) into the *src* folder.
+- The system clock must be 48MHz (`F_CPU = 48000000` in the makefile, HSI 24MHz x PLL). Officially, the PLL is only available on the PY32F030; on the PY32F002A/F003 it works on most chips, but this is not guaranteed. The PY32F002B is not supported.
+- The timing-critical functions are executed from SRAM (about 1KB), where every instruction has a deterministic execution time. The GPIO registers are accessed via the single-cycle IOPORT. Each USB bit takes exactly 32 clock cycles.
+- Set the USB pins in *config.h*. The default is D+ on PA3 and D- on PA1, which are available on all packages except ESSOP10. D+ and D- must be on the same port (PORTA, PORTB or PORTF). The interrupt is triggered by D-, other pins of the same EXTI group cannot use interrupts.
+- D- needs a 1.5k pull-up resistor (to 3V3 or to the GPIO defined by `USB_PIN_DPU`). The MCU must be supplied with 3.3V, the data lines should have 22R - 68R series resistors.
+- The internal oscillator (HSI) is not accurate enough for USB. If `USB_CALIBRATE` is set in *config.h*, it is calibrated with the USB keep-alive pulses (every 1ms) using TIM16, which cannot be used for other purposes then.
+- The USB interrupt gets the highest priority, all other interrupts are set to a lower priority. Interrupts must not be disabled for longer than a few microseconds.
+- PA3 is also the RX pin of the UART bootloader (PA2/PA3). Disconnect USB while flashing via these pins.
+- This implementation of Software USB is still experimental.
 
 ## Compiling Firmware
 To use the *makefile*, some additional software components must be installed to set up the toolchain.
@@ -189,12 +206,14 @@ SWD Programmer      PY32F0xx
 - The PY32F002A is said to be a PY32F030 die with limited specification. Many chips work at higher clock rates and with larger memory than specified, but this is not guaranteed.
 - The linker script *py32f031x6.ld* defines 64KB flash and 8KB SRAM, check this against the datasheet of the chip used.
 - The PY32F002B is a different chip with its own peripheral set; the template and libraries may need adjustments for it.
+- The V-USB libraries require `F_CPU` = 48MHz (see above).
 
 ## Development Boards and Projects
 - [PY32F002A F15P Development Board](https://github.com/wagiminator/Development-Boards/tree/main/PY32F002AF15P_DevBoard)
 - [Development Board Adapter](https://github.com/wagiminator/Development-Boards/tree/main/DevBoard_Adapter)
 
 ## Links
+- [rv003usb (software USB for CH32V003)](https://github.com/cnlohr/rv003usb)
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
 - [puyaisp on PyPI](https://pypi.org/project/puyaisp/)
 - [tinyocd on PyPI](https://pypi.org/project/tinyocd/)

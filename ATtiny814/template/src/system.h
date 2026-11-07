@@ -170,6 +170,8 @@ extern "C" {
 // Main clock prescaler (MCLKCTRLB = PDIV << 1 | PEN)
 #if   F_CPU == 20000000 || F_CPU == 16000000
   #define CLK_PRESC_VAL       0x00      // no prescaler
+#elif F_CPU == 16500000 || F_CPU == 12800000
+  #define CLK_PRESC_VAL       0x00      // no prescaler (tuned 16MHz oscillator, V-USB)
 #elif F_CPU == 10000000 || F_CPU ==  8000000
   #define CLK_PRESC_VAL       0x01      // divide by 2
 #elif F_CPU ==  5000000 || F_CPU ==  4000000
