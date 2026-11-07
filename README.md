@@ -5,6 +5,7 @@ In the [Libraries](https://github.com/wagiminator/MCU-Templates/tree/main/Librar
 
 ## AVR 8-bit Microcontrollers
 - [ATtiny814, tinyAVR 0/1-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATtiny814)
+- [ATmega4808, megaAVR 0-series](https://github.com/wagiminator/MCU-Templates/tree/main/ATmega4808)
 
 ## 8051-based 8-bit Microcontrollers
 - [CH551, CH552, CH554](https://github.com/wagiminator/MCU-Templates/tree/main/CH552)

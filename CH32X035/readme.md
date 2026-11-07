@@ -109,8 +109,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | usb/hid_mouse | USB HID mouse |
 | usb/hid_consumer | USB HID consumer control (multimedia keys) |
 | usb/hid_composite | USB HID composite device (keyboard, consumer and mouse) |
-| usb/usbpd_3_0_sink | USB Power Delivery sink (PD 3.0, fixed and PPS supplies) |
-| usb/usbpd_3_1_sink | USB Power Delivery sink (PD 3.1 incl. EPR and AVS) |
+| usb_pd/usbpd_3_0_sink | USB Power Delivery sink (PD 3.0, fixed and PPS supplies) |
+| usb_pd/usbpd_3_1_sink | USB Power Delivery sink (PD 3.1 incl. EPR and AVS) |
 | usb_host/host_keyboard | USB host for a keyboard (boot protocol, ASCII conversion) |
 | usb_host/host_mouse | USB host for a mouse (boot protocol) |
 | usb_host/host_gamepad | USB host for a HID gamepad/joystick (report descriptor parser) |
