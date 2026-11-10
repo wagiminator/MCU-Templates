@@ -19,6 +19,7 @@ In the [Libraries](https://github.com/wagiminator/MCU-Templates/tree/main/Librar
 - [CH32V103](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V103)
 - [CH32V203](https://github.com/wagiminator/MCU-Templates/tree/main/CH32V203)
 - [CH32X035, CH32X034, CH32X033](https://github.com/wagiminator/MCU-Templates/tree/main/CH32X035)
+- [CH573, CH571](https://github.com/wagiminator/MCU-Templates/tree/main/CH573)
 
 ## ARM Cortex M 32-bit Microcontrollers
 - [ATSAMD11C14A, ATSAMD11D14AM/AS/AU](https://github.com/wagiminator/MCU-Templates/tree/main/ATSAMD11)
