@@ -102,6 +102,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | debug_serial | Serial debug output (TX only) via USART0 with simple printf, for debugging |
 | evsys | Event system helpers (channels, users, pin events, event outputs), header only |
 | i2c | I2C master functions using TWI0 |
+| i2c_int | I2C master functions with interrupt (background transfer of write buffers) |
 | i2c_slave | I2C slave with register-based interface using TWI0 |
 | i2c_soft | Software I2C master (bit-banging) on any pins |
 | i2c_tx | I2C master functions, TX only (e.g. for OLED displays) |
@@ -110,6 +111,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
 | pwm | PWM using TCA0: 3 x 16-bit (single mode) or 6 x 8-bit channels (split mode) |
 | spi | SPI master functions using SPI0 |
+| spi_int | SPI master functions with interrupt (background transfer of write buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | tcb | TCB0/TCB1: periodic timer, 8-bit PWM, frequency and pulse-width measurement |
 | tcd | PWM using the 12-bit TCD0 (1-series only), clocked directly by the 16/20MHz oscillator |
@@ -121,6 +123,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | v-usb/hid_consumer | Software USB HID consumer control (multimedia keys) |
 | v-usb/hid_joystick | Software USB HID joystick |
 | v-usb/hid_composite | Software USB HID composite device (keyboard, consumer and mouse) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 Libraries that use the same peripheral cannot be combined (e.g. *millis* with `MIL_TIMER = 0` and *tcb* with `TCB_NUM = 0`, or *uart*, *uart_int* and *debug_serial*).
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.1 *
+// Basic I2C Master Functions with DMA for TX for CH32V003                    * v1.2 *
 // ===================================================================================
 //
 // Functions available:

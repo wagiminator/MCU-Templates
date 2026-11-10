@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART (SERCOM USART) with RX Interrupt and Ring Buffer for SAMD11          * v1.0 *
+// UART (SERCOM USART) with RX Interrupt and Ring Buffer for SAMD11           * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -113,4 +113,18 @@ void UART_IRQHandler(void) {
     UART_buffer[UART_wptr] = data;                  // push received byte to buffer
     UART_wptr = next;                               // increase write pointer
   }
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

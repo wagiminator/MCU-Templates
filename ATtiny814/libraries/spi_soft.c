@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software SPI Master Functions for tinyAVR 0-Series and 1-Series            * v1.0 *
+// Software SPI Master Functions for tinyAVR 0-Series and 1-Series            * v1.1 *
 // ===================================================================================
 //
 // Simple SPI bitbanging. Slave select pin (NSS) must be controlled by the application.
@@ -54,4 +54,18 @@ uint8_t SPI_transfer(uint8_t data) {
     PIN_low(PIN_SCK);                     // SCK low -> prepare next bit
   }
   return data;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via SPI
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) SPI_transfer(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via SPI
+void SPI_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = SPI_transfer(0xff);
 }

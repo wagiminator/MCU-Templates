@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic LPUART1 Functions for STM32L0xx  (no buffer, no interrupt, no DMA)   * v1.0 *
+// Basic LPUART1 Functions for STM32L0xx  (no buffer, no interrupt, no DMA)   * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -88,4 +88,18 @@ char LPUART_read(void) {
 void LPUART_write(const char c) {
   while(!LPUART_ready());
   LPUART1->TDR = c;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void LPUART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) LPUART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void LPUART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = LPUART_read();
 }

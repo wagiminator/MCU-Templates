@@ -1,0 +1,92 @@
+// ===================================================================================
+// SPI Master Functions with DMA for STM32F03x                                * v1.0 *
+// ===================================================================================
+// 2026 by Stefan Wagner:   https://github.com/wagiminator
+
+#include "spi_dma.h"
+
+#define SPI_DR_8BIT *((volatile uint8_t*) &(SPI1->DR))  // for 8-bit data transfer
+
+void SPI_init(void) {
+  // Set GPIO pins
+  #if SPI_MAP == 0
+    // Setup pins PA5 (SCK), PA6 (MISO), PA7 (MOSI)
+    RCC->AHBENR    |= RCC_AHBENR_GPIOAEN;
+    GPIOA->MODER    = (GPIOA->MODER  & ~(((uint32_t)0b11<<(5<<1)) | ((uint32_t)0b11<<(6<<1)) | ((uint32_t)0b11<<(7<<1))))
+                      |  (((uint32_t)0b10<<(5<<1)) | ((uint32_t)0b10<<(6<<1)) | ((uint32_t)0b10<<(7<<1)));
+    GPIOA->OTYPER  &= ~(((uint32_t)1<<5) | ((uint32_t)1<<7));
+    GPIOA->OSPEEDR |= (((uint32_t)0b11<<(5<<1)) | ((uint32_t)0b11<<(7<<1)));
+    GPIOA->PUPDR    = (GPIOA->PUPDR  & ~((uint32_t)0b11<<(6<<1)))
+                      |  ((uint32_t)0b01<<(6<<1));
+    GPIOA->AFR[0]  &= ~(((uint32_t)0xf<<(5<<2)) | ((uint32_t)0xf<<(6<<2)) | ((uint32_t)0xf<<(7<<2)));
+  #elif SPI_MAP == 1
+    // Setup pins PB3 (SCK), PB4 (MISO), PB5 (MOSI)
+    RCC->AHBENR    |= RCC_AHBENR_GPIOBEN;
+    GPIOB->MODER    = (GPIOB->MODER  & ~(((uint32_t)0b11<<(3<<1)) | ((uint32_t)0b11<<(4<<1)) | ((uint32_t)0b11<<(5<<1))))
+                      |  (((uint32_t)0b10<<(3<<1)) | ((uint32_t)0b10<<(4<<1)) | ((uint32_t)0b10<<(5<<1)));
+    GPIOB->OTYPER  &= ~(((uint32_t)1<<3) | ((uint32_t)1<<5));
+    GPIOB->OSPEEDR |= (((uint32_t)0b11<<(3<<1)) | ((uint32_t)0b11<<(5<<1)));
+    GPIOB->PUPDR    = (GPIOB->PUPDR  & ~((uint32_t)0b11<<(4<<1)))
+                      |  ((uint32_t)0b01<<(4<<1));
+    GPIOB->AFR[0]  &= ~(((uint32_t)0xf<<(3<<2)) | ((uint32_t)0xf<<(4<<2)) | ((uint32_t)0xf<<(5<<2)));
+  #elif SPI_MAP == 2
+    // Setup pins PB13 (SCK), PB14 (MISO), PB15 (MOSI)
+    RCC->AHBENR    |= RCC_AHBENR_GPIOBEN;
+    GPIOB->MODER    = (GPIOB->MODER  & ~(((uint32_t)0b11<<(13<<1)) | ((uint32_t)0b11<<(14<<1)) | ((uint32_t)0b11<<(15<<1))))
+                      |  (((uint32_t)0b10<<(13<<1)) | ((uint32_t)0b10<<(14<<1)) | ((uint32_t)0b10<<(15<<1)));
+    GPIOB->OTYPER  &= ~(((uint32_t)1<<13) | ((uint32_t)1<<15));
+    GPIOB->OSPEEDR |= (((uint32_t)0b11<<(13<<1)) | ((uint32_t)0b11<<(15<<1)));
+    GPIOB->PUPDR    = (GPIOB->PUPDR  & ~((uint32_t)0b11<<(14<<1)))
+                      |  ((uint32_t)0b01<<(14<<1));
+    GPIOB->AFR[1]  &= ~(((uint32_t)0xf<<(5<<2)) | ((uint32_t)0xf<<(6<<2)) | ((uint32_t)0xf<<(7<<2)));
+  #else
+    #warning No automatic pin mapping for SPI
+  #endif
+
+
+  // Setup and enable SPI master, standard configuration
+  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+  SPI1->CR2     = SPI_CR2_FRXTH                 // set RXNE flag after 8-bit
+                | (7 << SPI_CR2_DS_Pos);        // 8-bit data size
+  SPI1->CR1     = (SPI_PRESC << 3)              // set prescaler
+                | SPI_CR1_MSTR                  // master configuration
+                | SPI_CR1_SSM                   // software control of NSS
+                | SPI_CR1_SSI;                  // set internal NSS high
+  SPI1->CR2    |= SPI_CR2_TXDMAEN;               // enable TX DMA request
+  SPI1->CR1    |= SPI_CR1_SPE;                  // enable SPI
+
+  // Setup DMA
+  RCC->AHBENR |= RCC_AHBENR_DMAEN;                // enable DMA module clock
+  SPI_DMA_CHAN->CPAR  = (uint32_t)&SPI1->DR;      // peripheral address
+  SPI_DMA_CHAN->CCR   = DMA_CCR_MINC              // increment memory address
+                      | DMA_CCR_DIR;              // memory to peripheral
+}
+
+// Transfer one data byte (read and write)
+uint8_t SPI_transfer(uint8_t data) {
+  while(SPI_busy());                  // wait for DMA transfer
+  while(SPI_available()) (void)SPI_DR_8BIT; // discard old received data
+  (void)SPI1->SR;                     // clear overrun flag
+  SPI_DR_8BIT = data;                 // send data byte
+  while(!SPI_available());            // wait for data byte received
+  return(SPI_DR_8BIT);                // return received data byte
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Transmit buffer (*buf) with length (len) using DMA (returns immediately)
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
+  if(!len) return;                                // nothing to send
+  while(SPI_busy());                              // wait for previous transfer
+  SPI_DMA_CHAN->CCR  &= ~DMA_CCR_EN;              // disable DMA channel
+  SPI_DMA_CHAN->CNDTR = len;                      // number of bytes to be transfered
+  SPI_DMA_CHAN->CMAR  = (uint32_t)buf;            // memory address
+  SPI_DMA_CHAN->CCR  |=  DMA_CCR_EN;              // enable DMA channel -> start
+}
+
+// Receive buffer (*buf) with length (len) via SPI
+void SPI_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = SPI_transfer(0xff);
+}

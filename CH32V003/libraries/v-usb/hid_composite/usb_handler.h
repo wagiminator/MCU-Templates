@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software USB Handler for CH32V003                                          * v1.0 *
+// Software USB Handler for CH32V003                                          * v1.1 *
 // ===================================================================================
 //
 // This file contains a copy of rv003usb.h (https://github.com/cnlohr/rv003usb),

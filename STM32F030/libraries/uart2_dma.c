@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART2 with DMA RX Buffer for STM32F03x                              * v1.0 *
+// Basic USART2 with DMA RX Buffer for STM32F03x                              * v1.1 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -72,4 +72,18 @@ char UART2_read(void) {
 void UART2_write(const char c) {
   while(!UART2_ready());
   USART2->TDR = c;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART2_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART2_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART2_read();
 }

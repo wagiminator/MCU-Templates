@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master TX Functions for CH32V002, V004, V005, V006, V007, M007   * v1.0 *
+// Basic SPI Master TX Functions for CH32V002, V004, V005, V006, V007, M007   * v1.1 *
 // ===================================================================================
 // 2024 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -78,4 +78,13 @@ void SPI_init(void) {
 void SPI_write(uint8_t data) {
   while(!SPI_ready());                // wait for ready to write
   SPI1->DATAR = data;                 // send data byte
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via SPI
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) SPI_write(*buf++);
 }

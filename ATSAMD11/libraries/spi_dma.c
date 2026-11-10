@@ -1,5 +1,5 @@
 // ===================================================================================
-// SPI Master Functions with DMA (SERCOM SPI, DMAC) for SAMD11               * v1.0 *
+// SPI Master Functions with DMA (SERCOM SPI, DMAC) for SAMD11                * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -110,4 +110,13 @@ uint8_t SPI_transfer(uint8_t data) {
 // Transmit one data byte
 void SPI_write(uint8_t data) {
   (void)SPI_transfer(data);
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Receive buffer (*buf) with length (len) via SPI
+void SPI_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = SPI_transfer(0xff);
 }

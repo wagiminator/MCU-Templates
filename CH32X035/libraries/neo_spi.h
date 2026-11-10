@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Hardware-SPI for CH32X033/034/035           * v1.1 *
+// Basic NeoPixel Functions using Hardware-SPI for CH32X033/034/035           * v1.2 *
 // ===================================================================================
 //
 // Functions available:

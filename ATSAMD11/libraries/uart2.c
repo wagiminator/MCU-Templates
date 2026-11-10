@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART2 Functions (SERCOM USART) for SAMD11 (no buffer, no interrupt) * v1.0 *
+// Basic UART2 Functions (SERCOM USART) for SAMD11 (no buffer, no interrupt)  * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -93,4 +93,18 @@ void UART2_write(const char c) {
   while(!UART2_ready());
   UART2_SER->USART.DATA.reg = c;
   UART2_txflag = 1;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART2_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART2_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART2_read();
 }

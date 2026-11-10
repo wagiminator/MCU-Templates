@@ -104,6 +104,12 @@ clean:
 	@echo "Cleaning all up ..."
 	@rm -rf $(OUTPUT)
 
+size:
+	@echo "------------------"
+	@echo "FLASH: $(shell $(OBJSIZE) -d $(OUTPUT)/$(PROJECT).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
+	@echo "SRAM:  $(shell $(OBJSIZE) -d $(OUTPUT)/$(PROJECT).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "------------------"
+
 removeelf:
 	@echo "Removing $(OUTPUT)/$(PROJECT).elf ..."
 	@rm -f $(OUTPUT)/$(PROJECT).elf

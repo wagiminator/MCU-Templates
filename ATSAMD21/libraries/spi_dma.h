@@ -1,5 +1,5 @@
 // ===================================================================================
-// SPI Master Functions with DMA (SERCOM SPI, DMAC) for SAMD21               * v1.0 *
+// SPI Master Functions with DMA (SERCOM SPI, DMAC) for SAMD21                * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -7,7 +7,9 @@
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_transfer(d)          Transmit and receive one data byte
 // SPI_write(d)             Transmit one data byte
+// SPI_read()               Receive one data byte (sends 0xFF)
 // SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len) using DMA
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len), sends 0xFF
 //
 // SPI_busy()               Check if SPI is busy (DMA transfer or transmission ongoing)
 // SPI_ready()              Check if SPI is ready to write
@@ -208,7 +210,9 @@ void SPI_setCTRLA(uint32_t mask, uint32_t val);
 void SPI_init(void);
 uint8_t SPI_transfer(uint8_t data);
 void SPI_write(uint8_t data);
+#define SPI_read()          SPI_transfer(0xff)
 void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
+void SPI_readBuffer(uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };

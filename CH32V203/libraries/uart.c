@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.1 *
+// Basic UART Functions for CH32V203  (no buffer, no interrupt, no DMA)       * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -158,4 +158,38 @@ char UART3_read(void) {
 void UART3_write(const char c) {
   while(!UART3_ready());
   USART3->DATAR = c;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART1_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART1_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART1_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART1_read();
+}
+
+// Send buffer (*buf) with length (len) via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART2_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART2_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART2_read();
+}
+
+// Send buffer (*buf) with length (len) via UART
+void UART3_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART3_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART3_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART3_read();
 }

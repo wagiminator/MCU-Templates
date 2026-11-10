@@ -1,5 +1,5 @@
 // ===================================================================================
-// SPI Master Functions with DMA for RP2350 (SPI0/SPI1)                      * v1.0 *
+// SPI Master Functions with DMA for RP2350 (SPI0/SPI1)                       * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -49,4 +49,13 @@ void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
   DMA_CH(SPI_DMA_CH).CTRL_TRIG   = DMA_CH_CTRL_TRIG_EN | DMA_CH_CTRL_TRIG_INCR_READ
                                  | ((uint32_t)SPI_DREQ_TX << DMA_CH_CTRL_TRIG_TREQ_SEL_Pos)
                                  | ((uint32_t)SPI_DMA_CH  << DMA_CH_CTRL_TRIG_CHAIN_TO_Pos);
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Receive buffer (*buf) with length (len) via SPI
+void SPI_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = SPI_transfer(0xff);
 }

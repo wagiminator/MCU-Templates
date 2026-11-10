@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART with DMA RX Buffer for CH32V003                                       * v1.2 *
+// UART with DMA RX Buffer for CH32V003                                       * v1.3 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // UART_read()              Read character via UART
 // UART_write(c)            Send character via UART
+// UART_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_enable()            Enable USART
 // UART_disable()           Disable USART
@@ -81,6 +83,8 @@ extern "C" {
 // UART Functions
 void UART_init(void);                     // init UART with default BAUD rate
 void UART_write(const char c);            // send character via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 char UART_read(void);                     // read character via UART
 uint8_t UART_available(void);             // check if there is something to read
 

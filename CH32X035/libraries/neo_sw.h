@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic NeoPixel Functions using Software Bit-banging for CH32X035/X034/X033 * v1.0 *
+// Basic NeoPixel Functions using Software Bit-banging for CH32X035/X034/X033 * v1.1 *
 // ===================================================================================
 //
 // Basic control functions for 800kHz addressable LEDs (NeoPixel). A simplified 

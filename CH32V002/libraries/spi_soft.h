@@ -1,5 +1,5 @@
 // ===================================================================================
-// Software SPI Master Functions for CH32V002, V004, V005, V006, V007, M007   * v1.0 *
+// Software SPI Master Functions for CH32V002, V004, V005, V006, V007, M007   * v1.1 *
 // ===================================================================================
 //
 // Simple SPI bitbanging.
@@ -8,6 +8,10 @@
 // --------------------
 // SPI_init()               SPI init function
 // SPI_transfer(d)          transmit and receive one data byte
+// SPI_write(d)             Transmit one data byte
+// SPI_read()               Receive one data byte (sends 0xFF)
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len), sends 0xFF
 //
 // SCK/MOSI/MISO pin and SPI clock rate must be defined below.
 // Slave select pins (NSS) must be defined and controlled by the application.
@@ -33,6 +37,10 @@ extern "C" {
 // SPI functions
 void SPI_init(void);
 uint8_t SPI_transfer(uint8_t data);
+#define SPI_write(d)        (void)SPI_transfer(d)  // transmit one data byte
+#define SPI_read()          SPI_transfer(0xff)     // receive one data byte
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
+void SPI_readBuffer(uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };

@@ -1,11 +1,12 @@
 // ===================================================================================
-// Basic SPI Master Functions (TX only) for STM32C0xx                         * v1.0 *
+// Basic SPI Master Functions (TX only) for STM32C0xx                         * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_write(d)             Transmit one data byte
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
 //
 // SPI_busy()               Check if SPI bus is busy
 // SPI_ready()              Check if SPI is ready to write
@@ -56,6 +57,7 @@ extern "C" {
 
 void SPI_init(void);
 void SPI_write(uint8_t data);
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };

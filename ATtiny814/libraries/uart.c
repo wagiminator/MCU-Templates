@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USART Functions (no buffer, no interrupt) for tinyAVR                * v1.1 *
+// Basic USART Functions (no buffer, no interrupt) for tinyAVR                * v1.2 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -64,4 +64,18 @@ char UART_read(void) {
 void UART_write(const char c) {
   while(!UART_ready());
   USART0.TXDATAL = c;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

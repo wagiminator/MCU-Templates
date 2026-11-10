@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART2 Functions (SERCOM USART) for SAMD11 (no buffer, no interrupt) * v1.0 *
+// Basic UART2 Functions (SERCOM USART) for SAMD11 (no buffer, no interrupt)  * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // UART2_read()             Read character via UART
 // UART2_write(c)           Send character via UART
+// UART2_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART2_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART2_enable()           Enable USART
 // UART2_disable()          Disable USART
@@ -200,6 +202,8 @@ static inline void UART2_wait(void) { UART2_sync(); }
 void UART2_init(void);                     // init UART with default BAUD rate
 char UART2_read(void);                     // read character via UART
 void UART2_write(const char c);            // send character via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART2_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 void UART2_setBAUD(uint32_t baud);         // set BAUD rate
 void UART2_setCTRLA(uint32_t mask, uint32_t val);  // change CTRLA (USART disabled)
 void UART2_setCTRLB(uint32_t mask, uint32_t val);  // change CTRLB (USART disabled)

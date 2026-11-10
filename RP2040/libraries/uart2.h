@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART2 Functions for RP2040 (UART0/UART1, no buffer, no interrupt)   * v1.0 *
+// Basic UART2 Functions for RP2040 (UART0/UART1, no buffer, no interrupt)    * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // UART2_read()              Read character via UART
 // UART2_write(c)            Send character via UART
+// UART2_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART2_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART2_enable()            Enable UART
 // UART2_disable()           Disable UART
@@ -105,6 +107,8 @@ _Static_assert(UART2_NUM == (((UART2_RX_PIN >> 2) ^ (UART2_RX_PIN >> 3)) & 1),
 void UART2_init(void);                     // init UART with default BAUD rate
 char UART2_read(void);                     // read character via UART
 void UART2_write(const char c);            // send character via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART2_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 void UART2_setBAUD(uint32_t baud);         // set BAUD rate
 void UART2_setLCR(uint32_t mask, uint32_t val);  // change line control register
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions (SERCOM SPI, TX only) for SAMD11               * v1.0 *
+// Basic SPI Master Functions (SERCOM SPI, TX only) for SAMD11                * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -67,4 +67,13 @@ void SPI_write(uint8_t data) {
   while(!SPI_ready());                          // wait for transmit buffer empty
   SPI_SER->SPI.DATA.reg = data;                 // send data byte (clears TXC)
   SPI_txflag = 1;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via SPI
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) SPI_write(*buf++);
 }

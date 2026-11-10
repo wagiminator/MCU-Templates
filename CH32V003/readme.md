@@ -100,9 +100,12 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | neo_spi | NeoPixel (WS2812) control using hardware SPI (MOSI pin PC6) |
 | neo_sw | NeoPixel (WS2812) control using software bit-banging on any pin |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
+| pwm | PWM outputs on 4 channels of TIM2 (PD4, PD3, PC0, PD7) |
 | spi | SPI master functions |
+| spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | spi_tx | SPI master functions (TX only) |
+| timer | Periodic timer interrupt (TIM1, microsecond resolution) |
 | uart | Basic USART1 functions (no buffer, no interrupt, no DMA) |
 | uart_dma | USART1 with DMA-driven RX ring buffer |
 | uart_dma_rx | USART1 receive only with DMA-driven RX ring buffer |
@@ -112,6 +115,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | v-usb/hid_consumer | Software USB HID consumer control (multimedia keys) |
 | v-usb/hid_joystick | Software USB HID joystick |
 | v-usb/hid_composite | Software USB HID composite device (keyboard, consumer and mouse) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 ### Notes on the V-USB Libraries
 The CH32V003 has no USB peripheral. The libraries in the *v-usb* folder implement a low-speed USB device in software. They are based on [rv003usb](https://github.com/cnlohr/rv003usb) by CNLohr.

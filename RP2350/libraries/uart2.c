@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART2 Functions for RP2350 (UART0/UART1, no buffer, no interrupt)   * v1.0 *
+// Basic UART2 Functions for RP2350 (UART0/UART1, no buffer, no interrupt)    * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -48,4 +48,18 @@ char UART2_read(void) {
 void UART2_write(const char c) {
   while(!UART2_ready());                           // wait for space in TX FIFO
   UART2_DEV->UARTDR = c;                          // send data byte
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART2_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART2_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART2_read();
 }

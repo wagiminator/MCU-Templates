@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for CH573/CH571                                 * v1.0 *
+// Basic SPI Master Functions for CH573/CH571                                 * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 

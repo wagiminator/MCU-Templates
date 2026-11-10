@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Rotary Encoder Functions using Timer for CH32V003                    * v1.0 *
+// Basic Rotary Encoder Functions using Timer for CH32V003                    * v1.1 *
 // ===================================================================================
 //
 // This library contains the basic functions to read up to two rotary encoders 

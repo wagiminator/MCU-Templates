@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.1 *
+// Basic Serial Debug Functions for STC8H Microcontrollers                    * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 

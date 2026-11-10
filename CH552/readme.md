@@ -112,6 +112,9 @@ The *libraries* folder contains optional libraries for the internal peripherals 
 | usb/hid_composite | USB HID composite device (keyboard, consumer control and mouse) |
 | usb/hid_multitouch | USB HID multitouch (digitizer) |
 | usb/hid_data | USB HID raw data transfer |
+| usb_host/host_keyboard | USB host for a keyboard (boot protocol, ASCII conversion), CH554 only |
+| usb_host/host_mouse | USB host for a mouse (boot protocol), CH554 only |
+| usb_host/host_gamepad | USB host for a HID gamepad/joystick (report descriptor parser), CH554 only |
 
 Note: The *makefile* compiles all *.c* files in the template folder and in *src*, but not in an *include* folder. Therefore, libraries must be copied into *src*.
 
@@ -124,6 +127,20 @@ Each USB library consists of the following files:
 - the USB definitions (*usb.h*)
 
 To use a library, copy all of its files into the *src* folder (and replace the *config.h* there, if present). Adjust the *config.h* (pins, vendor and product strings, VID/PID) according to your needs. The default VID/PID pairs are shared IDs that are only suitable for private projects. The USB endpoint buffers are located at the beginning of the xRAM, so `XRAM_LOC` in the makefile must not be changed. USB requires a system clock (`FREQ_SYS`) of at least 6MHz (recommended: 16MHz or 24MHz).
+
+### Using the USB Host Libraries
+Each USB host library consists of the following files:
+- the class driver (e.g. *host_keyboard.c/h*)
+- the configuration (*config.h*)
+- the USB host handler (*usb_host.c/h*), which contains all MCU-specific parts incl. the register accesses
+- the USB definitions (*usb.h*)
+
+To use a library, copy all of its files into the *src* folder. The library is started with its init function (e.g. `KBD_init()`); the update function (e.g. `KBD_update()`) must be called frequently, it handles connecting/disconnecting and enumerating the device and polls its reports. A single HID device can be connected directly to the USB port (UDP/UDM, P3.6/P3.7); hubs are not supported, and for composite devices only the first matching interface is used. The host works without interrupts. The class drivers are the same as for the other templates with USB host libraries.
+Additionally:
+- Only the CH554 supports the USB host mode (not CH551/CH552).
+- VBUS (5V) for the connected device must be provided by the board.
+- The USB DMA buffers are at the beginning of the xRAM, so `XRAM_LOC` in the makefile must not be changed.
+- The USB device libraries and the USB host libraries cannot be used at the same time.
 
 ## Compiling Firmware
 ### Using the Makefile

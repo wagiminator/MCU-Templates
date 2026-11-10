@@ -1,11 +1,12 @@
 // ===================================================================================
-// Basic SPI Master Functions (TX only) for CH32V203                          * v1.0 *
+// Basic SPI Master Functions (TX only) for CH32V203                          * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_write(d)             Transmit one data byte
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
 // SPI_flush()              Wait until all data bytes are transmitted
 //
 // SPI_busy()               Check if SPI bus is busy
@@ -93,6 +94,7 @@ extern "C" {
 
 void SPI_init(void);
 void SPI_write(uint8_t data);
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
 #define SPI_flush()         do{while(!SPI_ready()); while(SPI_busy());}while(0)
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART1 with DMA for PY32F0xx (RX only)                                      * v1.1 *
+// UART1 with DMA for PY32F0xx (RX only)                                      * v1.2 *
 // ===================================================================================
 //
 // Functions available:
@@ -15,6 +15,7 @@
 //
 // UART_available()         Check if there is something to read
 // UART_read()              Read character via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_enable()            Enable USART
 // UART_disable()           Disable USART
@@ -57,6 +58,7 @@ extern "C" {
 // UART functions
 void UART_init(void);         // init UART with default BAUD rate
 char UART_read(void);         // read character via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 uint8_t UART_available(void); // check if there is something to read
 
 // DMA channel defines

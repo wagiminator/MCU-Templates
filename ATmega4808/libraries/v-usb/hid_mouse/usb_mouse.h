@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Standard Mouse Functions for megaAVR 0-Series                      * v1.0 *
+// USB HID Standard Mouse Functions for megaAVR 0-Series                      * v1.1 *
 // ===================================================================================
 //
 // Functions available:

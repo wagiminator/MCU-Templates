@@ -1,12 +1,12 @@
 // ===================================================================================
-// Basic UART Functions for CH32V002, V004, V005, V006, V007, M007            * v1.0 *
+// Basic UART Functions for CH32V002, V004, V005, V006, V007, M007            * v1.1 *
 // (no buffer, no interrupt, no DMA)
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART_init()              Init UART with 8N1 and default BAUD rate (115200)
-// UART_setBaud(n)          Set BAUD rate
+// UART_setBAUD(n)          Set BAUD rate
 // UART_setDataBits(n)      Set number of data bits (n = 8, 9)
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
 // UART_setNoParity()       Set no parity bit
@@ -19,6 +19,8 @@
 //
 // UART_read()              Read character via UART
 // UART_write(c)            Send character via UART
+// UART_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 // UART_flush()             Wait until transmission is completed
 //
 // UART_enable()            Enable USART
@@ -95,6 +97,8 @@ extern "C" {
 void UART_init(void);                   // init UART with default BAUD rate
 char UART_read(void);                   // read character via UART
 void UART_write(const char c);          // send character via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 // Additional print functions (if activated, see above)
 #if UART_PRINT == 1

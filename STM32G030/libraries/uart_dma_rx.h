@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART1 with DMA RX Buffer (RX only) for STM32G0xx                          * v1.0 *
+// USART1 with DMA RX Buffer (RX only) for STM32G0xx                          * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -14,6 +14,7 @@
 //
 // UART_available()         Check if there is something to read
 // UART_read()              Read character via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_enable()            Enable USART
 // UART_disable()           Disable USART
@@ -84,6 +85,7 @@ static inline void UART_config(volatile uint32_t* reg, uint32_t mask, uint32_t v
 // UART functions
 void UART_init(void);                     // init UART with default BAUD rate
 char UART_read(void);                     // read character via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 uint8_t UART_available(void);             // check if there is something to read
 
 // DMA channel defines

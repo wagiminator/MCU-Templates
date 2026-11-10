@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.1 *
+// Basic UART Functions for CH32X035/X034/X033  (no buffer/interrupt/DMA)     * v1.2 *
 // ===================================================================================
 //
 // Functions available:
@@ -17,6 +17,8 @@
 //
 // UARTx_read()             Read character via UART
 // UARTx_write(c)           Send character via UART
+// UARTx_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UARTx_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UARTx_enable()           Enable UART
 // UARTx_disable()          Disable UART
@@ -156,18 +158,26 @@ extern "C" {
 void UART1_init(void);                    // init UART with default BAUD rate
 char UART1_read(void);                    // read character via UART
 void UART1_write(const char c);           // send character via UART
+void UART1_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART1_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 void UART2_init(void);                    // init UART with default BAUD rate
 char UART2_read(void);                    // read character via UART
 void UART2_write(const char c);           // send character via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART2_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 void UART3_init(void);                    // init UART with default BAUD rate
 char UART3_read(void);                    // read character via UART
 void UART3_write(const char c);           // send character via UART
+void UART3_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART3_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 void UART4_init(void);                    // init UART with default BAUD rate
 char UART4_read(void);                    // read character via UART
 void UART4_write(const char c);           // send character via UART
+void UART4_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART4_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 // ===================================================================================
 // Additional Print Functions (if activated, see above)

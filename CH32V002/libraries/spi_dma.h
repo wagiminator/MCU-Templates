@@ -1,0 +1,80 @@
+// ===================================================================================
+// SPI Master Functions with DMA for CH32V002, V004, V005, V006, V007, M007   * v1.0 *
+// ===================================================================================
+//
+// Functions available:
+// --------------------
+// SPI_init()               Init SPI with defined clock rate (see below)
+// SPI_transfer(d)          Transmit and receive one data byte
+// SPI_write(d)             Transmit one data byte
+// SPI_read()               Receive one data byte (sends 0xFF)
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len) using DMA
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len), sends 0xFF
+//
+// SPI_busy()               Check if SPI is busy (DMA transfer or transmission ongoing)
+// SPI_ready()              Check if SPI is ready to write
+// SPI_available()          Check if something was received
+// SPI_enable()             Enable SPI module
+// SPI_disable()            Disable SPI module
+// SPI_setBAUD(n)           Set BAUD rate (see below)
+// SPI_setCPOL(n)           0: SCK low in idle, 1: SCK high in idle
+// SPI_setCPHA(n)           Start sampling from 0: first clock edge, 1: second clock edge
+//
+// SPI pin mapping (set below in SPI parameters, value = AFIO_PCFR1 SPI1_RM):
+// --------------------------------------------------------------------------
+// SPI_MAP    0     1     2     3     4     5     6
+// SCK-pin   PC5   PC5   PD2   PB1   PD4   PA1   PB5
+// MOSI-pin  PC6   PC6   PD3   PC0   PD6   PA2   PB4
+// MISO-pin  PC7   PC7   PB3   PB2   PD5   PB5   PC7
+// NSS-pin   PC1   PC0   PC4   PB0   PD3   PC1   PC4   (not used, software controlled)
+//
+// Notes:
+// ------
+// - Slave select pins (NSS) must be defined and controlled by the application.
+// - Not all pins are available on every package/chip variant.
+// - PD1 is also the SWIO (programming/debug) pin, PD7 is the reset pin (if enabled).
+// - SPI_CLKRATE = F_CPU / (2 << SPI_PRESC); the maximum is F_CPU / 2 (SPI_PRESC = 0).
+// - Change CPOL, CPHA and BAUD only while the SPI module is disabled (SPI_disable()).
+//
+// SPI_writeBuffer() uses DMA1 channel 3 and returns immediately. The buffer must not
+// be changed until SPI_busy() returns 0. Use SPI_busy() before releasing the slave
+// select pin. Received data is ignored during DMA transfers.
+//
+// 2026 by Stefan Wagner:   https://github.com/wagiminator
+
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "system.h"
+
+// SPI Parameters
+#define SPI_MAP             0     // SPI pin mapping (see above)
+#define SPI_PRESC           5     // SPI_CLKRATE = F_CPU / (2 << SPI_PRESC)
+
+// SPI Functions and Macros
+#define SPI_busy()          (SPI_DMA_CHAN->CNTR || !(SPI1->STATR & SPI_STATR_TXE) || (SPI1->STATR & SPI_STATR_BSY))
+#define SPI_ready()         (SPI1->STATR & SPI_STATR_TXE)
+#define SPI_available()     (SPI1->STATR & SPI_STATR_RXNE)
+
+#define SPI_enable()        SPI1->CTLR1 |=  SPI_CTLR1_SPE
+#define SPI_disable()       SPI1->CTLR1 &= ~SPI_CTLR1_SPE
+#define SPI_setCPOL(n)      ((n)?(SPI1->CTLR1|=SPI_CTLR1_CPOL):(SPI1->CTLR1&=~SPI_CTLR1_CPOL))
+#define SPI_setCPHA(n)      ((n)?(SPI1->CTLR1|=SPI_CTLR1_CPHA):(SPI1->CTLR1&=~SPI_CTLR1_CPHA))
+#define SPI_setBAUD(n)      SPI1->CTLR1 = (SPI1->CTLR1&~SPI_CTLR1_BR) | (((n)&7)<<3)
+
+void SPI_init(void);
+uint8_t SPI_transfer(uint8_t data);
+#define SPI_write(d)        (void)SPI_transfer(d)  // transmit one data byte
+#define SPI_read()          SPI_transfer(0xff)     // receive one data byte
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
+void SPI_readBuffer(uint8_t* buf, uint16_t len);
+
+// DMA channel define (SPI1_TX is fixed to DMA1 channel 3)
+#define SPI_DMA_CHAN        DMA1_Channel3
+
+#ifdef __cplusplus
+};
+#endif

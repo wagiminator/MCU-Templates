@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for CH573/CH571  (no buffer/interrupt/DMA)            * v1.0 *
+// Basic UART Functions for CH573/CH571  (no buffer/interrupt/DMA)            * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -138,4 +138,48 @@ char UART3_read(void) {
 void UART3_write(const char c) {
   while(!UART3_ready());
   R8_UART3_THR = c;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART0_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART0_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART0_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART0_read();
+}
+
+// Send buffer (*buf) with length (len) via UART
+void UART1_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART1_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART1_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART1_read();
+}
+
+// Send buffer (*buf) with length (len) via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART2_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART2_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART2_read();
+}
+
+// Send buffer (*buf) with length (len) via UART
+void UART3_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART3_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART3_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART3_read();
 }

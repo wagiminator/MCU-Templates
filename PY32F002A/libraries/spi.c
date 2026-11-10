@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for PY32F0xx                                    * v1.0 *
+// Basic SPI Master Functions for PY32F0xx                                    * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -87,4 +87,18 @@ uint8_t SPI_transfer(uint8_t data) {
   SPI_DR_8BIT = data;                 // send data byte
   while(!SPI_available());            // wait for data byte received
   return(SPI_DR_8BIT);                // return received data byte
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via SPI
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) SPI_transfer(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via SPI
+void SPI_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = SPI_transfer(0xff);
 }

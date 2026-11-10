@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART with DMA (RX only) for CH32V003                                       * v1.2 *
+// UART with DMA (RX only) for CH32V003                                       * v1.3 *
 // ===================================================================================
 //
 // Functions available:
@@ -7,6 +7,7 @@
 // UART_init()              Init UART with default BAUD rate (115200)
 // UART_available()         Check if there is something to read
 // UART_read()              Read character via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_setBAUD(n)          Set BAUD rate
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
@@ -40,6 +41,7 @@ extern "C" {
 // UART Functions
 void UART_init(void);                     // init UART with default BAUD rate
 char UART_read(void);                     // read character via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 uint8_t UART_available(void);             // check if there is something to read
 
 // UART Macros

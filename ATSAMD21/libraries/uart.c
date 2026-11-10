@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions (SERCOM USART) for SAMD21  (no buffer, no interrupt)  * v1.0 *
+// Basic UART Functions (SERCOM USART) for SAMD21  (no buffer, no interrupt)  * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -93,4 +93,18 @@ void UART_write(const char c) {
   while(!UART_ready());
   UART_SER->USART.DATA.reg = c;
   UART_txflag = 1;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

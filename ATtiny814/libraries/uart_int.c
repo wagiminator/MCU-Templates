@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART0 with RX Interrupt and Ring Buffer for tinyAVR                       * v1.1 *
+// USART0 with RX Interrupt and Ring Buffer for tinyAVR                       * v1.2 *
 // ===================================================================================
 // 2021 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -86,4 +86,18 @@ ISR(USART0_RXC_vect) {
     UART_buffer[UART_wptr] = data;                // push received byte to buffer...
     UART_wptr = next;                             // ...and increase write pointer
   }
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

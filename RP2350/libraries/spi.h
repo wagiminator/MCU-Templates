@@ -1,11 +1,15 @@
 // ===================================================================================
-// Basic SPI Master Functions for RP2350 (SPI0/SPI1)                          * v1.0 *
+// Basic SPI Master Functions for RP2350 (SPI0/SPI1)                          * v1.1 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_transfer(d)          Transmit and receive one data byte
+// SPI_write(d)             Transmit one data byte
+// SPI_read()               Receive one data byte (sends 0xFF)
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len), sends 0xFF
 //
 // SPI_busy()               Check if SPI is busy (transmission ongoing)
 // SPI_ready()              Check if SPI is ready to write (TX FIFO not full)
@@ -84,6 +88,10 @@ _Static_assert((((SPI_MOSI_PIN >> 3) & 1) == SPI_NUM) &&
 // SPI functions
 void SPI_init(void);                      // init SPI with defined clock rate
 uint8_t SPI_transfer(uint8_t data);       // transmit and receive one data byte
+#define SPI_write(d)        (void)SPI_transfer(d)  // transmit one data byte
+#define SPI_read()          SPI_transfer(0xff)     // receive one data byte
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void SPI_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 #ifdef __cplusplus
 };

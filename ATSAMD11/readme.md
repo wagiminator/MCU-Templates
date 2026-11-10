@@ -104,6 +104,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | debug_serial | Serial debug output (SERCOM USART, TX only) with simple printf, for debugging |
 | flash | Flash memory functions (NVMCTRL): erase rows, write pages/words, region locks, user row, security bit |
 | i2c | I2C master functions (SERCOM I2CM, polling) |
+| i2c_dma | I2C master functions with DMA (background transfer of write buffers) |
 | i2c_slave | I2C slave with register array (SERCOM I2CS, interrupt) |
 | i2c_soft | Software I2C master (bit-banging) on any pins |
 | millis | Millisecond counter using a timer/counter (TC1 or TC2) |
@@ -122,6 +123,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | usb/hid_mouse | USB HID mouse |
 | usb/hid_consumer | USB HID consumer control (media keys) |
 | usb/hid_composite | USB HID composite device (keyboard, mouse and consumer control) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 The USB libraries consist of several files (all files of the respective folder must be copied into the *src* folder). The USB device descriptors and strings are set in *config.h*. The USB libraries have the same structure and API as the USB libraries of the CH32X035 template. They require the DFLL48M as clock source (`F_CPU` = 48MHz, 24MHz, 16MHz, 12MHz or 6MHz). By default, the DFLL48M runs in USB clock recovery mode (`SYS_USB_CRM` in *system.h*), so no crystal is required. Note that the VID/PID in *config.h* are shared IDs for testing purposes only.
 

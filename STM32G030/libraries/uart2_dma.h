@@ -1,5 +1,5 @@
 // ===================================================================================
-// USART2 with DMA RX Buffer for STM32G0xx                                    * v1.1 *
+// USART2 with DMA RX Buffer for STM32G0xx                                    * v1.2 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // UART2_read()             Read character via UART
 // UART2_write(c)           Send character via UART
+// UART2_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART2_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART2_enable()           Enable USART
 // UART2_disable()          Disable USART
@@ -98,6 +100,8 @@ static inline void UART2_config(volatile uint32_t* reg, uint32_t mask, uint32_t 
 void UART2_init(void);                    // init UART with default BAUD rate
 char UART2_read(void);                    // read character via UART
 void UART2_write(const char c);           // send character via UART
+void UART2_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART2_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 uint8_t UART2_available(void);            // check if there is something to read
 
 // Additional print functions (if activated, see above)

@@ -1,11 +1,11 @@
 // ===================================================================================
-// USART with RX Interrupt and Ring Buffer for megaAVR                        * v1.1 *
+// USART with RX Interrupt and Ring Buffer for megaAVR                        * v1.2 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // UART_init()              Init UART with 8N1 and default BAUD rate (115200)
-// UART_setBaud(n)          Set BAUD rate (normal speed mode)
+// UART_setBAUD(n)          Set BAUD rate (normal speed mode)
 // UART_setDataBits(n)      Set number of data bits (n = 5, 6, 7, 8)
 // UART_setStopBits(n)      Set number of stop bits (n = 1, 2)
 // UART_setNoParity()       Set no parity bit
@@ -18,6 +18,8 @@
 //
 // UART_read()              Read character via UART
 // UART_write(c)            Send character via UART
+// UART_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_TX_enable()         Enable transmitter
 // UART_TX_disable()        Disable transmitter
@@ -104,6 +106,8 @@ extern volatile uint8_t UART_wptr;    // UART RX buffer write pointer
 void UART_init(void);                 // init UART with default BAUD rate
 char UART_read(void);                 // read character via UART
 void UART_write(const char c);        // send character via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 // Additional print functions (if activated, see above)
 #if UART_PRINT == 1

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic LPUART1 Functions for STM32L0xx  (no buffer, no interrupt, no DMA)   * v1.0 *
+// Basic LPUART1 Functions for STM32L0xx  (no buffer, no interrupt, no DMA)   * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // LPUART_read()            Read character via UART
 // LPUART_write(c)          Send character via UART
+// LPUART_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// LPUART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // LPUART_enable()          Enable USART
 // LPUART_disable()         Disable USART
@@ -126,6 +128,8 @@ void LPUART_setBAUD(uint32_t baud);
 void LPUART_init(void);                     // init UART with default BAUD rate
 char LPUART_read(void);                     // read character via UART
 void LPUART_write(const char c);            // send character via UART
+void LPUART_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void LPUART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 
 // Additional print functions (if activated, see above)
 #if LPUART_PRINT == 1

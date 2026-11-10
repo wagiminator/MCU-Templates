@@ -1,11 +1,15 @@
 // ===================================================================================
-// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.1 *
+// Basic SPI Master Functions for tinyAVR 0-Series and 1-Series               * v1.2 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
 // SPI_init()               Init SPI with defined clock rate (see below)
 // SPI_transfer(d)          Transmit and receive one data byte
+// SPI_write(d)             Transmit one data byte
+// SPI_read()               Receive one data byte (sends 0xFF)
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len), sends 0xFF
 //
 // SPI_ready()              Check if SPI is ready for transfer
 // SPI_enable()             Enable SPI module
@@ -60,6 +64,10 @@ extern "C" {
 
 void SPI_init(void);
 uint8_t SPI_transfer(uint8_t data);
+#define SPI_write(d)        (void)SPI_transfer(d)  // transmit one data byte
+#define SPI_read()          SPI_transfer(0xff)     // receive one data byte
+void SPI_writeBuffer(const uint8_t* buf, uint16_t len);
+void SPI_readBuffer(uint8_t* buf, uint16_t len);
 
 #ifdef __cplusplus
 };

@@ -106,11 +106,17 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | millis | Millisecond counter using the SysTick timer |
 | neo_dma | NeoPixel (WS2812) control using hardware SPI and DMA |
 | neo_spi | NeoPixel (WS2812) control using hardware SPI |
+| pwm | PWM outputs on 4 channels of TIM2 (PD4, PD3, PC0, PD7) |
 | spi | SPI master functions |
+| spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | spi_tx | SPI master functions (TX only) |
+| timer | Periodic timer interrupt (TIM1, microsecond resolution) |
 | uart | Basic USART1 functions (no buffer, no interrupt, no DMA) |
+| uart_dma | USART1 with DMA-driven RX ring buffer |
 | v-usb/hid_keyboard | Software USB HID keyboard (low-speed USB via bit-banging) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 The V-USB library is based on [rv003usb](https://github.com/cnlohr/rv003usb) by CNLohr. Copy all files of the library (including the assembler file *usb_handler.S*) into the *src* folder and set the USB pins in *config.h* (default: D+ on PA1, D- on PA2). D- requires a 1.5k pull-up resistor, the supply voltage must be 3.3V and the system clock 48MHz.
 

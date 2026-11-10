@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions for RP2040 (UART0/UART1, no buffer, no interrupt)    * v1.0 *
+// Basic UART Functions for RP2040 (UART0/UART1, no buffer, no interrupt)     * v1.1 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -48,4 +48,18 @@ char UART_read(void) {
 void UART_write(const char c) {
   while(!UART_ready());                           // wait for space in TX FIFO
   UART_DEV->UARTDR = c;                          // send data byte
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Send buffer (*buf) with length (len) via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len) {
+  while(len--) UART_write(*buf++);
+}
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

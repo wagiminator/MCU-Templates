@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART (SERCOM USART) with RX Interrupt and Ring Buffer for SAMD21          * v1.0 *
+// UART (SERCOM USART) with RX Interrupt and Ring Buffer for SAMD21           * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -18,6 +18,8 @@
 //
 // UART_read()              Read character via UART
 // UART_write(c)            Send character via UART
+// UART_writeBuffer(buf,len) Send buffer (*buf) with length (len) via UART
+// UART_readBuffer(buf,len) Read buffer (*buf) with length (len) via UART (waits)
 //
 // UART_enable()            Enable USART
 // UART_disable()           Disable USART
@@ -268,6 +270,8 @@ extern volatile uint8_t UART_wptr;        // UART RX buffer write pointer
 void UART_init(void);                     // init UART with default BAUD rate
 char UART_read(void);                     // read character via UART
 void UART_write(const char c);            // send character via UART
+void UART_writeBuffer(const uint8_t* buf, uint16_t len); // send buffer
+void UART_readBuffer(uint8_t* buf, uint16_t len); // receive buffer
 void UART_setBAUD(uint32_t baud);         // set BAUD rate
 void UART_setCTRLA(uint32_t mask, uint32_t val);  // change CTRLA (USART disabled)
 void UART_setCTRLB(uint32_t mask, uint32_t val);  // change CTRLB (USART disabled)

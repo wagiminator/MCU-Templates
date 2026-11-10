@@ -1,5 +1,5 @@
 // ===================================================================================
-// ST7302 250x122 Pixels Monochrome Low-Power LCD Graphics Functions          * v1.1 *
+// ST7302 250x122 Pixels Monochrome Low-Power LCD Graphics Functions          * v1.2 *
 // ===================================================================================
 //
 // Functions available:

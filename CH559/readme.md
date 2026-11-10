@@ -98,6 +98,7 @@ The *libraries* folder contains optional libraries for the internal peripherals,
 | print | Lightweight print functions (strings, decimal and hex numbers) for any output function, much smaller than printf |
 | spi | Hardware SPI0 master functions |
 | uart | Basic UART0 (TIMER1 BAUD rate generator) and UART1 (16550 compatible with FIFO) functions |
+| uart_int | UART0 or UART1 with RX interrupt and ring buffer |
 | usb/usb_cdc | USB device: CDC (virtual serial port) |
 | usb_host/host_keyboard | USB host: keyboard (boot protocol, ASCII conversion with US layout, LEDs) |
 | usb_host/host_mouse | USB host: mouse (boot protocol, buttons, movement, wheel) |

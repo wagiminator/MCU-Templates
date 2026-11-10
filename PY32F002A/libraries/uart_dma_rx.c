@@ -1,5 +1,5 @@
 // ===================================================================================
-// UART1 with DMA (RX only) for PY32F0xx                                      * v1.1 *
+// UART1 with DMA (RX only) for PY32F0xx                                      * v1.2 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -129,4 +129,13 @@ char UART_read(void) {
   result = UART_RX_buffer[UART_RX_tptr++];
   if(UART_RX_tptr >= UART_RX_BUF_SIZE) UART_RX_tptr = 0;
   return result;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

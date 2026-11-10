@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic SPI Master Functions for CH573/CH571                                 * v1.0 *
+// Basic SPI Master Functions for CH573/CH571                                 * v1.1 *
 // ===================================================================================
 //
 // Functions available:
@@ -8,8 +8,8 @@
 // SPI_transfer(d)          Transmit and receive one data byte
 // SPI_write(d)             Transmit one data byte
 // SPI_read()               Receive one data byte (sends 0xFF)
-// SPI_writeBuffer(buf,len) Transmit buffer (via FIFO)
-// SPI_readBuffer(buf,len)  Receive buffer (via FIFO)
+// SPI_writeBuffer(buf,len) Transmit buffer (*buf) with length (len)
+// SPI_readBuffer(buf,len)  Receive buffer (*buf) with length (len)
 //
 // SPI_busy()               Check if SPI is busy
 // SPI_setDIV(n)            Set clock divider (SCK = F_CPU / n, n = 2..255)

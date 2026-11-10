@@ -98,9 +98,12 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | i2c_tx | I2C master functions, TX only |
 | neo_spi | NeoPixel (WS2812) control using the hardware SPI (MOSI pin) |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
+| pwm | PWM outputs on 4 channels of TIM1 (PA3, PB3, PA0, PA1) |
 | spi | SPI master functions |
+| spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | spi_tx | SPI master functions, TX only |
+| timer | Periodic timer interrupt (TIM16, microsecond resolution) |
 | uart | Basic USART1 functions (polling, no buffer) |
 | uart_dma | USART1 with DMA-driven RX ring buffer |
 | uart_dma_rx | USART1 RX only with DMA-driven ring buffer |
@@ -110,6 +113,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | v-usb/hid_consumer | Software USB HID consumer control (multimedia keys) |
 | v-usb/hid_joystick | Software USB HID joystick |
 | v-usb/hid_composite | Software USB HID composite device (keyboard, consumer and mouse) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 The DMA libraries (*i2c_dma*, *i2c_dma_tx*, *uart_dma*, *uart_dma_rx*) need a chip with DMA controller (PY32F003/F030). The PY32F002A has no DMA.
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic UART Functions (RX only) for CH32V003                                * v1.1 *
+// Basic UART Functions (RX only) for CH32V003                                * v1.3 *
 // ===================================================================================
 // 2023 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -59,4 +59,13 @@ void UART_init(void) {
 char UART_read(void) {
   while(!UART_available());
   return USART1->DATAR;
+}
+
+// ===================================================================================
+// Buffer Functions
+// ===================================================================================
+
+// Receive buffer (*buf) with length (len) via UART
+void UART_readBuffer(uint8_t* buf, uint16_t len) {
+  while(len--) *buf++ = UART_read();
 }

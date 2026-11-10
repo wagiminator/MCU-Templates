@@ -101,6 +101,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | debug_serial | Serial debug output (UART, TX only) with simple printf, for debugging |
 | flash | Flash memory functions (via boot ROM and QMI direct mode): erase sectors, write pages/words, user data at the end of the flash, unique ID and JEDEC ID of the flash chip |
 | i2c | I2C master functions (I2C0/I2C1, polling) |
+| i2c_int | I2C master functions with interrupt (background transfer of write buffers) |
 | i2c_soft | Software I2C master (bit-banging) on any pins |
 | millis | Millisecond and microsecond counter using the 64-bit TIMER0 (no interrupt) |
 | multicore | Start functions on core 1, inter-core FIFO and spinlocks (software spinlocks because of erratum RP2350-E2) |
@@ -108,21 +109,41 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | pio | PIO functions: load programs, configure and control state machines, instruction encoding (PIO0..PIO2) |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
 | pwm | PWM outputs on any pin (8 slices, 16 channels) |
+| sha256 | SHA-256 hardware accelerator |
 | spi | SPI master functions (SPI0/SPI1) |
 | spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | timer | Periodic timer interrupt (TIMER0 alarm 0) |
+| trng | True random number generator (TRNG) |
 | uart | Basic UART functions (UART0/UART1, polling, no buffer, incl. UART_AUX pins) |
 | uart2 | Second UART (copy of uart with prefix `UART2_`, default UART1) |
+| uart_int | UART with RX interrupt and ring buffer (UART0/UART1) |
 | usb/usb_cdc | USB CDC (virtual serial port), with 1200 baud touch to enter the USB bootloader |
 | usb/hid_keyboard | USB HID keyboard |
 | usb/hid_mouse | USB HID mouse |
 | usb/hid_consumer | USB HID consumer control (media keys) |
 | usb/hid_composite | USB HID composite device (keyboard, mouse and consumer control) |
+| usb_host/host_keyboard | USB host for a keyboard (boot protocol, ASCII conversion) |
+| usb_host/host_mouse | USB host for a mouse (boot protocol) |
+| usb_host/host_gamepad | USB host for a HID gamepad/joystick (report descriptor parser) |
 
-The USB libraries consist of several files (all files of the respective folder must be copied into the *src* folder). The USB device descriptors and strings are set in *config.h*. The USB libraries have the same structure and API as the USB libraries of the RP2040, ATSAMD21, CH32X035 and ATSAMD11 templates (device mode only): only the USB handler (*usb_handler.c*) is specific to the RP2040/RP2350, the class drivers are identical. The USB controller is clocked with 48MHz by PLL_USB, independent of `F_CPU`. Note that the VID/PID in *config.h* are shared IDs for testing purposes only.
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
-The functions of the clock system, RTC, watchdog, sleep modes, DMA, CRC (DMA sniffer) and boot ROM are part of *system.h*. The GPIO, pin interrupts and the ADC are part of *gpio.h*. HSTX, TRNG, SHA-256, the interpolators, the OTP programming, the security features (TrustZone, secure boot), the low power states of the power manager, the USB host mode and PIO programs other than WS2812 are not covered by the libraries, but can be used directly via the register definitions in *rp2350.h* (and the *pio* library).
+The USB libraries consist of several files (all files of the respective folder must be copied into the *src* folder). The USB device descriptors and strings are set in *config.h*. The USB libraries have the same structure and API as the USB libraries of the RP2040, ATSAMD21, CH32X035 and ATSAMD11 templates (device mode; host libraries are in *usb_host*): only the USB handler (*usb_handler.c*) is specific to the RP2040/RP2350, the class drivers are identical. The USB controller is clocked with 48MHz by PLL_USB, independent of `F_CPU`. Note that the VID/PID in *config.h* are shared IDs for testing purposes only.
+
+The functions of the clock system, RTC, watchdog, sleep modes, DMA, CRC (DMA sniffer) and boot ROM are part of *system.h*. The GPIO, pin interrupts and the ADC are part of *gpio.h*. HSTX, the interpolators, the OTP programming, the security features (TrustZone, secure boot), the low power states of the power manager and PIO programs other than WS2812 are not covered by the libraries, but can be used directly via the register definitions in *rp2350.h* (and the *pio* library).
+
+### Using the USB Host Libraries
+Each USB host library consists of the following files:
+- the class driver (e.g. *host_keyboard.c/h*)
+- the configuration (*config.h*)
+- the USB host handler (*usb_host.c/h*), which contains all MCU-specific parts incl. the register accesses
+- the USB definitions (*usb.h*)
+
+To use a library, copy all of its files into the *src* folder. The library is started with its init function (e.g. `KBD_init()`); the update function (e.g. `KBD_update()`) must be called frequently, it handles connecting/disconnecting and enumerating the device and polls its reports. A single HID device can be connected directly to the USB port (USB_DM/USB_DP); hubs are not supported, and for composite devices only the first matching interface is used. The host works without interrupts. The class drivers are the same as for the other templates with USB host libraries.
+Additionally:
+- VBUS (5V) for the connected device must be provided by the board (e.g. Raspberry Pi Pico 2: 5V on VBUS or VSYS via a diode).
+- The USB device libraries and the USB host libraries cannot be used at the same time.
 
 ## Compiling Firmware
 To use the *makefile*, some additional software components must be installed to set up the toolchain.

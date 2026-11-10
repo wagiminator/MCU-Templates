@@ -72,7 +72,6 @@ Notes:
 - The *debug_serial* and *uart2_dma* libraries use USART2 (default TX on PA2). The *uart2_dma* library supports further mappings (see header).
 - PC17 (USB D+) is the boot detection pin: if it is high at power-up (e.g. BOOT button connecting D+ to 3V3), the chip starts the bootloader.
 - The RST function on PC3 is only available on the CH32X035 in the QSOP28 and TSSOP20 packages and must be enabled in the option bytes.
-- There is no library for the hardware I2C yet, use the *i2c_soft* library instead.
 
 ## Template Structure
 
@@ -94,14 +93,20 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | Library | Description |
 |:-|:-|
 | debug_serial | Serial debug output (TX only) via USART2 (PA2) with simple printf |
+| flash | Read, write and erase the flash memory (e.g. for storing user data at the end of the flash) |
+| i2c | I2C master functions (hardware I2C1, polling) |
+| i2c_dma | I2C master functions with DMA (background transfer of write buffers) |
 | i2c_soft | Software I2C master (bit-banging) on any pins |
 | millis | Millisecond counter using the SysTick timer |
 | neo_spi | NeoPixel (WS2812) control using hardware SPI (MOSI pin PA7, PA9, PA10 or PC7) |
 | neo_sw | NeoPixel (WS2812) control using software bit-banging on any pin |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
+| pwm | PWM outputs on 4 channels of TIM2 (PA0, PA1, PA2, PA3) |
 | spi | SPI master functions |
+| spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | spi_tx | SPI master functions (TX only) |
+| timer | Periodic timer interrupt (TIM3, microsecond resolution) |
 | uart | Basic USART1/2/3/4 functions (no buffer, no interrupt, no DMA) |
 | uart2_dma | USART2 with DMA-driven RX ring buffer |
 | usb/usb_cdc | USB CDC (virtual serial port) |
@@ -114,6 +119,8 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | usb_host/host_keyboard | USB host for a keyboard (boot protocol, ASCII conversion) |
 | usb_host/host_mouse | USB host for a mouse (boot protocol) |
 | usb_host/host_gamepad | USB host for a HID gamepad/joystick (report descriptor parser) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 ### Using the USB Libraries
 Each USB library consists of the following files:

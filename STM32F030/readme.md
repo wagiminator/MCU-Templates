@@ -87,6 +87,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | Library | Description |
 |:-|:-|
 | debug_serial | Serial debug output (TX only) with simple printf, for debugging |
+| flash | Read, write and erase the flash memory (e.g. for storing user data at the end of the flash) |
 | i2c | I2C master functions (polling) |
 | i2c_dma | I2C master with DMA (background transfers) |
 | i2c_dma_tx | I2C master with DMA, TX only (e.g. for OLED displays) |
@@ -94,14 +95,19 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | i2c_tx | I2C master functions, TX only |
 | neo_spi | NeoPixel (WS2812) control using the hardware SPI (MOSI pin) |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
+| pwm | PWM outputs on 4 channels of TIM3 (PA6, PA7, PB0, PB1) |
 | spi | SPI master functions |
+| spi_dma | SPI master functions with DMA (background transfers of buffers) |
 | spi_soft | Software SPI master (bit-banging) on any pins |
 | spi_tx | SPI master functions, TX only |
+| timer | Periodic timer interrupt (TIM14, microsecond resolution) |
 | uart | Basic USART1 functions (polling, no buffer) |
 | uart_dma | USART1 with DMA-driven RX ring buffer |
 | uart_dma_rx | USART1 RX only with DMA-driven ring buffer |
 | uart2 | Basic USART2 functions (polling, no buffer) (STM32F030x8/xC only) |
 | uart2_dma | USART2 with DMA-driven RX ring buffer (STM32F030x8/xC only) |
+
+All I2C, SPI and UART libraries provide functions for buffers with the same API (e.g. `I2C_sendBuffer(addr,buf,len)`, `I2C_getBuffer(addr,buf,len)`, `I2C_writeBuffer(buf,len)`, `I2C_readBuffer(buf,len)`, `SPI_writeBuffer(buf,len)`, `SPI_readBuffer(buf,len)`, `UART_writeBuffer(buf,len)`, `UART_readBuffer(buf,len)`). The *_dma* and *_int* variants transfer write buffers in the background; in this case the buffer must not be changed until the respective `..._busy()` function returns 0.
 
 ## Compiling Firmware
 To use the *makefile*, some additional software components must be installed to set up the toolchain.
