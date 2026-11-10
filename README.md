@@ -28,6 +28,8 @@ In the [Libraries](https://github.com/wagiminator/MCU-Templates/tree/main/Librar
 - [STM32F030, STM32F031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32F030)
 - [STM32G030, STM32G031, STM32G041](https://github.com/wagiminator/MCU-Templates/tree/main/STM32G030)
 - [STM32L010, STM32L011, STM32L021, STM32L031](https://github.com/wagiminator/MCU-Templates/tree/main/STM32L010)
+- [RP2040, Raspberry Pi Pico](https://github.com/wagiminator/MCU-Templates/tree/main/RP2040)
+- [RP2350, Raspberry Pi Pico 2](https://github.com/wagiminator/MCU-Templates/tree/main/RP2350)
 
 ## Links
 - [MCU Flash Tools](https://github.com/wagiminator/MCU-Flash-Tools)
