@@ -1,5 +1,5 @@
 // ===================================================================================
-// USB HID Consumer Media Keyboard Device Functions for RP2350                 * v1.0 *
+// USB HID Consumer Media Keyboard Device Functions for RP2040                 * v1.0 *
 // ===================================================================================
 
 #include "usb_consumer.h"

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Millis Functions for RP2350 (using the 64-bit microsecond TIMER0)          * v1.0 *
+// Millis Functions for RP2040 (using the 64-bit microsecond TIMER)           * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -12,10 +12,10 @@
 // Notes:
 // ------
 // The millis (MIL) functions use the free-running 64-bit microsecond counter of the
-// TIMER0 peripheral (no interrupt required), so the delay (DLY) functions, which use
-// the SysTick, continue to work properly. The TIMER0 alarms remain available for other
-// purposes (e.g. timer library, SLEEP_ms). TIMER0 counts with the 1us tick of the
-// tick generator (TICKS), which is set up by CLK_init(). TIMER1 is not used.
+// TIMER peripheral (no interrupt required), so the delay (DLY) functions, which use
+// the SysTick, continue to work properly. The TIMER alarms remain available for other
+// purposes (e.g. timer library, SLEEP_ms). The TIMER counts with the 1us watchdog
+// tick, which is set up by CLK_init().
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 

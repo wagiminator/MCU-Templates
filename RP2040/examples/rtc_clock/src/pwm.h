@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic PWM Functions for RP2350 (PWM slices 0..7)                          * v1.0 *
+// Basic PWM Functions for RP2040 (PWM slices 0..7)                          * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -21,9 +21,8 @@
 // Notes:
 // ------
 // - Pins of the same slice and channel output the same PWM signal (e.g. GP0 and GP16).
-// - PWM frequency = F_CPU / PRESCALER / (PWM_TOP + 1), e.g. 150MHz / 1 / 256 = 586kHz
+// - PWM frequency = F_CPU / PRESCALER / (PWM_TOP + 1), e.g. 125MHz / 1 / 256 = 488kHz
 // - All counters are 16-bit (PWM_TOP <= 65534).
-// - The RP2350A has 8 PWM slices, the RP2350B has 12 (slices 8..11 on GP32..GP47).
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 

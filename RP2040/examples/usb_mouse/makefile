@@ -1,7 +1,7 @@
 # ===================================================================================
 # Project Makefile
 # ===================================================================================
-# Project:  Raspberry Pi Pico 2 Example - USB Mouse
+# Project:  Raspberry Pi Pico Example - USB Mouse
 # Author:   Stefan Wagner
 # Year:     2026
 # URL:      https://github.com/wagiminator
@@ -11,8 +11,8 @@
 #   sudo apt install python3 python3-pip
 #   pip install rpprog
 #
-# Provide access permission to the RP2350 USB bootloader (for rpprog):
-#   echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2e8a", ATTR{idProduct}=="000f", MODE="666"' | sudo tee /etc/udev/rules.d/99-rp2350.rules
+# Provide access permission to the RP2040 USB bootloader (for rpprog):
+#   echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2e8a", ATTR{idProduct}=="0003", MODE="666"' | sudo tee /etc/udev/rules.d/99-rp2040.rules
 #   sudo udevadm control --reload-rules
 #
 # Settings are made in config.h. Hold the BOOTSEL button while connecting the board
@@ -28,8 +28,8 @@ BIN      = bin
 # Microcontroller Settings
 CONFIG   = config.h
 F_CPU   ?= $(shell sed -n 's/^\#define[ \t]\+F_CPU[ \t]\+\([0-9]\+\).*/\1/p' $(CONFIG))
-LDSCRIPT = ld/rp2350_4mb.ld
-CPUARCH  = -mcpu=cortex-m33 -mthumb -mfloat-abi=softfp -mfpu=fpv5-sp-d16
+LDSCRIPT = ld/rp2040_2mb.ld
+CPUARCH  = -mcpu=cortex-m0plus -mthumb
 
 # Toolchain
 PREFIX   = arm-none-eabi
@@ -38,7 +38,7 @@ OBJCOPY  = $(PREFIX)-objcopy
 OBJDUMP  = $(PREFIX)-objdump
 OBJSIZE  = $(PREFIX)-size
 ISPTOOL  = rpprog -f $(BIN)/$(TARGET).bin
-SWDTOOL  = openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000" -c "program $(BIN)/$(TARGET).elf verify reset exit"
+SWDTOOL  = openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program $(BIN)/$(TARGET).elf verify reset exit"
 CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.d
 
 # Compiler Flags

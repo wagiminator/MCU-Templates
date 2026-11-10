@@ -1,10 +1,9 @@
 /* ===================================================================================
- * Linker Script for RP2350 with 4MB  Flash                                 * v1.0 *
+ * Linker Script for RP2040 with 2MB  Flash                                 * v1.0 *
  * ===================================================================================
  *
- * Flash (XIP, 0x10000000): vector table, IMAGE_DEF block (within the first 4KB),
- *                          code, data
- * SRAM (0x20000000): data, RAM functions, bss, stack (520KB incl. SRAM8 and SRAM9)
+ * Flash (XIP, 0x10000000): boot2 (256 bytes), vector table (0x10000100), code, data
+ * SRAM (0x20000000): data, RAM functions, bss, stack (264KB incl. SRAM4 and SRAM5)
  *
  * 2026 by Stefan Wagner:   https://github.com/wagiminator
  * =================================================================================== */
@@ -13,27 +12,27 @@ ENTRY( Reset_Handler )
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x10000000, LENGTH = 4096K
-  RAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 520K
+  FLASH (rx) : ORIGIN = 0x10000000, LENGTH = 2048K
+  RAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 264K
 }
 
 SECTIONS
 {
+  .boot2 :
+  {
+    __boot2_start__ = .;
+    KEEP(*(.boot2))
+    __boot2_end__ = .;
+  } > FLASH
+
+  ASSERT(__boot2_end__ - __boot2_start__ == 256, "ERROR: boot2 must be 256 bytes in size")
+
   .vectors :
   {
+    . = ALIGN(256);
     KEEP(*(.isr_vector))
     . = ALIGN(4);
   } > FLASH
-
-  .embedded_block :
-  {
-    __embedded_block_start__ = .;
-    KEEP(*(.embedded_block))
-    __embedded_block_end__ = .;
-  } > FLASH
-
-  ASSERT(__embedded_block_end__ - __embedded_block_start__ == 20, "ERROR: IMAGE_DEF block missing")
-  ASSERT(__embedded_block_end__ <= ORIGIN(FLASH) + 4096, "ERROR: IMAGE_DEF block must be within the first 4KB")
 
   .text :
   {

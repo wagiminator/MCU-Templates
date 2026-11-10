@@ -1,8 +1,8 @@
 // ===================================================================================
-// USB Handler for RP2350                                                     * v1.0 *
+// USB Handler for RP2040                                                     * v1.0 *
 // ===================================================================================
 //
-// USB full-speed device using the USB controller of the RP2350 (dedicated pins USB_DP
+// USB full-speed device using the USB controller of the RP2040 (dedicated pins USB_DP
 // and USB_DM) with internal pull-up resistor. The USB controller is clocked with
 // 48MHz by PLL_USB (see CLK_init() in system.c).
 //
@@ -182,7 +182,7 @@ void USB_init(void) {
   // Setup USB device (full-speed, controller connected to the PHY, VBUS forced)
   USB->USB_MUXING = USB_USB_MUXING_TO_PHY | USB_USB_MUXING_SOFTCON;
   USB->USB_PWR    = USB_USB_PWR_VBUS_DETECT | USB_USB_PWR_VBUS_DETECT_OVERRIDE_EN;
-  USB->MAIN_CTRL  = USB_MAIN_CTRL_CONTROLLER_EN;   // device mode, clear PHY_ISO
+  USB->MAIN_CTRL  = USB_MAIN_CTRL_CONTROLLER_EN;   // device mode
   USB->SIE_CTRL   = USB_SIE_CTRL_EP0_INT_1BUF;     // interrupt per EP0 buffer
   USB->ADDR_ENDP  = 0;                             // address 0
   USB_EP_reset();

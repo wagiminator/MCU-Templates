@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic Timer Functions for RP2350 (TIMER0 alarm 0)                          * v1.0 *
+// Basic Timer Functions for RP2040 (TIMER alarm 0)                           * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -13,11 +13,11 @@
 //
 // Notes:
 // ------
-// - The 64-bit microsecond counter of the TIMER0 peripheral and alarm 0 are used
-//   (interrupt TIMER0_IRQ_0). The period is kept exact by advancing the alarm time.
+// - The 64-bit microsecond counter of the TIMER peripheral and alarm 0 are used
+//   (interrupt TIMER_IRQ_0). The period is kept exact by advancing the alarm time.
 // - The interrupt flag is cleared automatically, TIM_ISR is an ordinary function.
-// - TIM_reset() changes the time base of TIMER0, which is also used by the millis
-//   library and SLEEP_ms(). TIMER1 remains free for other purposes.
+// - TIM_reset() changes the time base of the TIMER, which is also used by the millis
+//   library and SLEEP_ms().
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 

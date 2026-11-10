@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic USB CDC Functions for RP2350                                          * v1.0 *
+// Basic USB CDC Functions for RP2040                                          * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -34,7 +34,7 @@
 //
 // Notes:
 // ------
-// - If CDC_BOOT_1200 is set below, the RP2350 enters the USB bootloader (BOOTSEL
+// - If CDC_BOOT_1200 is set below, the RP2040 enters the USB bootloader (BOOTSEL
 //   mode) when the host opens the port with 1200 BAUD and closes it again (DTR off,
 //   e.g. "stty -F /dev/ttyACM0 1200" or "make reboot"), like Arduino boards.
 //

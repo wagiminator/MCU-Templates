@@ -1,5 +1,5 @@
 // ===================================================================================
-// Project:   Raspberry Pi Pico 2 Examples - USB Media Keys
+// Project:   Raspberry Pi Pico Examples - USB Media Keys
 // Version:   v1.0
 // Year:      2026
 // Author:    Stefan Wagner

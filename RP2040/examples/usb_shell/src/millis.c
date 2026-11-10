@@ -1,25 +1,25 @@
 // ===================================================================================
-// Millis Functions for RP2350 (using the 64-bit microsecond TIMER0)          * v1.0 *
+// Millis Functions for RP2040 (using the 64-bit microsecond TIMER)           * v1.0 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "millis.h"
 
-static uint64_t MIL_start;                // TIMER0 value at reset
+static uint64_t MIL_start;                // TIMER value at reset
 
-// Read 64-bit TIMER0 value (consistent reading of high and low word)
+// Read 64-bit TIMER value (consistent reading of high and low word)
 static uint64_t MIL_timer(void) {
   uint32_t hi, lo;
   do {
-    hi = TIMER0->TIMERAWH;
-    lo = TIMER0->TIMERAWL;
-  } while(hi != TIMER0->TIMERAWH);
+    hi = TIMER->TIMERAWH;
+    lo = TIMER->TIMERAWL;
+  } while(hi != TIMER->TIMERAWH);
   return ((uint64_t)hi << 32) | lo;
 }
 
 // Init and start millis counter
 void MIL_init(void) {
-  RESET_release(RESETS_RESET_TIMER0);      // release TIMER0 from reset (if not done)
+  RESET_release(RESETS_RESET_TIMER);      // release TIMER from reset (if not done)
   MIL_reset();
 }
 

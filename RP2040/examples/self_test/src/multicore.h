@@ -1,5 +1,5 @@
 // ===================================================================================
-// Multicore Functions for RP2350 (core 1, inter-core FIFO, spinlocks)       * v1.0 *
+// Multicore Functions for RP2040 (core 1, inter-core FIFO, spinlocks)       * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -12,13 +12,12 @@
 // FIFO_available()         check if a word from the other core is waiting
 // FIFO_ready()             check if a word can be sent (FIFO not full)
 // FIFO_clear()             discard all received words, clear error flags
-// FIFO_INT_enable()        enable FIFO interrupt of the calling core (SIO_IRQ_FIFO)
+// FIFO_INT_enable()        enable FIFO interrupt of the calling core (SIO_IRQ_PROCn)
 // FIFO_INT_disable()       disable FIFO interrupt of the calling core
 //
 // SPIN_lock(n)             acquire spinlock n (0..31), wait until available
 // SPIN_tryLock(n)          try to acquire spinlock n, returns 1 if successful
 // SPIN_unlock(n)           release spinlock n
-// SPIN_LOCK_SW             0: hardware spinlocks (SIO), 1: software spinlocks (default)
 //
 // Notes:
 // ------
@@ -29,15 +28,10 @@
 //   core 0. Core 1 uses the system clock set up by core 0. DLY functions use the
 //   SysTick of the respective core, which is enabled by CORE1_launch().
 // - The stack size of core 1 can be set below. The stack of core 0 is at the top of
-//   the SRAM (SRAM9/SRAM8). The FPU of core 1 is enabled by CORE1_launch().
-// - Each core has its own FIFO interrupt (SIO_IRQ_FIFO_IRQHandler on both cores).
+//   the SRAM (SRAM5/SRAM4).
 // - The FIFOs are 8 words deep in each direction. Each core reads its own RX FIFO
 //   and writes to the RX FIFO of the other core (SIO->FIFO_RD/FIFO_WR).
 // - Spinlocks 16..31 are free for the user, 0..15 may be used by future libraries.
-// - Erratum RP2350-E2: writes to certain SIO registers (e.g. at addresses +0x80 above
-//   the spinlocks) can release the hardware spinlocks. Therefore software spinlocks
-//   (exclusive LDREXB/STREXB accesses to SRAM, global exclusive monitor) are used by
-//   default, as in the Pico SDK. Set SPIN_LOCK_SW to 0 to use the SIO spinlocks.
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -51,7 +45,6 @@ extern "C" {
 
 // Multicore parameters
 #define CORE1_STACK_SIZE  2048            // stack size of core 1 in bytes
-#define SPIN_LOCK_SW      1               // 1: software spinlocks (erratum RP2350-E2)
 
 // Core 1 functions
 void CORE1_launch(void (*func)(void));    // start function on core 1
@@ -60,8 +53,8 @@ void CORE1_reset(void);                   // reset core 1
 // Inter-core FIFO functions
 #define FIFO_available()  (SIO->FIFO_ST & SIO_FIFO_ST_VLD)
 #define FIFO_ready()      (SIO->FIFO_ST & SIO_FIFO_ST_RDY)
-#define FIFO_INT_enable()   NVIC_EnableIRQ(SIO_IRQ_FIFO_IRQn)
-#define FIFO_INT_disable()  NVIC_DisableIRQ(SIO_IRQ_FIFO_IRQn)
+#define FIFO_INT_enable()   NVIC_EnableIRQ(CPU_ID ? SIO_IRQ_PROC1_IRQn : SIO_IRQ_PROC0_IRQn)
+#define FIFO_INT_disable()  NVIC_DisableIRQ(CPU_ID ? SIO_IRQ_PROC1_IRQn : SIO_IRQ_PROC0_IRQn)
 
 static inline void FIFO_write(uint32_t data) {
   while(!FIFO_ready());
@@ -80,23 +73,8 @@ static inline void FIFO_clear(void) {
 }
 
 // Spinlock functions
-#if SPIN_LOCK_SW > 0
-extern volatile uint8_t SPIN_locks[32];   // software spinlocks (in SRAM)
-static inline uint8_t SPIN_tryLock(uint8_t n) {
-  if(__LDREXB(&SPIN_locks[n])) {          // already locked
-    __CLREX();
-    return 0;
-  }
-  if(__STREXB(1, &SPIN_locks[n])) return 0; // exclusive access failed
-  __DMB();
-  return 1;
-}
-#define SPIN_unlock(n)    (__DMB(), SPIN_locks[n] = 0)
-#else
 #define SPIN_tryLock(n)   (SIO->SPINLOCK[n] != 0)
 #define SPIN_unlock(n)    (__DMB(), SIO->SPINLOCK[n] = 0)
-#endif
-
 static inline void SPIN_lock(uint8_t n) {
   while(!SPIN_tryLock(n));
   __DMB();

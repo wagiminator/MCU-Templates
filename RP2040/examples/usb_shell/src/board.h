@@ -1,5 +1,5 @@
 // ===================================================================================
-// Board Support for Raspberry Pi Pico 2                                      * v1.0 *
+// Board Support for Raspberry Pi Pico                                        * v1.0 *
 // ===================================================================================
 //
 // Common functions for the on-board hardware, which are used by all examples. The

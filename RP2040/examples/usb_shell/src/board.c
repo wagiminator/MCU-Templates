@@ -1,9 +1,13 @@
 // ===================================================================================
-// Board Support for Raspberry Pi Pico 2                                      * v1.0 *
+// Board Support for Raspberry Pi Pico                                        * v1.0 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
 #include "board.h"
+#if __has_include("flash.h")
+#include "flash.h"                  // unique ID of the flash chip (if flash lib is used)
+#define BOARD_FLASH_UID   1
+#endif
 
 static uint8_t  LED_on_state = 0;   // current LED state
 static uint32_t LED_off_time = 0;   // time to switch off LED after flash (0: none)
@@ -37,13 +41,17 @@ const char* BOARD_resetReason(void) {
 // Print board information
 void BOARD_printInfo(void (*out)(char)) {
   printF(out, "Board:       %s\n", BOARD_NAME);
-  printF(out, "Chip:        RP2350%c, revision %d, boot ROM v%d\n",
-              ESIG_PACKAGE ? 'A' : 'B', ESIG_REVISION, ROM_VERSION);
+  printF(out, "Chip:        RP2040-B%d, boot ROM v%d\n", ESIG_REVISION, ROM_VERSION);
   printF(out, "CPU clock:   %d MHz\n", F_CPU / 1000000);
+  #ifdef BOARD_FLASH_UID
   {
-    uint64_t uid = ESIG_UID64;
-    printF(out, "Unique ID:   %08x%08x (OTP)\n", (uint32_t)(uid >> 32), (uint32_t)uid);
+    uint8_t uid[8], i;
+    FLASH_getUID(uid);
+    printF(out, "Unique ID:   ");
+    for(i = 0; i < 8; i++) printF(out, "%02x", uid[i]);
+    printF(out, " (flash chip)\nFlash:       JEDEC ID 0x%06x\n", FLASH_getJEDEC());
   }
+  #endif
   printF(out, "Last reset:  %s\n", BOARD_resetReason());
 }
 
@@ -117,7 +125,7 @@ RAM_FUNC uint8_t BTN_read(void) {
     IO_QSPI->GPIO_QSPI_SS_CTRL = (IO_QSPI->GPIO_QSPI_SS_CTRL & ~IO_QSPI_GPIO_QSPI_SS_CTRL_OEOVER_Msk)
                                | IO_QSPI_GPIO_QSPI_SS_CTRL_OEOVER_DISABLE;
     for(i = 0; i < 1000; i++);      // wait for the line to settle
-    pressed = !(SIO->GPIO_HI_IN & SIO_GPIO_HI_IN_QSPI_CSN_Msk);
+    pressed = !(SIO->GPIO_HI_IN & (1 << 1));  // bit 1: QSPI_SS
     // Restore normal chip select output
     IO_QSPI->GPIO_QSPI_SS_CTRL = (IO_QSPI->GPIO_QSPI_SS_CTRL & ~IO_QSPI_GPIO_QSPI_SS_CTRL_OEOVER_Msk)
                                | IO_QSPI_GPIO_QSPI_SS_CTRL_OEOVER_NORMAL;

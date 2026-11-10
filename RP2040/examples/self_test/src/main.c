@@ -1,5 +1,5 @@
 // ===================================================================================
-// Project:   Raspberry Pi Pico 2 Examples - Self Test
+// Project:   Raspberry Pi Pico Examples - Self Test
 // Version:   v1.0
 // Year:      2026
 // Author:    Stefan Wagner
@@ -271,7 +271,7 @@ void testPWM(void) {
 void runTests(void) {
   passed = 0; total = 0;
   LED_off();
-  TERM_print("\n=== Raspberry Pi Pico 2 - Self Test ===\n");
+  TERM_print("\n=== Raspberry Pi Pico - Self Test ===\n");
   BOARD_printInfo(TERM_putchar);
   TERM_print("\n");
   testClock();

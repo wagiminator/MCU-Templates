@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic FLASH Functions for RP2350 (external QSPI flash via boot ROM)       * v1.0 *
+// Basic FLASH Functions for RP2040 (external QSPI flash via boot ROM)       * v1.0 *
 // ===================================================================================
 //
 // Functions available:
@@ -23,16 +23,13 @@
 // - The FLASH is organized in sectors of 4096 bytes, each consisting of 16 pages of
 //   256 bytes. Erasing is done sector by sector, writing page by page. Bits can only
 //   be changed from 1 to 0 by writing, an erase sets all bits to 1.
-// - Each sector can be erased about 100,000 times (W25Q32RV, see datasheet).
+// - Each sector can be erased about 100,000 times (W25Q16JV, see datasheet).
 // - During erasing and writing the flash cannot be read, so the functions run from
 //   SRAM with interrupts disabled. Core 1 must not execute code from flash or access
 //   the flash at that time (e.g. let it wait in a function placed in SRAM).
-// - The XIP cache is flushed after each operation. Afterwards the fast XIP mode is
-//   restored by the XIP setup function that the boot ROM stored in the boot RAM.
-// - The flash commands (UID, JEDEC) are sent via the direct mode of the QSPI memory
-//   interface (QMI).
-// - The RP2350 has its own 64-bit unique ID in the OTP (ESIG_UID64, see system.h),
-//   which is used as unique ID of the board by the Raspberry Pi Pico SDK.
+// - The XIP cache is flushed after each operation.
+// - The unique ID of the flash chip is used as unique ID of the board (e.g. as USB
+//   serial number by the Raspberry Pi Pico SDK).
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -45,7 +42,7 @@ extern "C" {
 #include "system.h"
 
 // FLASH parameters
-#define FLASH_SIZE        (4 * 1024 * 1024)       // flash size (Raspberry Pi Pico 2: 4MB)
+#define FLASH_SIZE        (2 * 1024 * 1024)       // flash size (Raspberry Pi Pico: 2MB)
 
 // FLASH definitions
 #define FLASH_END_ADDR    (XIP_BASE + FLASH_SIZE - FLASH_SECTOR_SIZE) // last sector

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Basic PWM Functions for RP2350 (PWM slices 0..7)                          * v1.0 *
+// Basic PWM Functions for RP2040 (PWM slices 0..7)                          * v1.0 *
 // ===================================================================================
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 

@@ -1,5 +1,5 @@
 // ===================================================================================
-// Project:   Raspberry Pi Pico 2 Examples - RTC Clock with Alarm
+// Project:   Raspberry Pi Pico Examples - RTC Clock with Alarm
 // Version:   v1.0
 // Year:      2026
 // Author:    Stefan Wagner
@@ -9,7 +9,7 @@
 //
 // Description:
 // ------------
-// A clock with alarm based on the real-time clock (always-on timer of the RP2350). The time
+// A clock with alarm based on the real-time clock (RTC peripheral of the RP2040). The time
 // is set and shown via the terminal (USB serial port). The LED flashes briefly
 // every second (heartbeat). When the alarm time is reached, the LED fades in and
 // out (PWM) and a message is sent every 10 seconds, until the BOOTSEL button is
@@ -51,7 +51,7 @@ uint8_t  showClock = 1;                   // show time every second
 // ===================================================================================
 
 // Alarm interrupt
-void POWMAN_IRQ_TIMER_IRQHandler(void) {
+void RTC_IRQ_IRQHandler(void) {
   RTC_clearAlarmFlag();                   // clear flag (stops the alarm)
   alarmFlag = 1;
 }
@@ -183,7 +183,7 @@ int main(void) {
       connected = TERM_connected();
       if(connected) {
         DLY_ms(100);
-        TERM_print("\n=== Raspberry Pi Pico 2 - RTC Clock ===\n");
+        TERM_print("\n=== Raspberry Pi Pico - RTC Clock ===\n");
         TERM_print("Set the clock with 'time hh:mm:ss' and 'date yyyy-mm-dd',\n");
         TERM_print("the alarm with 'alarm hh:mm'. Type 'help' for all commands.\n");
         SHELL_prompt();

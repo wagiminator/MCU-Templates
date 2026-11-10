@@ -1,9 +1,9 @@
 // ===================================================================================
-// Basic GPIO Functions for RP2350                                            * v1.0 *
+// Basic GPIO Functions for RP2040                                            * v1.0 *
 // ===================================================================================
 //
 // Pins must be defined as GP0, GP1, .., GP29 - e.g.:
-// #define PIN_LED GP25     // LED on pin GP25 (Raspberry Pi Pico 2)
+// #define PIN_LED GP25     // LED on pin GP25 (Raspberry Pi Pico)
 //
 // PIN functions available:
 // ------------------------
@@ -20,8 +20,7 @@
 // PIN_drive(PIN, s)        Set PIN drive strength (0: 2mA, 1: 4mA (*), 2: 8mA, 3: 12mA)
 // PIN_slew(PIN, s)         Set PIN slew rate (0: slow (*), 1: fast)
 // PIN_alternate(PIN, F)    Set peripheral function F for PIN (GPIO_FUNC_SPI, _UART,
-//                          _I2C, _PWM, _PIO0, _PIO1, _PIO2, _GPCK, _USB, _UART_AUX,
-//                          _HSTX, see rp2350.h)
+//                          _I2C, _PWM, _PIO0, _PIO1, _GPCK, _USB, see rp2040.h)
 // PIN_alternate_off(PIN)   Disable peripheral function for PIN (back to GPIO)
 //
 // PIN_low(PIN)             Set PIN output value to LOW (*)
@@ -62,27 +61,20 @@
 // ADC_read()               Sample and read 12-bit ADC value (0..4095)
 // ADC_read_mV()            Sample and read voltage in millivolts (mV)
 // ADC_read_TEMP()          Sample and read temperature sensor in °C
-// ADC_read_VSYS()          Sample and read VSYS (Raspberry Pi Pico 2, GP29 = VSYS/3) in mV
+// ADC_read_VSYS()          Sample and read VSYS (Raspberry Pi Pico, GP29 = VSYS/3) in mV
 //
 // Notes:
 // ------
 // - (*) reset state; GP0..GP29 after SYS_init(): no function (FUNC_NULL), output
-//   disabled, input disabled, pull-down enabled, pad isolated (ISO).
-// - On the RP2350 all pads are isolated (ISO bit) after reset, i.e. the pad keeps its
-//   state independent of the peripherals. The PIN functions clear the ISO bit.
-// - Only the 30 GPIOs of the RP2350A (QFN60) are supported here. The RP2350B (QFN80)
-//   has 48 GPIOs, GP32..GP47 are accessed via the SIO->GPIO_HI_xxx registers.
-// - Raspberry Pi Pico 2: GP23 = SMPS power save (low: PFM, high: PWM, less ripple),
+//   disabled, input enabled, pull-down enabled.
+// - Raspberry Pi Pico: GP23 = SMPS power save (low: PFM, high: PWM, less ripple),
 //   GP24 = VBUS sense, GP25 = LED, GP29 = VSYS/3 (ADC3). GP0..GP22 and GP26..GP28 are
 //   available on the pin headers.
-// - The RP2350 has no open-drain outputs, they can be emulated by switching between
+// - The RP2040 has no open-drain outputs, they can be emulated by switching between
 //   PIN_input() and PIN_output() with output value LOW.
-// - Erratum RP2350-E9: a GPIO input with enabled pull-down resistor may latch at
-//   about 2.2V if it was driven high by an external source. Use an external pull-down
-//   (< 8.2kOhm) or disable the input buffer (PIN_disable) when this is an issue.
 // - The GPIO interrupts are routed to the core which calls PIN_INT_set().
 // - Pins used for ADC must be set with PIN_input_AN beforehand. The ADC reference is
-//   ADC_VREF (3.3V on the Raspberry Pi Pico 2). ADC_read_TEMP() uses the typical values
+//   ADC_VREF (3.3V on the Raspberry Pi Pico). ADC_read_TEMP() uses the typical values
 //   of the datasheet (27°C at 0.706V, -1.721mV/°C), accuracy approx. +/- 5°C.
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
@@ -102,7 +94,7 @@ extern "C" {
 #define GPIO_PAD(PIN)         (PADS_BANK0->GPIO[PIN])
 #define GPIO_FUNC(PIN, F)     (IO_BANK0->GPIO[PIN].CTRL = (F))
 
-// Pad settings (writing the pad register also clears the isolation bit ISO)
+// Pad settings
 #define GPIO_PAD_IN           (PADS_BANK0_GPIO_IE | PADS_BANK0_GPIO_SCHMITT | ((uint32_t)1 << PADS_BANK0_GPIO_DRIVE_Pos))
 #define GPIO_PAD_DRIVE(s)     ((uint32_t)((s) & 3) << PADS_BANK0_GPIO_DRIVE_Pos)
 
@@ -174,9 +166,9 @@ extern "C" {
 // ===================================================================================
 // Set peripheral function F for PIN (input enabled, output not disabled)
 // ===================================================================================
-#define PIN_alternate(PIN, F) ( GPIO_FUNC(PIN, F),                                     \
-                                REG_WRITE_MASK(GPIO_PAD(PIN), PADS_BANK0_GPIO_IE,      \
-                                PADS_BANK0_GPIO_IE | PADS_BANK0_GPIO_OD | PADS_BANK0_GPIO_ISO) )
+#define PIN_alternate(PIN, F) ( REG_WRITE_MASK(GPIO_PAD(PIN), PADS_BANK0_GPIO_IE,        \
+                                PADS_BANK0_GPIO_IE | PADS_BANK0_GPIO_OD),              \
+                                GPIO_FUNC(PIN, F) )
 #define PIN_alternate_off(PIN) GPIO_FUNC(PIN, GPIO_FUNC_SIO)
 
 // ===================================================================================
@@ -237,7 +229,7 @@ static inline void PIN_INT_set(uint8_t pin, uint8_t type) {
 // ADC Functions
 // ===================================================================================
 #define ADC_VREF            3300    // ADC reference voltage in mV (ADC_AVDD)
-#define ADC_CH_TEMP         4       // temperature sensor channel (RP2350A, RP2350B: 8)
+#define ADC_CH_TEMP         4       // temperature sensor channel
 
 #define ADC_enable()        REG_SET(ADC->CS, ADC_CS_EN)
 #define ADC_disable()       REG_CLR(ADC->CS, ADC_CS_EN)
@@ -274,7 +266,7 @@ static inline int8_t ADC_read_TEMP(void) {
   return (int8_t)(27 - (uv - 706000 + (uv < 706000 ? -860 : 860)) / 1721);
 }
 
-// Sample and read VSYS on Raspberry Pi Pico 2 (GP29 = VSYS/3) in mV
+// Sample and read VSYS on Raspberry Pi Pico (GP29 = VSYS/3) in mV
 static inline uint16_t ADC_read_VSYS(void) {
   PIN_input_AN(GP29);
   ADC_input(GP29);

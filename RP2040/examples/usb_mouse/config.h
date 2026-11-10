@@ -1,5 +1,5 @@
 // ===================================================================================
-// Configuration of the Raspberry Pi Pico 2 Example 'usb_mouse'
+// Configuration of the Raspberry Pi Pico Example 'usb_mouse'
 // ===================================================================================
 //
 // All settings of this example are made here. This file is also read by the makefile
@@ -12,14 +12,14 @@
 // ===================================================================================
 // System Clock (also read by the makefile)
 // ===================================================================================
-// System clock in Hz: 12000000 or 24000000..150000000 (must be generated exactly by the PLL)
-#define F_CPU                 150000000
+// System clock in Hz: 12000000 or 16000000..133000000 (must be generated exactly by the PLL)
+#define F_CPU                 125000000
 
 // ===================================================================================
-// Board: Raspberry Pi Pico 2
+// Board: Raspberry Pi Pico
 // ===================================================================================
 #define PIN_LED               GP25      // pin connected to on-board LED
-#define BOARD_NAME            "Raspberry Pi Pico 2"
+#define BOARD_NAME            "Raspberry Pi Pico"
 
 // ===================================================================================
 // Example Settings
@@ -37,6 +37,6 @@
 #define USB_LANGUAGE          0x0409    // US English
 #define USB_MAX_POWER_mA      100       // max power in mA
 #define MANUF_STR             "wagiminator"
-#define PROD_STR              "Pico 2 USB Mouse"
-#define SERIAL_STR            "RP2350USBMOUSE"
+#define PROD_STR              "Pico USB Mouse"
+#define SERIAL_STR            "RP2040USBMOUSE"
 #define INTERF_STR            "HID-Mouse"

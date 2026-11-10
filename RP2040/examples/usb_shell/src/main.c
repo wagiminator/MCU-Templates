@@ -1,5 +1,5 @@
 // ===================================================================================
-// Project:   Raspberry Pi Pico 2 Examples - USB Shell
+// Project:   Raspberry Pi Pico Examples - USB Shell
 // Version:   v1.0
 // Year:      2026
 // Author:    Stefan Wagner
@@ -9,7 +9,7 @@
 //
 // Description:
 // ------------
-// Command line via the native USB port. The RP2350 appears as a virtual serial port
+// Command line via the native USB port. The RP2040 appears as a virtual serial port
 // on the PC (USB CDC, e.g. /dev/ttyACM0 or COMx), which can be opened with any
 // terminal program (e.g. "make monitor", PuTTY, Arduino serial monitor, web serial
 // terminal). A welcome message is shown when the terminal is opened. Type "help" to
@@ -31,7 +31,7 @@
 
 // Print welcome message
 void printWelcome(void) {
-  TERM_print("\n=== Raspberry Pi Pico 2 - USB Shell ===\n");
+  TERM_print("\n=== Raspberry Pi Pico - USB Shell ===\n");
   BOARD_printInfo(TERM_putchar);
   TERM_print("Type 'help' for a list of commands.\n");
 }

@@ -1,13 +1,13 @@
 // ===================================================================================
-// Basic PIO Functions for RP2350 (programmable I/O, PIO0..PIO2)             * v1.0 *
+// Basic PIO Functions for RP2040 (programmable I/O, PIO0/PIO1)              * v1.0 *
 // ===================================================================================
 //
 // Functions available:
 // --------------------
-// PIO_init(pio)                  reset and release PIO block (PIO0, PIO1 or PIO2)
+// PIO_init(pio)                  reset and release PIO block (PIO0 or PIO1)
 // PIO_load(pio,prog,len,offs)    load program (len instructions) into instruction
 //                                memory at offset offs (JMP targets are relocated)
-// PIO_pin(pio, PIN)              connect PIN to PIO block (GPIO function PIO0..PIO2)
+// PIO_pin(pio, PIN)              connect PIN to PIO block (GPIO function PIO0/PIO1)
 //
 // PIO_SM_enable(pio,sm)          start state machine sm (0..3)
 // PIO_SM_disable(pio,sm)         stop state machine
@@ -20,8 +20,8 @@
 // PIO_SM_txFull(pio,sm)          check if TX FIFO is full
 // PIO_SM_rxEmpty(pio,sm)         check if RX FIFO is empty
 //
-// Instruction encoding (for hand-assembled programs, see datasheet chapter 11.4):
-// -------------------------------------------------------------------------------
+// Instruction encoding (for hand-assembled programs, see datasheet chapter 3.4):
+// ------------------------------------------------------------------------------
 // PIO_JMP(cond,addr)  PIO_WAIT(pol,src,idx)  PIO_IN(src,n)   PIO_OUT(dest,n)
 // PIO_PUSH(ifF,blk)   PIO_PULL(ifE,blk)      PIO_MOV(d,op,s) PIO_IRQ(clr,wait,idx)
 // PIO_SET(dest,data)  PIO_NOP                PIO_SIDE(n,v)   PIO_DELAY(n)
@@ -29,16 +29,13 @@
 //
 // Notes:
 // ------
-// - The RP2350 has three PIO blocks (PIO0..PIO2). Each PIO block has 32 instruction
-//   words and 4 state machines with 4-word TX and RX FIFOs. Programs written with pioasm (Raspberry Pi Pico SDK) can be used by
+// - Each PIO block has 32 instruction words and 4 state machines with 4-word TX and
+//   RX FIFOs. Programs written with pioasm (Raspberry Pi Pico SDK) can be used by
 //   copying the instruction words from the generated header file.
 // - Side-set and delay share bits 12..8 of each instruction: with n side-set bits
 //   (PINCTRL SIDESET_COUNT), the remaining 5-n bits are used for the delay.
 // - The configuration registers (CLKDIV, EXECCTRL, SHIFTCTRL, PINCTRL) are accessed
-//   directly via pio->SM[sm] (see rp2350.h).
-// - New features of the RP2350 PIO (version 1): WAIT on the JMP pin (PIO_JMPPIN), MOV
-//   to pin directions (PIO_PINDIRS_MOV), random access to the RX FIFO (pio->RXF_BLK),
-//   GPIO base for the RP2350B (pio->GPIOBASE), IRQ flags of neighbouring blocks.
+//   directly via pio->SM[sm] (see rp2040.h).
 //
 // 2026 by Stefan Wagner:   https://github.com/wagiminator
 
@@ -66,15 +63,10 @@ extern "C" {
 
 // Sources and destinations
 #define PIO_PINS          0               // IN/OUT/SET/MOV: pins
-#define PIO_GPIO          0               // WAIT source: GPIO
-#define PIO_WAIT_PIN      1               // WAIT source: input pin (relative to IN_BASE)
-#define PIO_WAIT_IRQ      2               // WAIT source: IRQ flag
-#define PIO_JMPPIN        3               // WAIT source: JMP pin (RP2350)
 #define PIO_X             1               // scratch register X
 #define PIO_Y             2               // scratch register Y
 #define PIO_NULL          3               // IN/OUT/MOV: null (zeros)
 #define PIO_PINDIRS       4               // OUT/SET: pin directions
-#define PIO_PINDIRS_MOV   3               // MOV destination: pin directions (RP2350)
 #define PIO_EXEC_MOV      4               // MOV destination: execute
 #define PIO_STATUS        5               // MOV source: status
 #define PIO_PC            5               // OUT/MOV destination: program counter
@@ -99,10 +91,8 @@ extern "C" {
 // ===================================================================================
 // PIO Block Functions
 // ===================================================================================
-#define PIO_init(pio)           RESET_cycle((pio) == PIO0 ? RESETS_RESET_PIO0 :            \
-                                            (pio) == PIO1 ? RESETS_RESET_PIO1 : RESETS_RESET_PIO2)
-#define PIO_pin(pio, PIN)       PIN_alternate(PIN, (pio) == PIO0 ? GPIO_FUNC_PIO0 :         \
-                                                   (pio) == PIO1 ? GPIO_FUNC_PIO1 : GPIO_FUNC_PIO2)
+#define PIO_init(pio)           RESET_cycle((pio) == PIO0 ? RESETS_RESET_PIO0 : RESETS_RESET_PIO1)
+#define PIO_pin(pio, PIN)       PIN_alternate(PIN, (pio) == PIO0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1)
 
 // Load program into instruction memory at offset (JMP targets are relocated)
 static inline void PIO_load(PIO_TypeDef* pio, const uint16_t* prog, uint8_t len, uint8_t offs) {
