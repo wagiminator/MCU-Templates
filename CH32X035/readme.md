@@ -64,8 +64,8 @@ Common features of all variants:
 | 16 | VDD |  |  |  |  | Supply voltage 2.0V - 5.5V |
 | 17 | PC16 |  | U4 TX (2), U4 RX (5) |  | D- (UDM) |  |
 | 18 | PC17 |  | U4 TX (5), U4 RX (2) |  | D+ (UDP) | BOOT detection (high at power-up = bootloader) |
-| 19 | PC18 |  | U3 TX (1) |  |  | SWDIO |
-| 20 | PC19 |  | U3 RX (1), U4 RX (4) |  |  | SWCLK |
+| 19 | PC18 |  | U3 TX (1) |  |  | SWDIO, PIOC IO0 |
+| 20 | PC19 |  | U3 RX (1), U4 RX (4) |  |  | SWCLK, PIOC IO1 |
 
 Notes:
 - The numbers in brackets are the mapping options (`UART1_REMAP` ... `UART4_REMAP`) that are selected in the parameter section of the *uart.h* library. U1 ... U4 stand for USART1 ... USART4.
@@ -85,6 +85,7 @@ Notes:
 | template/src/gpio.h | GPIO, pin interrupt, ADC, OPA, comparator and touch key functions |
 | template/src/ch32x035.h | Register definitions |
 | libraries/ | Optional libraries for internal peripherals (see below) |
+| libraries/pioc_asm/ | Assembler and program sources for the PIOC |
 | datasheet/ | Datasheet, reference manual and QingKe V4 core manual |
 
 ## Libraries
@@ -99,7 +100,9 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | i2c_soft | Software I2C master (bit-banging) on any pins |
 | millis | Millisecond counter using the SysTick timer |
 | neo_spi | NeoPixel (WS2812) control using hardware SPI (MOSI pin PA7, PA9, PA10 or PC7) |
+| neo_pioc | NeoPixel (WS2812) control using the PIOC (PC18 or PC7, transfer in the background) |
 | neo_sw | NeoPixel (WS2812) control using software bit-banging on any pin |
+| pioc | Programmable protocol I/O controller (PIOC): load/start programs, data exchange, interrupt |
 | print | Print functions (printf, numbers, strings) for the serial and other libraries |
 | pwm | PWM outputs on 4 channels of TIM2 (PA0, PA1, PA2, PA3) |
 | spi | SPI master functions |
@@ -109,6 +112,7 @@ The *libraries* folder contains optional libraries for the internal peripherals.
 | timer | Periodic timer interrupt (TIM3, microsecond resolution) |
 | uart | Basic USART1/2/3/4 functions (no buffer, no interrupt, no DMA) |
 | uart2_dma | USART2 with DMA-driven RX ring buffer |
+| uart_pioc | Additional UART transmitter using the PIOC (PC18, PC19 or PC7) |
 | usb/usb_cdc | USB CDC (virtual serial port) |
 | usb/hid_keyboard | USB HID keyboard |
 | usb/hid_mouse | USB HID mouse |
@@ -147,6 +151,13 @@ Additionally:
 - VBUS (5V) for the connected device must be provided by the board.
 - Set `USB_VDD` in *config.h* according to the supply voltage of the MCU (0: 3.3V, 1: 5V).
 - The USB device libraries and the USB host libraries cannot be used at the same time.
+
+### Using the PIOC
+The programmable protocol I/O controller (PIOC) is a small 8-bit RISC core (RISC8B) that runs programs independently of the main core at F_CPU and controls two pins: IO0 (PC18, or PC7 with `PIOC_MAP` = 1) and IO1 (PC19). The *pioc* library loads and starts PIOC programs and handles the data exchange (data registers, command/result registers, interrupt). The *neo_pioc* and *uart_pioc* libraries contain ready-made PIOC programs. Own PIOC programs are written in RISC8B assembler and translated into a C header with *pioc_asm.py* (see *libraries/pioc_asm*).
+Additionally:
+- The 4KB code RAM of the PIOC is the upper part of the SRAM (0x20004000). Reduce the RAM size by using the linker script *ld/ch32x035_pioc.ld* in the *makefile*!
+- PC18/PC19 are also used by the debug interface (SWD), which is disabled when these pins are connected to the PIOC. Upload new firmware via the USB bootloader then.
+- Only one PIOC program can run at a time, i.e. the *neo_pioc* and *uart_pioc* libraries cannot be used together.
 
 ## Compiling Firmware
 ### Using the Makefile
